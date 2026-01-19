@@ -24,7 +24,7 @@ jobs:
         run: npm run build:win
 
       - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: windows-installer
           path: dist/*.exe
@@ -46,7 +46,7 @@ jobs:
         run: npm run build:linux
 
       - name: Upload Linux artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: linux-appimage
           path: dist/*.AppImage
@@ -68,7 +68,7 @@ jobs:
         run: npm run build:mac
 
       - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
           path: dist/*.dmg
@@ -79,7 +79,7 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
