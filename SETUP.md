@@ -7,12 +7,17 @@
    - Choose the LTS version
    - Verify installation: `node --version`
 
-2. **Install Dependencies**
+2. **Clone the repo**
+   ```bash
+   git clone https://github.com/AferilVT/neuro-karaoke-wrapper.git
+   ```
+
+4. **Install Dependencies**
    ```bash
    npm install
    ```
 
-3. **Run the Application**
+5. **Run the Application**
    ```bash
    npm start
    ```
