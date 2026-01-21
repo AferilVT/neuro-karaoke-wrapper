@@ -37,27 +37,7 @@ A simple desktop wrapper for [neurokaraoke.com](https://www.neurokaraoke.com) bu
 
 Still in works... (I don't own a mac device to compile it. Need contributions)
 
-## Quick Start (Development)
-
-### Install Dependencies
-
-```bash
-npm install
-```
-
-### Run the App
-
-```bash
-npm start
-```
-
-### Build for Windows
-
-```bash
-npm run build:win
-```
-
-The installer will be created in the `dist` folder.
+## For developement [Setup.md](https://github.com/AferilVT/neuro-karaoke-wrapper/edit/main/SETUP.md)
 
 ## What It Does
 
