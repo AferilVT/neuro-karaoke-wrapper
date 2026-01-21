@@ -52,12 +52,12 @@ This app simply wraps the Neuro Karaoke website in a desktop window, providing a
 
 ```
 Neuro Karaoke/
-├── main.js          # Main Electron process
-├── preload.js       # Preload script
-├── package.json     # Dependencies and build config
-├── assets/          # App icons
-├── .gitignore       # Git ignore rules
-└── README.md        # This file
+├── main.js          
+├── preload.js       
+├── package.json    
+├── assets/         
+├── .gitignore       
+└── README.md       
 ```
 
 ## Development
