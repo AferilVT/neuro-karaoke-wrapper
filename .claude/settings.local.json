@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(reg query:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)"
+    ]
+  }
+}
