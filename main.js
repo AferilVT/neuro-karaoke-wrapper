@@ -231,7 +231,14 @@ function setupIpcHandlers() {
  */
 function handleQuit() {
   isQuitting = true;
-  app.quit();
+  // On macOS, app.quit() called directly from a tray menu can be swallowed
+  // by the Cocoa event loop while the menu is still dismissing. Destroying
+  // the window first (skipping the close-event cycle) and deferring the
+  // quit past the current event loop tick fixes this reliably.
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.destroy();
+  }
+  setImmediate(() => app.quit());
 }
 
 /**

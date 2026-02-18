@@ -1,4 +1,4 @@
-const { Tray, Menu, app, BrowserWindow } = require('electron');
+const { Tray, Menu, app, BrowserWindow, nativeImage } = require('electron');
 
 /**
  * Manages system tray icon and menu
@@ -20,7 +20,13 @@ class TrayManager {
   create(mainWindow, onQuit) {
     this.mainWindow = mainWindow;
     this.onQuit = onQuit;
-    this.tray = new Tray(this.iconPath);
+    let icon = this.iconPath;
+    if (process.platform === 'darwin') {
+      const img = nativeImage.createFromPath(this.iconPath);
+      icon = img.resize({ width: 16, height: 16 });
+      icon.setTemplateImage(true);
+    }
+    this.tray = new Tray(icon);
     this.tray.setToolTip('Neuro Karaoke');
 
     this.rebuildMenu();
@@ -238,6 +244,11 @@ class TrayManager {
     }
     this.mainWindow.show();
     this.mainWindow.focus();
+    // On macOS the GPU compositor can fail to repaint after hide/show,
+    // leaving a black screen. Invalidating forces a repaint.
+    if (process.platform === 'darwin') {
+      this.mainWindow.webContents.invalidate();
+    }
   }
 
   /**
