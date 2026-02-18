@@ -40,6 +40,7 @@
       "discord-manager.js",
       "tray-manager.js",
       "neurokaraoke-api.js",
+      "update-checker.js",
       "package.json"
     ],
     "extraResources": [

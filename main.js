@@ -4,6 +4,7 @@ const config = require('./config');
 const DiscordManager = require('./discord-manager');
 const TrayManager = require('./tray-manager');
 const NeuroKaraokeAPI = require('./neurokaraoke-api');
+const { checkForUpdates } = require('./update-checker');
 
 const isDev = !app.isPackaged;
 
@@ -62,6 +63,11 @@ function createWindow() {
 
   // Load the site
   mainWindow.loadURL(config.URL.SITE);
+
+  // Check for updates once the page has loaded (small delay so UI is visible first)
+  mainWindow.webContents.once('did-finish-load', () => {
+    setTimeout(() => checkForUpdates(mainWindow), 3000);
+  });
 
   // Minimize to tray instead of closing (only if tray is available)
   mainWindow.on('close', (event) => {
