@@ -15,7 +15,10 @@ data class Song(
     val audioUrl: String = "",
     val duration: Long = 0L,
     val singer: Singer = Singer.NEURO,
-    val artCredit: String? = null
+    val artCredit: String? = null,
+    val titleRomaji: String = "",
+    val titleEnglish: String? = null,
+    val artistRomaji: String = ""
 ) {
     /** The cover artist (who performed this cover) based on singer */
     val coverArtist: String

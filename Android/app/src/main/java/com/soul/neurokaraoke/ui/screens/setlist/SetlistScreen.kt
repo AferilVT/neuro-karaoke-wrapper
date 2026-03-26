@@ -44,6 +44,8 @@ import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.ui.components.FilterChipsRow
 import com.soul.neurokaraoke.ui.components.SearchBar
+import com.soul.neurokaraoke.ui.theme.GlassCard
+import com.soul.neurokaraoke.ui.theme.NeonTheme
 
 @Composable
 fun SetlistScreen(
@@ -80,7 +82,7 @@ fun SetlistScreen(
             text = "Karaoke Setlists",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -142,21 +144,19 @@ private fun PlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    val neonColors = NeonTheme.colors
+
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-            else
-                MaterialTheme.colorScheme.surface
-        ),
-        border = if (isSelected)
-            androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-        else
-            null
+        cornerRadius = 12.dp,
+        borderColors = if (isSelected) neonColors.neonBorderColors
+                       else listOf(
+                           MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                           MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
+                       ),
+        backgroundAlpha = if (isSelected) 0.5f else 0.4f
     ) {
         Column {
             // Cover image grid (2x2)
@@ -222,7 +222,7 @@ private fun PlaylistCard(
                 modifier = Modifier.padding(12.dp)
             ) {
                 Text(
-                    text = playlist.title.ifEmpty { "Loading..." },
+                    text = playlist.title.ifEmpty { "Setlist ${playlist.id.take(8)}..." },
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Medium,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
@@ -230,7 +230,11 @@ private fun PlaylistCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = playlist.id.take(8) + "...",
+                    text = when {
+                        playlist.songCount > 0 -> "${playlist.songCount} songs"
+                        playlist.title.isEmpty() -> "Tap to load"
+                        else -> ""
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

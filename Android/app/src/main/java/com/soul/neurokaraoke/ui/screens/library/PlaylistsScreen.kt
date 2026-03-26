@@ -25,14 +25,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -69,10 +72,14 @@ import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 @Composable
 fun PlaylistsScreen(
     onPlaylistClick: (String) -> Unit,
+    externalRepository: UserPlaylistRepository? = null,
+    accessToken: String? = null,
+    isSyncing: Boolean = false,
+    onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val repository = remember { UserPlaylistRepository(context) }
+    val repository = externalRepository ?: remember { UserPlaylistRepository(context) }
     val userPlaylists by repository.playlists.collectAsState()
 
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -90,29 +97,52 @@ fun PlaylistsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Your Playlists",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
-                Text(
-                    text = "${userPlaylists.size} playlist${if (userPlaylists.size != 1) "s" else ""}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "${userPlaylists.size} playlist${if (userPlaylists.size != 1) "s" else ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(14.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
             }
 
-            FloatingActionButton(
-                onClick = { showCreateDialog = true },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Create playlist"
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (accessToken != null) {
+                    IconButton(onClick = onRefresh) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Sync playlists",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                FloatingActionButton(
+                    onClick = { showCreateDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Create playlist"
+                    )
+                }
             }
         }
 
@@ -159,6 +189,7 @@ fun PlaylistsScreen(
                 items(userPlaylists, key = { it.id }) { playlist ->
                     UserPlaylistCard(
                         playlist = playlist,
+                        isServerPlaylist = !playlist.id.startsWith("user_"),
                         onClick = { onPlaylistClick(playlist.id) },
                         onDeleteClick = { playlistToDelete = playlist }
                     )
@@ -197,7 +228,7 @@ fun PlaylistsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        repository.deletePlaylist(playlist.id)
+                        repository.deletePlaylist(playlist.id, accessToken)
                         playlistToDelete = null
                     },
                     colors = ButtonDefaults.textButtonColors(
@@ -222,6 +253,7 @@ fun PlaylistsScreen(
 @Composable
 private fun UserPlaylistCard(
     playlist: Playlist,
+    isServerPlaylist: Boolean = false,
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
@@ -296,16 +328,31 @@ private fun UserPlaylistCard(
             Column(
                 modifier = Modifier.padding(12.dp)
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = playlist.title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (isServerPlaylist) {
+                        Icon(
+                            imageVector = Icons.Default.Cloud,
+                            contentDescription = "Synced",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+                val count = if (playlist.songs.isNotEmpty()) playlist.songs.size else playlist.songCount
                 Text(
-                    text = playlist.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${playlist.songs.size} song${if (playlist.songs.size != 1) "s" else ""}",
+                    text = "$count song${if (count != 1) "s" else ""}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

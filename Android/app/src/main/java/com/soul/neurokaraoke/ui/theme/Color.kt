@@ -12,7 +12,7 @@ val NeuroPrimary = Color(0xFF00D9FF)      // Cyan accent
 val NeuroSecondary = Color(0xFFFF6B9D)    // Pink accent
 val NeuroTertiary = Color(0xFF8B5CF6)     // Purple for variety
 val NeuroGradientStart = Color(0xFF00D9FF)  // Cyan (gradient start)
-val NeuroGradientEnd = Color(0xFF00D9FF)    // Cyan (solid for Neuro)
+val NeuroGradientEnd = Color(0xFF0099CC)    // Darker cyan (visible 2-color gradient)
 val NeuroOnBackground = Color(0xFFFFFFFF)
 val NeuroOnSurface = Color(0xFFB0B8C1)    // Muted text
 val NeuroOnSurfaceVariant = Color(0xFF6B7280)
@@ -71,6 +71,20 @@ val CardBorder = Primary
 val DividerColor = NeuroDivider
 val ErrorColor = Color(0xFFFF5252)
 val SuccessColor = Color(0xFF4CAF50)
+
+// ==========================================
+// GLOW COLORS (brighter variants for neon glow layers)
+// ==========================================
+val NeuroGlow = Color(0xFF33E5FF)       // Bright cyan glow
+val EvilGlow = Color(0xFFFF3DA6)        // Bright pink glow
+val DuetGlow = Color(0xFFB87FE8)        // Bright purple glow
+
+// ==========================================
+// GRADIENT COLOR LISTS (for gradient text, borders, progress bars)
+// ==========================================
+val NeuroGradientColors = listOf(NeuroGradientStart, NeuroGradientEnd)
+val EvilGradientColors = listOf(EvilGradientStart, EvilGradientEnd)
+val DuetGradientColors = listOf(DuetGradientStart, DuetGradientEnd)
 
 // Singer-specific colors
 val NeuroColor = Color(0xFF00D9FF)   // Cyan for Neuro

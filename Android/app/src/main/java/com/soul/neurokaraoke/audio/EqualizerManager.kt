@@ -43,6 +43,7 @@ object EqualizerManager {
     private val _state = MutableStateFlow(AudioEffectsState())
     val state: StateFlow<AudioEffectsState> = _state.asStateFlow()
 
+    @Synchronized
     fun initialize(audioSessionId: Int) {
         if (this.audioSessionId == audioSessionId && equalizer != null) {
             return // Already initialized with same session
@@ -201,6 +202,7 @@ object EqualizerManager {
         }
     }
 
+    @Synchronized
     fun release() {
         try {
             equalizer?.release()

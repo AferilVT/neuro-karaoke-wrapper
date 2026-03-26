@@ -32,12 +32,13 @@ class LyricsApi {
      * Search for lyrics by track name and artist
      */
     suspend fun searchLyrics(trackName: String, artistName: String): Result<LyricsResult?> = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
         try {
             val encodedTrack = URLEncoder.encode(trackName, "UTF-8")
             val encodedArtist = URLEncoder.encode(artistName, "UTF-8")
             val url = URL("$BASE_URL/get?track_name=$encodedTrack&artist_name=$encodedArtist")
 
-            val connection = url.openConnection() as HttpURLConnection
+            connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("User-Agent", USER_AGENT)
             connection.connectTimeout = 10000
@@ -57,6 +58,8 @@ class LyricsApi {
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure(e)
+        } finally {
+            connection?.disconnect()
         }
     }
 
@@ -64,13 +67,14 @@ class LyricsApi {
      * Fallback search using the search endpoint
      */
     private suspend fun searchLyricsFallback(trackName: String, artistName: String): Result<LyricsResult?> = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
         try {
             // Try with just track name first
             val query = "$trackName $artistName"
             val encodedQuery = URLEncoder.encode(query, "UTF-8")
             val url = URL("$BASE_URL/search?q=$encodedQuery")
 
-            val connection = url.openConnection() as HttpURLConnection
+            connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.setRequestProperty("User-Agent", USER_AGENT)
             connection.connectTimeout = 10000
@@ -94,6 +98,8 @@ class LyricsApi {
         } catch (e: Exception) {
             e.printStackTrace()
             Result.failure(e)
+        } finally {
+            connection?.disconnect()
         }
     }
 
@@ -102,9 +108,9 @@ class LyricsApi {
             id = json.optInt("id", 0),
             trackName = json.optString("trackName", ""),
             artistName = json.optString("artistName", ""),
-            albumName = json.optString("albumName", null),
-            syncedLyrics = json.optString("syncedLyrics", null).takeIf { it.isNotBlank() && it != "null" },
-            plainLyrics = json.optString("plainLyrics", null).takeIf { it.isNotBlank() && it != "null" }
+            albumName = json.optString("albumName", "").takeIf { it.isNotBlank() },
+            syncedLyrics = json.optString("syncedLyrics", "").takeIf { it.isNotBlank() && it != "null" },
+            plainLyrics = json.optString("plainLyrics", "").takeIf { it.isNotBlank() && it != "null" }
         )
     }
 

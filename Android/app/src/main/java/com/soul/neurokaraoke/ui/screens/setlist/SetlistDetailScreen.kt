@@ -23,10 +23,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
@@ -55,10 +56,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import android.content.Intent
+import android.widget.Toast
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
+import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 
 @Composable
 fun SetlistDetailScreen(
@@ -70,14 +73,15 @@ fun SetlistDetailScreen(
     onPlayClick: () -> Unit,
     onShuffleClick: () -> Unit,
     onSongClick: (String) -> Unit,
+    onDownloadAll: (List<Song>) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var isFavorite by remember { mutableStateOf(false) }
     var showMoreMenu by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Calculate total duration
+    // Calculate total duration (only if we have duration data)
     val totalDurationMinutes = songs.sumOf { it.duration } / 1000 / 60
+    val hasDurationData = songs.any { it.duration > 0 }
 
     Box(modifier = modifier.fillMaxSize()) {
         // Blurred background
@@ -127,11 +131,12 @@ fun SetlistDetailScreen(
                         )
                         .padding(16.dp)
                 ) {
-                    // Back button
+                    // Back button with neon border
                     IconButton(
                         onClick = onBackClick,
                         modifier = Modifier
                             .size(40.dp)
+                            .clip(CircleShape)
                             .background(
                                 MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
                                 CircleShape
@@ -225,9 +230,8 @@ fun SetlistDetailScreen(
                             // Label
                             Text(
                                 text = "KARAOKE SETLIST",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
+                                style = CyberLabelStyle,
+                                color = MaterialTheme.colorScheme.primary
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -237,7 +241,7 @@ fun SetlistDetailScreen(
                                 text = playlist.title,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -246,7 +250,7 @@ fun SetlistDetailScreen(
 
                             // Stats
                             Text(
-                                text = "${songs.size} songs · ${totalDurationMinutes} min",
+                                text = if (hasDurationData) "${songs.size} songs · ${totalDurationMinutes} min" else "${songs.size} songs",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
@@ -270,7 +274,7 @@ fun SetlistDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Play button
+                        // Play button with neon glow
                         Button(
                             onClick = onPlayClick,
                             colors = ButtonDefaults.buttonColors(
@@ -278,7 +282,8 @@ fun SetlistDetailScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                            modifier = Modifier
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
@@ -292,20 +297,23 @@ fun SetlistDetailScreen(
                             )
                         }
 
-                        // Favorite button
+                        // Favorite button (requires sign-in)
                         IconButton(
-                            onClick = { isFavorite = !isFavorite },
+                            onClick = {
+                                Toast.makeText(context, "Sign in with Discord to save favorites", Toast.LENGTH_SHORT).show()
+                            },
                             modifier = Modifier
                                 .size(44.dp)
+                                .clip(CircleShape)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                     CircleShape
                                 )
                         ) {
                             Icon(
-                                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                imageVector = Icons.Default.FavoriteBorder,
                                 contentDescription = "Favorite",
-                                tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
 
@@ -314,8 +322,9 @@ fun SetlistDetailScreen(
                             onClick = onShuffleClick,
                             modifier = Modifier
                                 .size(44.dp)
+                                .clip(CircleShape)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                     CircleShape
                                 )
                         ) {
@@ -332,8 +341,9 @@ fun SetlistDetailScreen(
                                 onClick = { showMoreMenu = true },
                                 modifier = Modifier
                                     .size(44.dp)
+                                    .clip(CircleShape)
                                     .background(
-                                        MaterialTheme.colorScheme.surfaceVariant,
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                                         CircleShape
                                     )
                             ) {
@@ -380,7 +390,21 @@ fun SetlistDetailScreen(
                                     },
                                     leadingIcon = {
                                         Icon(
-                                            imageVector = Icons.Default.QueueMusic,
+                                            imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                                            contentDescription = null
+                                        )
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Download All") },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        onDownloadAll(songs)
+                                        Toast.makeText(context, "Downloading ${songs.size} songs...", Toast.LENGTH_SHORT).show()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Default.Download,
                                             contentDescription = null
                                         )
                                     }

@@ -21,6 +21,43 @@ enum class ThemeMode {
     NEURO, EVIL, DUET, AUTO
 }
 
+// Neon-specific theme colors for glow effects and gradients
+data class NeonThemeColors(
+    val glowColor: Color,
+    val glowColorDim: Color,
+    val gradientColors: List<Color>,
+    val neonBorderColors: List<Color>
+)
+
+private val NeuroNeonColors = NeonThemeColors(
+    glowColor = NeuroGlow,
+    glowColorDim = NeuroGlow.copy(alpha = 0.5f),
+    gradientColors = NeuroGradientColors,
+    neonBorderColors = listOf(NeuroGlow.copy(alpha = 0.6f), NeuroPrimary.copy(alpha = 0.2f))
+)
+
+private val EvilNeonColors = NeonThemeColors(
+    glowColor = EvilGlow,
+    glowColorDim = EvilGlow.copy(alpha = 0.5f),
+    gradientColors = EvilGradientColors,
+    neonBorderColors = listOf(EvilGlow.copy(alpha = 0.6f), EvilPrimary.copy(alpha = 0.2f))
+)
+
+private val DuetNeonColors = NeonThemeColors(
+    glowColor = DuetGlow,
+    glowColorDim = DuetGlow.copy(alpha = 0.5f),
+    gradientColors = DuetGradientColors,
+    neonBorderColors = listOf(DuetGlow.copy(alpha = 0.6f), DuetPrimary.copy(alpha = 0.2f))
+)
+
+val LocalNeonColors = staticCompositionLocalOf { NeuroNeonColors }
+
+object NeonTheme {
+    val colors: NeonThemeColors
+        @Composable
+        get() = LocalNeonColors.current
+}
+
 // Composition local to access current theme mode
 val LocalThemeMode = compositionLocalOf { ThemeMode.NEURO }
 
@@ -97,26 +134,37 @@ fun NeuroKaraokeTheme(
 ) {
     var themeMode by remember { mutableStateOf(ThemeMode.AUTO) }
 
-    // Determine the effective color scheme
-    val colorScheme = when (themeMode) {
+    // Determine the effective theme
+    val effectiveMode = when (themeMode) {
+        ThemeMode.NEURO -> ThemeMode.NEURO
+        ThemeMode.EVIL -> ThemeMode.EVIL
+        ThemeMode.DUET -> ThemeMode.DUET
+        ThemeMode.AUTO -> when (currentSinger) {
+            "EVIL" -> ThemeMode.EVIL
+            "DUET" -> ThemeMode.DUET
+            else -> ThemeMode.NEURO
+        }
+    }
+
+    val colorScheme = when (effectiveMode) {
         ThemeMode.NEURO -> NeuroColorScheme
         ThemeMode.EVIL -> EvilColorScheme
         ThemeMode.DUET -> DuetColorScheme
-        ThemeMode.AUTO -> {
-            // Auto-switch based on current singer
-            when (currentSinger) {
-                "EVIL" -> EvilColorScheme
-                "DUET" -> DuetColorScheme
-                "NEURO", "OTHER", null -> NeuroColorScheme
-                else -> NeuroColorScheme
-            }
-        }
+        ThemeMode.AUTO -> NeuroColorScheme
+    }
+
+    val neonColors = when (effectiveMode) {
+        ThemeMode.NEURO -> NeuroNeonColors
+        ThemeMode.EVIL -> EvilNeonColors
+        ThemeMode.DUET -> DuetNeonColors
+        ThemeMode.AUTO -> NeuroNeonColors
     }
 
     CompositionLocalProvider(
         LocalThemeMode provides themeMode,
         LocalThemeToggle provides { newMode -> themeMode = newMode },
-        LocalAutoThemeSinger provides currentSinger
+        LocalAutoThemeSinger provides currentSinger,
+        LocalNeonColors provides neonColors
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
@@ -178,9 +226,9 @@ fun themeAwareGradient(): Brush {
 @Composable
 fun themeAwareGradientColors(): List<Color> {
     return when (effectiveTheme()) {
-        ThemeMode.NEURO -> listOf(NeuroGradientStart, NeuroGradientEnd)
-        ThemeMode.EVIL -> listOf(EvilGradientStart, EvilGradientEnd)
-        ThemeMode.DUET -> listOf(DuetGradientStart, DuetGradientEnd)
-        ThemeMode.AUTO -> listOf(NeuroGradientStart, NeuroGradientEnd)
+        ThemeMode.NEURO -> NeuroGradientColors
+        ThemeMode.EVIL -> EvilGradientColors
+        ThemeMode.DUET -> DuetGradientColors
+        ThemeMode.AUTO -> NeuroGradientColors
     }
 }

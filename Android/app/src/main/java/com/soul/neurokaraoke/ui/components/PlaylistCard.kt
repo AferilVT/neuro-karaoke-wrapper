@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
-import com.soul.neurokaraoke.ui.theme.Primary
+import com.soul.neurokaraoke.ui.theme.GlassCard
 
 @Composable
 fun PlaylistCard(
@@ -30,14 +28,11 @@ fun PlaylistCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        cornerRadius = 12.dp
     ) {
         Column {
             Box(
@@ -62,7 +57,7 @@ fun PlaylistCard(
                             .align(Alignment.TopEnd)
                             .padding(8.dp)
                             .clip(RoundedCornerShape(4.dp))
-                            .background(Primary)
+                            .background(MaterialTheme.colorScheme.primary)
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(

@@ -18,15 +18,20 @@ import com.google.common.util.concurrent.ListenableFuture
 import com.soul.neurokaraoke.MainActivity
 import com.soul.neurokaraoke.audio.AudioCacheManager
 import com.soul.neurokaraoke.audio.EqualizerManager
+import com.soul.neurokaraoke.data.repository.DownloadRepository
 
 @UnstableApi
 class MediaPlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
     private var player: ExoPlayer? = null
+    private var playerListener: Player.Listener? = null
 
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize download repository (before audio cache so downloads are served locally)
+        DownloadRepository.initialize(this)
 
         // Initialize audio cache
         AudioCacheManager.initialize(this)
@@ -65,13 +70,15 @@ class MediaPlaybackService : MediaSessionService() {
 
         // Initialize equalizer with player's audio session ID
         player?.let { exoPlayer ->
-            exoPlayer.addListener(object : Player.Listener {
+            val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_READY) {
                         EqualizerManager.initialize(exoPlayer.audioSessionId)
                     }
                 }
-            })
+            }
+            playerListener = listener
+            exoPlayer.addListener(listener)
         }
 
         // Create pending intent for notification click
@@ -83,10 +90,13 @@ class MediaPlaybackService : MediaSessionService() {
         )
 
         // Create MediaSession with callback for lock screen controls
-        mediaSession = MediaSession.Builder(this, player!!)
-            .setSessionActivity(sessionActivityPendingIntent)
-            .setCallback(MediaSessionCallback())
-            .build()
+        // Only create session if player was successfully initialized
+        player?.let { exoPlayer ->
+            mediaSession = MediaSession.Builder(this, exoPlayer)
+                .setSessionActivity(sessionActivityPendingIntent)
+                .setCallback(MediaSessionCallback())
+                .build()
+        }
     }
 
     /**
@@ -136,6 +146,8 @@ class MediaPlaybackService : MediaSessionService() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
+        // Save current playback state before stopping — the ViewModel's process may already be dead
+        savePlaybackStateFromService()
         // Stop playback and service when app is swiped away from recents
         mediaSession?.player?.apply {
             stop()
@@ -144,14 +156,41 @@ class MediaPlaybackService : MediaSessionService() {
         stopSelf()
     }
 
+    /**
+     * Save the current song and position directly from the service.
+     * This is the last-resort save when the app process is being killed.
+     * The ViewModel normally handles saves, but when the app is swiped from recents,
+     * the ViewModel process may already be dead by the time onTaskRemoved fires.
+     */
+    private fun savePlaybackStateFromService() {
+        val p = player ?: return
+        val mediaItem = p.currentMediaItem ?: return
+        val metadata = mediaItem.mediaMetadata
+
+        val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)
+        prefs.edit()
+            .putString("last_song_id", mediaItem.mediaId)
+            .putString("last_song_title", metadata.title?.toString() ?: "")
+            .putString("last_song_artist", metadata.artist?.toString()?.split(" • ")?.firstOrNull() ?: "")
+            .putString("last_song_cover_url", metadata.artworkUri?.toString() ?: "")
+            .putString("last_song_audio_url", mediaItem.localConfiguration?.uri?.toString() ?: "")
+            .putLong("last_position", p.currentPosition)
+            .putLong("last_duration", p.duration.coerceAtLeast(0L))
+            .commit()
+    }
+
     override fun onDestroy() {
         EqualizerManager.release()
-        mediaSession?.run {
-            player.release()
-            release()
-            mediaSession = null
+        // Remove listener before releasing player
+        playerListener?.let { listener ->
+            player?.removeListener(listener)
         }
+        playerListener = null
+        // Release ExoPlayer explicitly, then release media session
+        player?.release()
         player = null
+        mediaSession?.release()
+        mediaSession = null
         // Note: Don't release AudioCacheManager here as it may be used by other components
         super.onDestroy()
     }

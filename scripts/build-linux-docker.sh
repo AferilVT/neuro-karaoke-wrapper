@@ -97,6 +97,6 @@ MSYS_NO_PATHCONV=1 docker run --rm \
   $cache_mounts \
   -w /app \
   "$IMAGE_NAME" \
-  bash -lc "echo 'Building for x64 and arm64...' && yarn install --frozen-lockfile && yarn build:linux --x64 --arm64"
+  bash -lc "echo 'Building for x64 and arm64...' && yarn install --frozen-lockfile --ignore-optional && yarn build:linux --x64 --arm64"
 
 echo "Done. Artifacts are in ./dist"

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+
+  /* Invisible drag region behind everything */
+  .drag-region {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    -webkit-app-region: drag;
+  }
+
+  .controls {
+    position: relative;
+    display: flex;
+    gap: 6px;
+    height: 100%;
+    margin-right: 14px;
+    align-items: center;
+    -webkit-app-region: no-drag;
+  }
+  .controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    border-radius: 50%;
+    background: rgba(10, 10, 25, 0.45);
+    color: rgba(0, 229, 255, 0.7);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    outline: none;
+    -webkit-app-region: no-drag;
+    backdrop-filter: blur(4px);
+  }
+  .controls button:hover {
+    background: rgba(0, 229, 255, 0.12);
+    border-color: rgba(0, 229, 255, 0.5);
+    color: #00e5ff;
+    box-shadow: 0 0 10px rgba(0, 229, 255, 0.25), inset 0 0 6px rgba(0, 229, 255, 0.08);
+  }
+  .controls button:active {
+    background: rgba(0, 229, 255, 0.2);
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.35);
+    transform: scale(0.92);
+  }
+
+  /* Close button — pink/red accent */
+  .controls button.close {
+    color: rgba(255, 100, 140, 0.7);
+    border-color: rgba(255, 100, 140, 0.15);
+  }
+  .controls button.close:hover {
+    background: rgba(255, 50, 80, 0.15);
+    border-color: rgba(255, 50, 80, 0.5);
+    color: #ff4060;
+    box-shadow: 0 0 10px rgba(255, 50, 80, 0.25), inset 0 0 6px rgba(255, 50, 80, 0.08);
+  }
+  .controls button.close:active {
+    background: rgba(255, 50, 80, 0.25);
+    box-shadow: 0 0 14px rgba(255, 50, 80, 0.35);
+  }
+
+  .controls svg {
+    width: 9px;
+    height: 9px;
+    pointer-events: none;
+  }
+  .controls svg line, .controls svg rect, .controls svg polyline {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .restore-icon { display: none; }
+  .maximized .maximize-icon { display: none; }
+  .maximized .restore-icon { display: block; }
+</style>
+</head>
+<body>
+<div class="titlebar" id="titlebar">
+  <div class="drag-region"></div>
+  <div class="controls">
+    <button id="btn-minimize" title="Minimize">
+      <svg viewBox="0 0 10 10">
+        <line x1="2" y1="5" x2="8" y2="5" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    </button>
+    <button id="btn-maximize" title="Maximize">
+      <svg class="maximize-icon" viewBox="0 0 10 10">
+        <rect x="1.5" y="1.5" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+      <svg class="restore-icon" viewBox="0 0 10 10">
+        <polyline points="3.5,3 3.5,1 9,1 9,6.5 7,6.5" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <rect x="1" y="3.5" width="6" height="5.5" rx="1" fill="transparent" stroke="currentColor" stroke-width="1.3"/>
+      </svg>
+    </button>
+    <button id="btn-close" class="close" title="Close">
+      <svg viewBox="0 0 10 10">
+        <line x1="2" y1="2" x2="8" y2="8" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="8" y1="2" x2="2" y2="8" stroke="currentColor" stroke-width="1.5"/>
+      </svg>
+    </button>
+  </div>
+</div>
+<script>
+  const { ipcRenderer } = require('electron');
+  const titlebar = document.getElementById('titlebar');
+
+  document.getElementById('btn-minimize').addEventListener('click', () => ipcRenderer.send('titlebar-minimize'));
+  document.getElementById('btn-maximize').addEventListener('click', () => ipcRenderer.send('titlebar-maximize'));
+  document.getElementById('btn-close').addEventListener('click', () => ipcRenderer.send('titlebar-close'));
+
+  ipcRenderer.on('titlebar-maximize-change', (_event, isMaximized) => {
+    titlebar.classList.toggle('maximized', isMaximized);
+    document.getElementById('btn-maximize').title = isMaximized ? 'Restore' : 'Maximize';
+  });
+</script>
+</body>
+</html>

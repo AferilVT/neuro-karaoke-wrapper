@@ -30,7 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brush
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
+import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Equalizer
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -80,9 +84,13 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.audio.EqualizerManager
 import com.soul.neurokaraoke.data.api.LyricLine
+import com.soul.neurokaraoke.data.LyricsCache
 import com.soul.neurokaraoke.data.api.LyricsApi
-import com.soul.neurokaraoke.data.api.LyricsResult
+import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.animatedNeonGlow
+import com.soul.neurokaraoke.ui.theme.neonBorder
 import com.soul.neurokaraoke.viewmodel.RepeatMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,17 +112,31 @@ fun PlayerScreen(
     onRepeatClick: () -> Unit = {},
     onCollapseClick: () -> Unit,
     onQueueSongClick: (String) -> Unit = {},
+    isDownloaded: Boolean = false,
+    downloadProgress: Float? = null,
+    onDownloadClick: () -> Unit = {},
+    sleepTimerRemainingMs: Long = 0L,
+    sleepTimerActive: Boolean = false,
+    onSetSleepTimer: (Int) -> Unit = {},
+    onCancelSleepTimer: () -> Unit = {},
+    onSetSleepTimerEndOfSong: () -> Unit = {},
+    isFavorite: Boolean = false,
+    onToggleFavorite: () -> Unit = {},
+    onAddToPlaylist: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var isFavorite by remember { mutableStateOf(false) }
     var showLyrics by remember { mutableStateOf(false) }
     var showQueue by remember { mutableStateOf(false) }
     var showEqualizer by remember { mutableStateOf(false) }
+    var showSleepTimer by remember { mutableStateOf(false) }
     var isSeeking by remember { mutableStateOf(false) }
     var seekProgress by remember { mutableStateOf(0f) }
 
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val lyricsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val equalizerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sleepTimerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Use seek progress while dragging, otherwise use actual progress
     val displayProgress = if (isSeeking) seekProgress else progress
@@ -148,22 +170,86 @@ fun PlayerScreen(
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            IconButton(onClick = { showEqualizer = true }) {
-                Icon(
-                    imageVector = Icons.Default.Equalizer,
-                    contentDescription = "Equalizer",
-                    tint = MaterialTheme.colorScheme.onBackground
-                )
+            Row {
+                // Download button
+                IconButton(onClick = { if (!isDownloaded && downloadProgress == null) onDownloadClick() }) {
+                    when {
+                        downloadProgress != null -> {
+                            CircularProgressIndicator(
+                                progress = { downloadProgress },
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 2.dp
+                            )
+                        }
+                        isDownloaded -> {
+                            Icon(
+                                imageVector = Icons.Default.DownloadDone,
+                                contentDescription = "Downloaded",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        else -> {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "Download",
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+
+                // Add to playlist button
+                IconButton(onClick = onAddToPlaylist) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.PlaylistAdd,
+                        contentDescription = "Add to playlist",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+
+                // Sleep timer button
+                IconButton(onClick = { showSleepTimer = true }) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.Default.Bedtime,
+                            contentDescription = "Sleep timer",
+                            tint = if (sleepTimerActive) MaterialTheme.colorScheme.primary
+                                   else MaterialTheme.colorScheme.onBackground
+                        )
+                        if (sleepTimerActive && sleepTimerRemainingMs > 0) {
+                            Text(
+                                text = formatTimerCompact(sleepTimerRemainingMs),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+
+                IconButton(onClick = { showEqualizer = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Equalizer,
+                        contentDescription = "Equalizer",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Album art
+        // Album art with subtle border
         Box(
             modifier = Modifier
                 .fillMaxWidth(0.85f)
                 .aspectRatio(1f)
+                .neonBorder(
+                    colors = NeonTheme.colors.neonBorderColors,
+                    borderWidth = 1.dp,
+                    cornerRadius = 16.dp,
+                    glowRadius = 4.dp
+                )
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
         ) {
@@ -235,7 +321,7 @@ fun PlayerScreen(
                     text = song.title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
@@ -258,7 +344,7 @@ fun PlayerScreen(
                 )
             }
 
-            IconButton(onClick = { isFavorite = !isFavorite }) {
+            IconButton(onClick = onToggleFavorite) {
                 Icon(
                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
@@ -339,6 +425,13 @@ fun PlayerScreen(
             Box(
                 modifier = Modifier
                     .size(72.dp)
+                    .then(
+                        if (isPlaying) Modifier.animatedNeonGlow(
+                            color = NeonTheme.colors.glowColor,
+                            baseRadius = 10.dp,
+                            cornerRadius = 36.dp
+                        ) else Modifier
+                    )
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center
@@ -389,8 +482,8 @@ fun PlayerScreen(
         Button(
             onClick = { showQueue = true },
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                contentColor = MaterialTheme.colorScheme.primary
             ),
             shape = RoundedCornerShape(24.dp),
             modifier = Modifier
@@ -409,13 +502,16 @@ fun PlayerScreen(
     if (showLyrics) {
         ModalBottomSheet(
             onDismissRequest = { showLyrics = false },
-            sheetState = sheetState,
+            sheetState = lyricsSheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             LyricsContent(
                 songTitle = song.title,
                 artistName = song.artist,
+                songAudioUrl = song.audioUrl,
                 currentPosition = currentPosition,
+                duration = duration,
+                onSeekTo = onSeekTo,
                 onClose = { showLyrics = false }
             )
         }
@@ -425,7 +521,7 @@ fun PlayerScreen(
     if (showQueue) {
         ModalBottomSheet(
             onDismissRequest = { showQueue = false },
-            sheetState = sheetState,
+            sheetState = queueSheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             QueueContent(
@@ -444,7 +540,7 @@ fun PlayerScreen(
     if (showEqualizer) {
         ModalBottomSheet(
             onDismissRequest = { showEqualizer = false },
-            sheetState = sheetState,
+            sheetState = equalizerSheetState,
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             EqualizerContent(
@@ -452,34 +548,289 @@ fun PlayerScreen(
             )
         }
     }
+
+    // Sleep timer bottom sheet
+    if (showSleepTimer) {
+        ModalBottomSheet(
+            onDismissRequest = { showSleepTimer = false },
+            sheetState = sleepTimerSheetState,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            SleepTimerContent(
+                sleepTimerActive = sleepTimerActive,
+                sleepTimerRemainingMs = sleepTimerRemainingMs,
+                onSetTimer = { minutes ->
+                    onSetSleepTimer(minutes)
+                    showSleepTimer = false
+                },
+                onSetEndOfSong = {
+                    onSetSleepTimerEndOfSong()
+                    showSleepTimer = false
+                },
+                onCancelTimer = {
+                    onCancelSleepTimer()
+                },
+                onClose = { showSleepTimer = false }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SleepTimerContent(
+    sleepTimerActive: Boolean,
+    sleepTimerRemainingMs: Long,
+    onSetTimer: (Int) -> Unit,
+    onSetEndOfSong: () -> Unit,
+    onCancelTimer: () -> Unit,
+    onClose: () -> Unit
+) {
+    val presets = listOf(5, 15, 30, 45, 60, 90, 120)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Bedtime,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(28.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Sleep Timer",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            IconButton(onClick = onClose) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = "Close",
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (sleepTimerActive) {
+            // Active timer display
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Timer Active",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = if (sleepTimerRemainingMs > 0) formatTimerDisplay(sleepTimerRemainingMs)
+                           else "End of current song",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(
+                    onClick = onCancelTimer,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    ),
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Text("Cancel Timer")
+                }
+            }
+        } else {
+            // Timer presets
+            Text(
+                text = "Stop playing after",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Preset chips in a flow layout
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                presets.forEach { minutes ->
+                    val label = if (minutes < 60) "${minutes} min"
+                                else "${minutes / 60}h${if (minutes % 60 > 0) " ${minutes % 60}m" else ""}"
+                    FilterChip(
+                        selected = false,
+                        onClick = { onSetTimer(minutes) },
+                        label = { Text(label) },
+                        colors = FilterChipDefaults.filterChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                            labelColor = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // End of song option
+            FilterChip(
+                selected = false,
+                onClick = onSetEndOfSong,
+                label = { Text("End of current song") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Bedtime,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                },
+                colors = FilterChipDefaults.filterChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    labelColor = MaterialTheme.colorScheme.onSurface
+                )
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+private fun formatTimerDisplay(millis: Long): String {
+    if (millis <= 0) return "0:00"
+    val totalSeconds = millis / 1000
+    val hours = totalSeconds / 3600
+    val minutes = (totalSeconds % 3600) / 60
+    val seconds = totalSeconds % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, seconds)
+    } else {
+        "%d:%02d".format(minutes, seconds)
+    }
+}
+
+private fun formatTimerCompact(millis: Long): String {
+    if (millis <= 0) return ""
+    val totalSeconds = millis / 1000
+    val minutes = (totalSeconds + 59) / 60 // Round up
+    return if (minutes >= 60) {
+        "${minutes / 60}h${if (minutes % 60 > 0) "${minutes % 60}m" else ""}"
+    } else {
+        "${minutes}m"
+    }
 }
 
 @Composable
 private fun LyricsContent(
     songTitle: String,
     artistName: String,
+    songAudioUrl: String,
     currentPosition: Long,
+    duration: Long,
+    onSeekTo: (Float) -> Unit,
     onClose: () -> Unit
 ) {
+    val context = LocalContext.current
     val lyricsApi = remember { LyricsApi() }
-    var lyricsResult by remember { mutableStateOf<LyricsResult?>(null) }
+    val neuroApi = remember { NeuroKaraokeApi() }
+    val lyricsCache = remember { LyricsCache(context) }
     var lyricLines by remember { mutableStateOf<List<LyricLine>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isSynced by remember { mutableStateOf(false) }
+    var lyricsOffset by remember { mutableStateOf(0f) } // Offset in seconds (-10 to +10)
+    var lyricsSource by remember { mutableStateOf("lrclib") }
 
     val listState = rememberLazyListState()
 
-    // Fetch lyrics when song changes
+    // Fetch lyrics when song changes (cache → NeuroKaraoke API → LRCLIB fallback)
     LaunchedEffect(songTitle, artistName) {
         isLoading = true
         errorMessage = null
+        lyricsSource = "lrclib"
 
+        // Try cache first
+        val cached = lyricsCache.getCachedLyrics(songTitle, artistName)
+        if (cached != null && (cached.syncedLyrics != null || cached.plainLyrics != null)) {
+            lyricsSource = cached.source
+            if (!cached.syncedLyrics.isNullOrBlank()) {
+                lyricLines = lyricsApi.parseSyncedLyrics(cached.syncedLyrics)
+                isSynced = true
+            } else if (!cached.plainLyrics.isNullOrBlank()) {
+                lyricLines = lyricsApi.parsePlainLyrics(cached.plainLyrics)
+                isSynced = false
+            }
+            isLoading = false
+            return@LaunchedEffect
+        }
+
+        // Try NeuroKaraoke API first (uses song ID lookup from audio URL)
+        var foundLyrics = false
+        if (songAudioUrl.isNotBlank()) {
+            val songId = neuroApi.findSongIdByAudioUrl(songAudioUrl)
+            if (songId != null) {
+                neuroApi.fetchSongLyrics(songId).onSuccess { lines ->
+                    if (lines.isNotEmpty()) {
+                        lyricLines = lines
+                        isSynced = true
+                        lyricsSource = "neurokaraoke"
+                        foundLyrics = true
+
+                        // Convert to LRC format for cache compatibility
+                        val lrcContent = lines.joinToString("\n") { line ->
+                            val totalSec = line.timestamp / 1000
+                            val min = totalSec / 60
+                            val sec = totalSec % 60
+                            val ms = (line.timestamp % 1000) / 10
+                            "[%02d:%02d.%02d]%s".format(min, sec, ms, line.text)
+                        }
+                        lyricsCache.cacheLyrics(
+                            songTitle, artistName, lrcContent, null, "neurokaraoke"
+                        )
+                    }
+                }
+            }
+        }
+
+        if (foundLyrics) {
+            isLoading = false
+            return@LaunchedEffect
+        }
+
+        // Fallback to LRCLIB
         val result = lyricsApi.searchLyrics(songTitle, artistName)
         result.fold(
             onSuccess = { lyrics ->
-                lyricsResult = lyrics
                 if (lyrics != null) {
+                    lyricsCache.cacheLyrics(
+                        songTitle = songTitle,
+                        artistName = artistName,
+                        syncedLyrics = lyrics.syncedLyrics,
+                        plainLyrics = lyrics.plainLyrics,
+                        source = "lrclib"
+                    )
+
                     if (!lyrics.syncedLyrics.isNullOrBlank()) {
                         lyricLines = lyricsApi.parseSyncedLyrics(lyrics.syncedLyrics)
                         isSynced = true
@@ -488,24 +839,32 @@ private fun LyricsContent(
                         isSynced = false
                     } else {
                         lyricLines = emptyList()
+                        lyricsCache.cacheLyrics(songTitle, artistName, null, null)
                     }
                 } else {
                     lyricLines = emptyList()
+                    lyricsCache.cacheLyrics(songTitle, artistName, null, null)
                 }
                 isLoading = false
             },
-            onFailure = { e ->
+            onFailure = { _ ->
                 errorMessage = "Failed to load lyrics"
                 isLoading = false
             }
         )
     }
 
-    // Find current line index for synced lyrics
-    val currentLineIndex = remember(currentPosition, lyricLines, isSynced) {
-        if (!isSynced || lyricLines.isEmpty()) -1
+    // Find current line index for synced lyrics (with offset applied)
+    val offsetMs = (lyricsOffset * 1000).toLong()
+    val adjustedPosition = currentPosition + offsetMs
+    // Pre-extract timestamps for O(log n) binary search instead of O(n) linear scan
+    val timestamps = remember(lyricLines) { lyricLines.map { it.timestamp } }
+    val currentLineIndex = remember(adjustedPosition, timestamps, isSynced) {
+        if (!isSynced || timestamps.isEmpty()) -1
         else {
-            lyricLines.indexOfLast { it.timestamp <= currentPosition }
+            val insertionPoint = timestamps.binarySearch(adjustedPosition)
+            if (insertionPoint >= 0) insertionPoint
+            else -(insertionPoint + 1) - 1
         }
     }
 
@@ -534,11 +893,11 @@ private fun LyricsContent(
                     text = "Lyrics",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 if (isSynced && lyricLines.isNotEmpty()) {
                     Text(
-                        text = "Synced",
+                        text = "Synced • Tap to seek",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                     )
@@ -549,6 +908,35 @@ private fun LyricsContent(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Close",
                     tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        // Offset slider for synced lyrics
+        if (isSynced && lyricLines.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Offset:",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Slider(
+                    value = lyricsOffset,
+                    onValueChange = { lyricsOffset = it },
+                    valueRange = -10f..10f,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp)
+                )
+                Text(
+                    text = "${if (lyricsOffset >= 0) "+" else ""}${"%.1f".format(lyricsOffset)}s",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.width(48.dp)
                 )
             }
         }
@@ -639,6 +1027,15 @@ private fun LyricsContent(
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .then(
+                                    if (isSynced && duration > 0) {
+                                        Modifier.clickable {
+                                            val adjustedTimestamp = line.timestamp - offsetMs
+                                            val progress = adjustedTimestamp.toFloat() / duration.toFloat()
+                                            onSeekTo(progress.coerceIn(0f, 1f))
+                                        }
+                                    } else Modifier
+                                )
                                 .padding(vertical = if (isCurrentLine) 12.dp else 6.dp),
                             textAlign = TextAlign.Center
                         )
@@ -651,7 +1048,10 @@ private fun LyricsContent(
 
         // Credit
         Text(
-            text = "Lyrics provided by LRCLIB",
+            text = when (lyricsSource) {
+                "neurokaraoke" -> "Lyrics provided by NeuroKaraoke"
+                else -> "Lyrics provided by LRCLIB"
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
             modifier = Modifier.fillMaxWidth(),
@@ -690,7 +1090,7 @@ private fun QueueContent(
                 text = "Queue",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onSurface
             )
             IconButton(onClick = onClose) {
                 Icon(
@@ -765,16 +1165,12 @@ private fun QueueItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick)
             .background(
                 if (isPlaying) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                else MaterialTheme.colorScheme.surface
+                else MaterialTheme.colorScheme.surface.copy(alpha = 0.4f)
             )
-            .padding(12.dp)
-            .then(
-                if (!isPlaying) Modifier.clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                else Modifier
-            ),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Cover art
@@ -860,7 +1256,7 @@ private fun EqualizerContent(
                     text = "Audio Effects",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             IconButton(onClick = onClose) {

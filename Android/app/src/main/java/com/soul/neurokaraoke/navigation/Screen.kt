@@ -2,12 +2,15 @@ package com.soul.neurokaraoke.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QueueMusic
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -21,10 +24,13 @@ sealed class Screen(
     data object Search : Screen("search", "Search", Icons.Default.Search)
     data object Explore : Screen("explore", "Explore", Icons.Default.Explore)
     data object Artists : Screen("artists", "Artists", Icons.Default.Person)
-    data object Setlists : Screen("setlists", "Karaoke Setlist", Icons.Default.QueueMusic)
+    data object Setlists : Screen("setlists", "Karaoke Setlist", Icons.AutoMirrored.Filled.QueueMusic)
+    data object Radio : Screen("radio", "Radio", Icons.Default.Radio)
+    data object Soundbites : Screen("soundbites", "Soundbites", Icons.Default.GraphicEq)
     data object About : Screen("about", "About", Icons.Default.Info)
 
     // Library screens
+    data object Downloads : Screen("downloads", "Downloads", Icons.Default.Download)
     data object Favorites : Screen("favorites", "Favorites", Icons.Default.Favorite)
     data object Playlists : Screen("playlists", "Your Playlists", Icons.Default.LibraryMusic)
 
@@ -38,12 +44,15 @@ sealed class Screen(
     data object SetlistDetail : Screen("setlist/{setlistId}", "Setlist") {
         fun createRoute(setlistId: String) = "setlist/$setlistId"
     }
+    data object UserPlaylistDetail : Screen("user_playlist/{playlistId}", "Playlist") {
+        fun createRoute(playlistId: String) = "user_playlist/$playlistId"
+    }
 
     // Player screen
     data object Player : Screen("player", "Now Playing")
 
     companion object {
-        val mainNavItems = listOf(Home, Search, Explore, Artists, Setlists, About)
-        val libraryItems = listOf(Favorites, Playlists)
+        val mainNavItems = listOf(Home, Search, Explore, Artists, Setlists, Radio, Soundbites, About)
+        val libraryItems = listOf(Downloads, Favorites, Playlists)
     }
 }

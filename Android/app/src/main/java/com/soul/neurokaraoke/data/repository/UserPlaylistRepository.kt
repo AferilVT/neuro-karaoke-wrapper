@@ -3,11 +3,19 @@ package com.soul.neurokaraoke.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
+import android.util.Log
+import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
+import com.soul.neurokaraoke.data.api.SyncApi
 import com.soul.neurokaraoke.data.model.Playlist
+import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
@@ -19,8 +27,15 @@ class UserPlaylistRepository(context: Context) {
         Context.MODE_PRIVATE
     )
 
+    private val syncApi = SyncApi()
+    private val karaokeApi = NeuroKaraokeApi()
+    private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val _playlists = MutableStateFlow<List<Playlist>>(emptyList())
     val playlists: StateFlow<List<Playlist>> = _playlists.asStateFlow()
+
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     init {
         loadPlaylists()
@@ -153,11 +168,20 @@ class UserPlaylistRepository(context: Context) {
     }
 
     /**
-     * Delete a playlist
+     * Delete a playlist (local and optionally server-side)
      */
-    fun deletePlaylist(playlistId: String) {
+    fun deletePlaylist(playlistId: String, accessToken: String? = null) {
         _playlists.value = _playlists.value.filter { it.id != playlistId }
         savePlaylists()
+
+        // Delete from server if it's a server playlist (not local "user_" prefix)
+        if (accessToken != null && !playlistId.startsWith("user_")) {
+            syncScope.launch {
+                syncApi.deletePlaylist(accessToken, playlistId).onFailure { e ->
+                    Log.e(TAG, "Server delete failed for $playlistId: ${e.message}")
+                }
+            }
+        }
     }
 
     /**
@@ -227,7 +251,99 @@ class UserPlaylistRepository(context: Context) {
         return _playlists.value.find { it.id == playlistId }
     }
 
+    /**
+     * Sync playlists from the server. Merges server playlists with local-only playlists.
+     * Server playlists use server UUIDs, local ones use "user_" prefix.
+     */
+    suspend fun syncFromServer(accessToken: String) {
+        _isSyncing.value = true
+        try {
+            syncApi.fetchUserPlaylists(accessToken).onSuccess { serverPlaylists ->
+                // Keep local-only playlists (those with "user_" prefix)
+                val localOnly = _playlists.value.filter { it.id.startsWith("user_") }
+                // Server playlists replace any previously synced server playlists
+                _playlists.value = serverPlaylists + localOnly
+                savePlaylists()
+                Log.d(TAG, "Synced ${serverPlaylists.size} playlists from server, ${localOnly.size} local")
+            }.onFailure { e ->
+                Log.e(TAG, "Sync playlists failed: ${e.message}")
+            }
+        } finally {
+            _isSyncing.value = false
+        }
+    }
+
+    /**
+     * Check if a playlist is a server playlist (vs local-only)
+     */
+    fun isServerPlaylist(playlistId: String): Boolean = !playlistId.startsWith("user_")
+
+    /**
+     * Load songs for a server playlist via the public playlist endpoint.
+     * Also updates the cover URL and preview covers from the API response.
+     */
+    suspend fun loadPlaylistSongs(playlistId: String) {
+        if (!isServerPlaylist(playlistId)) return
+
+        // Already have songs? Skip.
+        val existing = _playlists.value.find { it.id == playlistId }
+        if (existing != null && existing.songs.isNotEmpty()) return
+
+        _isSyncing.value = true
+        try {
+            // Fetch playlist info (cover URL, preview covers) and songs
+            val infoResult = karaokeApi.fetchPlaylistInfo(playlistId)
+            val songsResult = karaokeApi.fetchPlaylist(playlistId)
+
+            songsResult.onSuccess { apiSongs ->
+                val songs = apiSongs.map { apiSong ->
+                    val coverArtists = apiSong.coverArtists?.lowercase() ?: ""
+                    val singer = when {
+                        "evil" in coverArtists -> Singer.EVIL
+                        "duet" in coverArtists || ("neuro" in coverArtists && "evil" in coverArtists) -> Singer.DUET
+                        else -> Singer.NEURO
+                    }
+                    Song(
+                        id = apiSong.audioUrl?.hashCode()?.toString() ?: "",
+                        title = apiSong.title,
+                        artist = apiSong.originalArtists ?: "Unknown Artist",
+                        coverUrl = apiSong.getCoverArtUrl() ?: "",
+                        audioUrl = apiSong.audioUrl ?: "",
+                        singer = singer,
+                        artCredit = apiSong.artCredit
+                    )
+                }
+
+                val info = infoResult.getOrNull()
+
+                // Update the playlist with loaded songs and proper cover URL from API
+                _playlists.value = _playlists.value.map { playlist ->
+                    if (playlist.id == playlistId) {
+                        val songPreviewCovers = songs
+                            .filter { it.coverUrl.isNotBlank() }
+                            .take(4)
+                            .map { it.coverUrl }
+                        playlist.copy(
+                            songs = songs,
+                            coverUrl = info?.coverUrl?.takeIf { it.isNotBlank() } ?: playlist.coverUrl,
+                            previewCovers = info?.previewCovers?.takeIf { it.isNotEmpty() }
+                                ?: songPreviewCovers.takeIf { it.isNotEmpty() }
+                                ?: playlist.previewCovers
+                        )
+                    } else playlist
+                }
+                savePlaylists()
+                Log.d(TAG, "Loaded ${songs.size} songs for playlist $playlistId (cover=${info?.coverUrl?.take(50)})")
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to load songs for playlist $playlistId: ${e.message}")
+            }
+        } finally {
+            _isSyncing.value = false
+        }
+    }
+
     companion object {
+        private const val TAG = "UserPlaylistRepo"
         private const val PREFS_NAME = "neurokaraoke_user_playlists"
         private const val KEY_PLAYLISTS = "playlists"
     }

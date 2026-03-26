@@ -27,3 +27,17 @@ npm-debug.log*
 
 # Electron
 out/
+
+# Android
+Android/.gradle/
+Android/build/
+Android/app/build/
+Android/app/release/
+Android/local.properties
+Android/*.iml
+Android/.idea/
+Android/.externalNativeBuild/
+Android/.cxx/
+Android/captures/
+*.jks
+*.keystore

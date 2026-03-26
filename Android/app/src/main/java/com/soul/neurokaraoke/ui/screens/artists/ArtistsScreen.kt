@@ -33,27 +33,32 @@ import com.soul.neurokaraoke.ui.components.SearchBar
 @Composable
 fun ArtistsScreen(
     songs: List<Song> = emptyList(),
+    apiArtists: List<Artist> = emptyList(),
     isLoading: Boolean = false,
     onArtistClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    // Derive artists from songs by grouping by original artist name
-    val artists by remember(songs) {
+    // Use API artists if available, otherwise derive from songs as fallback
+    val artists by remember(apiArtists, songs) {
         derivedStateOf {
-            songs.groupBy { it.artist }
-                .map { (artistName, artistSongs) ->
-                    val fallbackImage = artistSongs.firstOrNull()?.coverUrl ?: ""
-                    Artist(
-                        id = artistName.lowercase().replace(" ", "-"),
-                        name = artistName,
-                        imageUrl = ArtistImageRepository.getArtistImageOrDefault(artistName, fallbackImage),
-                        songCount = artistSongs.size,
-                        songs = artistSongs
-                    )
-                }
-                .sortedByDescending { it.songCount }
+            if (apiArtists.isNotEmpty()) {
+                apiArtists
+            } else {
+                songs.groupBy { it.artist }
+                    .map { (artistName, artistSongs) ->
+                        val fallbackImage = artistSongs.firstOrNull()?.coverUrl ?: ""
+                        Artist(
+                            id = artistName.lowercase().replace(" ", "-"),
+                            name = artistName,
+                            imageUrl = ArtistImageRepository.getArtistImageOrDefault(artistName, fallbackImage),
+                            songCount = artistSongs.size,
+                            songs = artistSongs
+                        )
+                    }
+                    .sortedByDescending { it.songCount }
+            }
         }
     }
 
@@ -80,7 +85,7 @@ fun ArtistsScreen(
             text = "Artists",
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -109,7 +114,7 @@ fun ArtistsScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (isLoading && songs.isEmpty()) {
+        if (isLoading && artists.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center

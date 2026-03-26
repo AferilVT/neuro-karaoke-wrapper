@@ -4,19 +4,32 @@ import com.soul.neurokaraoke.data.api.ApiSong
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.util.EnglishTitleMap
+import com.soul.neurokaraoke.data.util.RomajiUtil
 
 class SongRepository(
     private val api: NeuroKaraokeApi = NeuroKaraokeApi()
 ) {
     /**
-     * Fetch songs from a playlist
+     * Fetch songs from a playlist, resolving server UUIDs for each song.
      */
     suspend fun getPlaylistSongs(playlistId: String): Result<List<Song>> {
-        return api.fetchPlaylist(playlistId).map { apiSongs ->
-            apiSongs.mapIndexed { index, apiSong ->
-                apiSong.toSong(playlistId, index)
-            }
+        val result = api.fetchPlaylist(playlistId)
+        if (result.isFailure) return Result.failure(result.exceptionOrNull()!!)
+
+        val apiSongs = result.getOrThrow()
+        // Build the server ID map once (lazy, cached after first call)
+        api.ensureSongIdMap()
+
+        val songs = apiSongs.mapIndexed { index, apiSong ->
+            val song = apiSong.toSong(playlistId, index)
+            // Replace hash-based ID with server UUID if available
+            val serverId = if (song.audioUrl.isNotBlank()) {
+                api.findSongIdByAudioUrl(song.audioUrl)
+            } else null
+            if (serverId != null) song.copy(id = serverId) else song
         }
+        return Result.success(songs)
     }
 
     /**
@@ -35,15 +48,24 @@ class SongRepository(
             else -> Singer.NEURO
         }
 
+        // Fallback ID if server UUID can't be resolved
+        val fallbackId = audioUrl?.hashCode()?.toString() ?: "${playlistId}_$index"
+
+        val songTitle = title
+        val songArtist = originalArtists ?: "Unknown Artist"
+
         return Song(
-            id = "${playlistId}_$index",
-            title = title,
-            artist = originalArtists ?: "Unknown Artist",
+            id = fallbackId,
+            title = songTitle,
+            artist = songArtist,
             coverUrl = getCoverArtUrl() ?: "",
             audioUrl = audioUrl ?: "",
-            duration = 0L, // Duration not provided by API
+            duration = 0L,
             singer = singer,
-            artCredit = artCredit?.takeIf { it.isNotBlank() }
+            artCredit = artCredit?.takeIf { it.isNotBlank() },
+            titleRomaji = RomajiUtil.toRomaji(songTitle),
+            titleEnglish = EnglishTitleMap.getEnglishTitle(songTitle),
+            artistRomaji = RomajiUtil.toRomaji(songArtist)
         )
     }
 }

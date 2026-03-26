@@ -729,6 +729,21 @@ class SongDetectionManager {
 // Initialize when DOM is ready
 window.addEventListener('DOMContentLoaded', () => {
 
+  // Fix layout overflow for listen-along controls and other wide rows
+  const fixStyle = document.createElement('style');
+  fixStyle.textContent = `
+    /* Prevent horizontal overflow in listen-along and player controls */
+    .mud-main-content, [class*="main-content"] {
+      overflow-x: hidden !important;
+    }
+    /* Ensure slider containers don't push past viewport */
+    input[type="range"] {
+      max-width: 100%;
+      min-width: 0;
+    }
+  `;
+  document.head.appendChild(fixStyle);
+
   const manager = new SongDetectionManager();
 
   // Initialize MediaSession API for hardware media key support

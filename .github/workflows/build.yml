@@ -54,7 +54,8 @@ jobs:
 
       - name: Build
         run: yarn build:${{ matrix.platform }} --publish=never
-      
+
+
       - name: Zip macOS .app bundles
         if: runner.os == 'macOS'
         run: |
@@ -74,6 +75,7 @@ jobs:
             dist/*.deb
             dist/*.AppImage
             dist/*.rpm
+            dist/*.flatpak
           if-no-files-found: error
 
       - name: Upload macOS artifacts
@@ -110,8 +112,19 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Decode keystore
+        if: env.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > Android/keystore.jks
+
       - name: Build Android APK
         working-directory: Android
+        env:
+          RELEASE_STORE_FILE: ${{ secrets.KEYSTORE_BASE64 != '' && 'keystore.jks' || '' }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew assembleRelease
 
       - name: Rename APK

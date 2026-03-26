@@ -5,7 +5,8 @@ data class User(
     val username: String,
     val discriminator: String,
     val avatar: String?,
-    val accessToken: String? = null
+    val accessToken: String? = null,
+    val apiToken: String? = null
 ) {
     val displayName: String
         get() = if (discriminator != "0") "$username#$discriminator" else username

@@ -47,13 +47,17 @@ fun ArtistDetailScreen(
     songs: List<Song>,
     onBackClick: () -> Unit,
     onSongClick: (String) -> Unit,
-    onPlayClick: () -> Unit = {},
-    onShuffleClick: () -> Unit = {},
+    onAddToPlaylist: (Song) -> Unit = {},
+    apiArtistImageUrl: String? = null,
     modifier: Modifier = Modifier
 ) {
     val artistSongs = songs.filter { it.artist == artistName }
     val fallbackImage = artistSongs.firstOrNull()?.coverUrl ?: ""
-    val coverImage = ArtistImageRepository.getArtistImageOrDefault(artistName, fallbackImage)
+    val coverImage = if (!apiArtistImageUrl.isNullOrBlank()) {
+        apiArtistImageUrl
+    } else {
+        ArtistImageRepository.getArtistImageOrDefault(artistName, fallbackImage)
+    }
 
     Column(
         modifier = modifier
@@ -191,7 +195,8 @@ fun ArtistDetailScreen(
                 SongListItem(
                     song = song,
                     index = index + 1,
-                    onClick = { onSongClick(song.id) }
+                    onClick = { onSongClick(song.id) },
+                    onAddToPlaylistClick = { onAddToPlaylist(song) }
                 )
             }
 

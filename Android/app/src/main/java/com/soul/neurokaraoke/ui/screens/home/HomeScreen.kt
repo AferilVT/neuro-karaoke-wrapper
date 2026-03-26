@@ -26,7 +26,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,7 +38,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.soul.neurokaraoke.data.api.CoverDistribution
+import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
+import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.ui.components.CyanBorderCard
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
 import com.soul.neurokaraoke.ui.components.SongCard
@@ -48,17 +56,39 @@ import com.soul.neurokaraoke.ui.theme.Surface
 fun HomeScreen(
     modifier: Modifier = Modifier,
     songs: List<Song> = emptyList(),
-    playlistName: String? = null,
+    latestPlaylist: Playlist? = null,
     isLoading: Boolean = false,
     onSongClick: (String) -> Unit,
-    onSeeAllClick: () -> Unit
+    onSeeAllClick: () -> Unit,
+    onSetlistClick: (String) -> Unit = {}
 ) {
-    // Derive sections from songs - use remember to avoid reshuffling on every recomposition
-    val recentSongs = songs.take(5)
+    // Fetch setlist songs from the latest playlist
+    val songRepository = remember { SongRepository() }
+    var setlistSongs by remember { mutableStateOf<List<Song>>(emptyList()) }
+    var isLoadingSetlist by remember { mutableStateOf(false) }
+
+    LaunchedEffect(latestPlaylist?.id) {
+        val playlistId = latestPlaylist?.id ?: return@LaunchedEffect
+        isLoadingSetlist = true
+        songRepository.getPlaylistSongs(playlistId)
+            .onSuccess { setlistSongs = it.take(5) }
+        isLoadingSetlist = false
+    }
+
+    // Fetch live cover distribution
+    val api = remember { NeuroKaraokeApi() }
+    var coverDistribution by remember { mutableStateOf<CoverDistribution?>(null) }
+
+    LaunchedEffect(Unit) {
+        api.fetchCoverDistribution()
+            .onSuccess { coverDistribution = it }
+    }
+
+    // Derive sections from songs
     val trendingSongs = remember(songs) { songs.shuffled().take(6) }
     val madeForYouSongs = remember(songs) { songs.shuffled().take(4) }
 
-    if (isLoading && songs.isEmpty()) {
+    if (isLoading && songs.isEmpty() && setlistSongs.isEmpty()) {
         Box(
             modifier = modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -75,19 +105,48 @@ fun HomeScreen(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Recent Songs Section
+        // Setlist Songs Section
         item {
             SectionHeader(
-                title = if (playlistName != null) "Songs" else "Recent Songs",
-                onSeeAllClick = onSeeAllClick
+                title = "Songs",
+                onSeeAllClick = if (latestPlaylist != null) {
+                    { onSetlistClick(latestPlaylist.id) }
+                } else {
+                    onSeeAllClick
+                }
             )
         }
 
         item {
-            if (recentSongs.isNotEmpty()) {
+            if (isLoadingSetlist) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            } else if (setlistSongs.isNotEmpty()) {
                 CyanBorderCard {
                     Column {
-                        recentSongs.forEachIndexed { index, song ->
+                        setlistSongs.forEachIndexed { index, song ->
+                            SimpleSongListItem(
+                                song = song,
+                                index = index + 1,
+                                onClick = { onSongClick(song.id) }
+                            )
+                        }
+                    }
+                }
+            } else if (songs.isNotEmpty()) {
+                // Fallback to first 5 songs from allSongs if no setlist loaded
+                CyanBorderCard {
+                    Column {
+                        songs.take(5).forEachIndexed { index, song ->
                             SimpleSongListItem(
                                 song = song,
                                 index = index + 1,
@@ -143,7 +202,7 @@ fun HomeScreen(
                     columns = GridCells.Fixed(2),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.height(380.dp)
+                    modifier = Modifier.height(500.dp)
                 ) {
                     items(trendingSongs.take(4)) { song ->
                         SongCard(
@@ -157,7 +216,7 @@ fun HomeScreen(
 
         // Cover Distribution Section
         item {
-            CoverDistributionCard()
+            CoverDistributionCard(coverDistribution = coverDistribution)
         }
 
         // Top Genres Section
@@ -174,17 +233,16 @@ fun HomeScreen(
 
 /**
  * Cover Distribution Card - shows breakdown of songs by singer
- * Hardcoded stats for now until database access is available
+ * Fetches live data from API, falls back to hardcoded defaults while loading
  */
 @Composable
-private fun CoverDistributionCard() {
-    // Hardcoded stats from the website - will be replaced with actual data later
-    val totalSongs = 1267
+private fun CoverDistributionCard(coverDistribution: CoverDistribution? = null) {
+    val totalSongs = coverDistribution?.totalSongs ?: 1267
     val stats = listOf(
-        CoverStat("Neuro V3", 516, NeuroColor),
-        CoverStat("Evil", 424, EvilColor),
-        CoverStat("Duet", 174, DuetColor, isGradient = true),
-        CoverStat("Other", 153, OtherColor)
+        CoverStat("Neuro V3", coverDistribution?.neuroCount ?: 516, NeuroColor),
+        CoverStat("Evil", coverDistribution?.evilCount ?: 424, EvilColor),
+        CoverStat("Duet", coverDistribution?.duetCount ?: 174, DuetColor, isGradient = true),
+        CoverStat("Other", coverDistribution?.otherCount ?: 153, OtherColor)
     )
 
     CyanBorderCard {

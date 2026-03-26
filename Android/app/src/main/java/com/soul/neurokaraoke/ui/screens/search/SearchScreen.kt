@@ -6,6 +6,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Singer
@@ -54,6 +56,7 @@ import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.components.Pagination
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.components.SongListItem
+import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 
 private const val PAGE_SIZE = 20
 
@@ -69,6 +72,7 @@ fun SearchScreen(
     songs: List<Song> = emptyList(),
     isLoading: Boolean = false,
     onSongClick: (String) -> Unit,
+    onAddToPlaylist: (Song) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -77,6 +81,14 @@ fun SearchScreen(
     var sortOption by remember { mutableStateOf(SortOption.TITLE_ASC) }
     var showSortMenu by remember { mutableStateOf(false) }
     var currentPage by remember { mutableIntStateOf(1) }
+    var isSearchFocused by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    // When search field is focused, back press clears focus first (dismisses keyboard);
+    // when not focused, back press navigates normally
+    BackHandler(enabled = isSearchFocused) {
+        focusManager.clearFocus()
+    }
 
     // Reset page when filters change
     LaunchedEffect(searchQuery, selectedSinger, sortOption) {
@@ -98,9 +110,13 @@ fun SearchScreen(
 
             // Filter by search query
             if (searchQuery.isNotBlank()) {
+                val query = searchQuery.lowercase()
                 result = result.filter { song ->
                     song.title.contains(searchQuery, ignoreCase = true) ||
-                    song.artist.contains(searchQuery, ignoreCase = true)
+                    song.artist.contains(searchQuery, ignoreCase = true) ||
+                    song.titleRomaji.contains(query) ||
+                    song.artistRomaji.contains(query) ||
+                    song.titleEnglish?.contains(searchQuery, ignoreCase = true) == true
                 }
             }
 
@@ -144,7 +160,8 @@ fun SearchScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search by name or artist"
+            placeholder = "Search by name or artist",
+            onFocusChanged = { isSearchFocused = it }
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -188,9 +205,8 @@ fun SearchScreen(
             ) {
                 // Singer filter
                 Text(
-                    text = "Singer",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Medium,
+                    text = "SINGER",
+                    style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -229,9 +245,8 @@ fun SearchScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Sort by",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
+                        text = "SORT BY",
+                        style = CyberLabelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(12.dp))
@@ -239,7 +254,7 @@ fun SearchScreen(
                         Row(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                                 .clickable { showSortMenu = true }
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
@@ -379,7 +394,8 @@ fun SearchScreen(
                     SongListItem(
                         song = song,
                         index = globalIndex + 1,
-                        onClick = { onSongClick(song.id) }
+                        onClick = { onSongClick(song.id) },
+                        onAddToPlaylistClick = { onAddToPlaylist(song) }
                     )
                 }
 

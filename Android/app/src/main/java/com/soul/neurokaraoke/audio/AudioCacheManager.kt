@@ -39,13 +39,16 @@ object AudioCacheManager {
     /**
      * Get the cache instance
      */
+    @Synchronized
     fun getCache(): Cache? = cache
 
     /**
      * Create a CacheDataSource.Factory that caches audio while streaming.
      * This allows playback to continue even if network drops.
+     * When downloadAware is true, downloaded songs are served from local files,
+     * bypassing network entirely.
      */
-    fun createCacheDataSourceFactory(context: Context): DataSource.Factory {
+    fun createCacheDataSourceFactory(context: Context, downloadAware: Boolean = true): DataSource.Factory {
         // Ensure cache is initialized
         initialize(context)
 
@@ -57,17 +60,27 @@ object AudioCacheManager {
             .setAllowCrossProtocolRedirects(true)
 
         // Wrap with default data source for local files
-        val upstreamFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+        val baseUpstreamFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+
+        // Wrap with download-aware data source if enabled
+        val upstreamFactory: DataSource.Factory = if (downloadAware) {
+            DownloadAwareDataSourceFactory(baseUpstreamFactory)
+        } else {
+            baseUpstreamFactory
+        }
 
         // Create cache data source that:
         // - Reads from cache if available
         // - Downloads to cache while streaming
         // - Ignores cache on error (falls back to network)
+        val resolvedCache = cache
+            ?: throw IllegalStateException("AudioCacheManager: cache not initialized. Call initialize() first.")
+
         return CacheDataSource.Factory()
-            .setCache(cache!!)
+            .setCache(resolvedCache)
             .setUpstreamDataSourceFactory(upstreamFactory)
             .setCacheWriteDataSinkFactory(null) // Use default
-            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR or CacheDataSource.FLAG_IGNORE_CACHE_FOR_UNSET_LENGTH_REQUESTS)
     }
 
     /**

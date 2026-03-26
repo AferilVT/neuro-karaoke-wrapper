@@ -2,6 +2,7 @@ package com.soul.neurokaraoke.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,23 +20,37 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Casino
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.navigation.Screen
+import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.DuetColor
 import com.soul.neurokaraoke.ui.theme.EvilColor
+import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.LocalThemeMode
 import com.soul.neurokaraoke.ui.theme.LocalThemeToggle
+import com.soul.neurokaraoke.ui.theme.NeonDivider
+import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.NeuroColor
 import com.soul.neurokaraoke.ui.theme.ThemeMode
 
@@ -49,20 +64,30 @@ fun NavigationDrawerContent(
     userAvatarUrl: String? = null,
     onSignInClick: () -> Unit = {},
     onSignOutClick: () -> Unit = {},
+    onRandomSongClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val themeMode = LocalThemeMode.current
     val setThemeMode = LocalThemeToggle.current
+    val primaryColor = MaterialTheme.colorScheme.primary
 
     Column(
         modifier = modifier
             .fillMaxHeight()
             .width(280.dp)
-            .background(MaterialTheme.colorScheme.surface)
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.95f))
+            .drawBehind {
+                // Subtle ambient background
+                drawCircle(
+                    color = primaryColor.copy(alpha = 0.02f),
+                    radius = size.width * 0.8f,
+                    center = Offset(size.width * 0.1f, size.height * 0.1f)
+                )
+            }
             .padding(vertical = 16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        // Header
+        // Header with GradientText title
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -75,11 +100,11 @@ fun NavigationDrawerContent(
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text(
+            GradientText(
                 text = "Neuro Karaoke",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                gradientColors = NeonTheme.colors.gradientColors
             )
         }
 
@@ -97,15 +122,39 @@ fun NavigationDrawerContent(
             )
         }
 
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.outline
+        // Random Song button
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 2.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onRandomSongClick)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Casino,
+                contentDescription = null,
+                tint = primaryColor,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(
+                text = "Random Song",
+                style = MaterialTheme.typography.bodyLarge,
+                color = primaryColor,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        NeonDivider(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
         )
 
-        // Library section
+        // Library section with CyberLabelStyle
         Text(
             text = "YOUR LIBRARY",
-            style = MaterialTheme.typography.labelMedium,
+            style = CyberLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
@@ -113,23 +162,25 @@ fun NavigationDrawerContent(
         Screen.libraryItems.forEach { screen ->
             NavigationDrawerItem(
                 screen = screen,
-                isSelected = false,
-                comingSoon = true,
-                onClick = { }
+                isSelected = currentRoute == screen.route,
+                comingSoon = false,
+                onClick = {
+                    onNavigate(screen)
+                    onClose()
+                }
             )
         }
 
         Spacer(modifier = Modifier.weight(1f))
 
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
-            color = MaterialTheme.colorScheme.outline
+        NeonDivider(
+            modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
         )
 
-        // Theme selector
+        // Theme selector with CyberLabelStyle
         Text(
             text = "THEME",
-            style = MaterialTheme.typography.labelMedium,
+            style = CyberLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
         )
@@ -172,40 +223,98 @@ fun NavigationDrawerContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // User profile (Coming Soon)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Box(
+        // User profile / Sign In
+        if (isLoggedIn && userName != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(36.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (userAvatarUrl != null) {
+                        AsyncImage(
+                            model = userAvatarUrl,
+                            contentDescription = "Avatar",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = userName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Signed in with Discord",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                IconButton(onClick = onSignOutClick) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "Sign Out",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Sign In",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    text = "Coming soon!",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onSignInClick)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Sign In",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Connect with Discord",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
@@ -221,9 +330,9 @@ private fun NavigationDrawerItem(
     val primaryColor = MaterialTheme.colorScheme.primary
 
     val backgroundColor = if (isSelected) {
-        primaryColor.copy(alpha = 0.15f)
+        primaryColor.copy(alpha = 0.1f)
     } else {
-        MaterialTheme.colorScheme.surface
+        Color.Transparent
     }
 
     val contentColor = if (comingSoon) {
@@ -240,6 +349,19 @@ private fun NavigationDrawerItem(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
             .clip(RoundedCornerShape(8.dp))
+            .then(
+                if (isSelected) {
+                    // Left-border accent
+                    Modifier.drawBehind {
+                        drawRoundRect(
+                            color = primaryColor,
+                            topLeft = Offset(0f, size.height * 0.15f),
+                            size = Size(3.dp.toPx(), size.height * 0.7f),
+                            cornerRadius = CornerRadius(2.dp.toPx())
+                        )
+                    }
+                } else Modifier
+            )
             .background(backgroundColor)
             .then(if (!comingSoon) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 16.dp, vertical = 12.dp)
@@ -273,17 +395,24 @@ private fun NavigationDrawerItem(
 private fun ThemeChip(
     text: String,
     isSelected: Boolean,
-    color: androidx.compose.ui.graphics.Color,
+    color: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isSelected) color.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
+    val backgroundColor = if (isSelected) color.copy(alpha = 0.1f) else Color.Transparent
     val textColor = if (isSelected) color else MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
+            .then(
+                if (isSelected) Modifier.border(
+                    width = 1.dp,
+                    color = color.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(8.dp)
+                ) else Modifier
+            )
             .background(backgroundColor)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 4.dp)

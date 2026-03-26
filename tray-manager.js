@@ -13,15 +13,17 @@ class TrayManager {
     this.sleepEndTime = null;
     this.sleepTickInterval = null;
     this.onSwitchSite = null;
+    this.onRefresh = null;
   }
 
   /**
    * Create the system tray icon
    */
-  create(mainWindow, onQuit, onSwitchSite = null) {
+  create(mainWindow, onQuit, onSwitchSite = null, onRefresh = null) {
     this.mainWindow = mainWindow;
     this.onQuit = onQuit;
     this.onSwitchSite = onSwitchSite;
+    this.onRefresh = onRefresh;
     let icon = this.iconPath;
     if (process.platform === 'darwin') {
       const img = nativeImage.createFromPath(this.iconPath);
@@ -95,6 +97,10 @@ class TrayManager {
             click: () => { this.showWindow(); this.onSwitchSite?.('smocus'); }
           }
         ]
+      },
+      {
+        label: 'Refresh',
+        click: () => { this.onRefresh?.(); }
       },
       { type: 'separator' },
       {

@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.soul.neurokaraoke.ui.theme.Primary
+
 
 @Composable
 fun FilterChipsRow(
@@ -25,8 +25,9 @@ fun FilterChipsRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(filters) { filter ->
+            val isSelected = filter == selectedFilter
             FilterChip(
-                selected = filter == selectedFilter,
+                selected = isSelected,
                 onClick = { onFilterSelected(filter) },
                 label = {
                     Text(
@@ -35,11 +36,26 @@ fun FilterChipsRow(
                     )
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Primary,
-                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                    selectedLabelColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                ),
+                border = if (isSelected) {
+                    FilterChipDefaults.filterChipBorder(
+                        borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        selectedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                        enabled = true,
+                        selected = true
+                    )
+                } else {
+                    FilterChipDefaults.filterChipBorder(
+                        borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                        selectedBorderColor = MaterialTheme.colorScheme.primary,
+                        enabled = true,
+                        selected = false
+                    )
+                }
             )
         }
     }
@@ -61,7 +77,7 @@ fun GenreChip(
             )
         },
         colors = FilterChipDefaults.filterChipColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             labelColor = MaterialTheme.colorScheme.onSurface
         ),
         modifier = modifier.padding(end = 4.dp)

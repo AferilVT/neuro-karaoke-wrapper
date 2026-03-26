@@ -100,6 +100,14 @@ class PlaylistCatalog(private val context: Context) {
     }
 
     /**
+     * Replace the entire catalog with a new list of playlists.
+     * Used to cache API results for offline use.
+     */
+    suspend fun replacePlaylists(playlists: List<Playlist>) = withContext(Dispatchers.IO) {
+        savePlaylists(playlists)
+    }
+
+    /**
      * Check if a playlist exists in the catalog
      */
     suspend fun hasPlaylist(playlistId: String): Boolean = withContext(Dispatchers.IO) {
@@ -122,6 +130,7 @@ class PlaylistCatalog(private val context: Context) {
                 put("description", playlist.description)
                 put("coverUrl", playlist.coverUrl)
                 put("previewCovers", previewCoversArray)
+                put("songCount", playlist.songCount)
             }
             jsonArray.put(obj)
         }
@@ -190,7 +199,8 @@ class PlaylistCatalog(private val context: Context) {
                         title = obj.optString("name", "Unknown Playlist"),
                         description = obj.optString("description", ""),
                         coverUrl = obj.optString("coverUrl", ""),
-                        previewCovers = previewCovers
+                        previewCovers = previewCovers,
+                        songCount = obj.optInt("songCount", 0)
                     )
                 )
             }
@@ -207,6 +217,45 @@ class PlaylistCatalog(private val context: Context) {
     suspend fun resetToDefault() = withContext(Dispatchers.IO) {
         file.delete()
         copyFromAssets()
+    }
+
+    /**
+     * Get playlists that need refresh (missing title, covers, or song count)
+     */
+    suspend fun getIncompletePlaylists(): List<Playlist> = withContext(Dispatchers.IO) {
+        getPlaylists().filter { playlist ->
+            playlist.title.isEmpty() ||
+            playlist.previewCovers.isEmpty() ||
+            playlist.songCount == 0
+        }
+    }
+
+    /**
+     * Force refresh a playlist by clearing its cached data
+     * This will trigger a re-fetch from API on next load
+     */
+    suspend fun clearPlaylistData(playlistId: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val playlists = getPlaylists().toMutableList()
+            val index = playlists.indexOfFirst { it.id == playlistId }
+
+            if (index == -1) return@withContext false
+
+            // Reset all fields except ID
+            playlists[index] = Playlist(
+                id = playlistId,
+                title = "",
+                description = "",
+                coverUrl = "",
+                previewCovers = emptyList(),
+                songCount = 0
+            )
+            savePlaylists(playlists)
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     /**

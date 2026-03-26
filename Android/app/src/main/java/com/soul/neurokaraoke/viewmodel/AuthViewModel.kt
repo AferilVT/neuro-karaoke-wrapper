@@ -16,7 +16,8 @@ data class AuthUiState(
     val user: User? = null,
     val isLoggedIn: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isSyncing: Boolean = false
 )
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
@@ -81,6 +82,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             isLoading = false
         )
     }
+
+    /**
+     * Handle JWT obtained from WebView login flow.
+     */
+    fun handleJwtFromWebView(jwt: String) {
+        authRepository.parseJwtAndSaveUser(jwt)
+    }
+
+    /**
+     * Get the NeuroKaraoke API token for authenticated API calls.
+     * Prefers the API JWT; falls back to Discord token.
+     */
+    fun getAccessToken(): String? =
+        _uiState.value.user?.apiToken ?: _uiState.value.user?.accessToken
 
     /**
      * Log out the current user

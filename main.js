@@ -1,15 +1,24 @@
 const { app, BrowserWindow, WebContentsView, ipcMain, shell, clipboard, nativeImage, Menu, net } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config');
 const DiscordManager = require('./discord-manager');
 const TrayManager = require('./tray-manager');
 const NeuroKaraokeAPI = require('./neurokaraoke-api');
 const { checkForUpdates } = require('./update-checker');
 
+// Lock colour profile to sRGB to prevent oversaturation after long sessions
+// (Chromium GPU colour-management can drift over extended uptime)
+app.commandLine.appendSwitch('force-color-profile', 'srgb');
+
 const isDev = !app.isPackaged;
+
+// Custom titlebar height in pixels
+const TITLEBAR_HEIGHT = 32;
 
 // Application state
 let mainWindow = null;
+let titlebarView = null;
 let isQuitting = false;
 let trayAvailable = false;
 
@@ -33,6 +42,22 @@ const SITE_MAP = {
 
 // Set app ID for Windows taskbar grouping
 app.setAppUserModelId(config.APP.ID);
+
+// Persistent state file for remembering user preferences (e.g. last site)
+const STATE_FILE = path.join(app.getPath('userData'), 'app-state.json');
+
+function loadState() {
+  try {
+    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+function saveState(patch) {
+  const state = { ...loadState(), ...patch };
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state), 'utf-8');
+}
 
 /**
  * Get asset path (works in both dev and production)
@@ -80,11 +105,15 @@ function autoSelectTheme(view, label) {
 function setupViewEvents(view, theme) {
   view.webContents.setUserAgent(config.APP.USER_AGENT);
 
+
   // Block navigation away from allowed hosts
   const allowedHostnames = new Set([
     'www.neurokaraoke.com', 'neurokaraoke.com',
     'www.evilkaraoke.com', 'evilkaraoke.com',
-    'www.twinskaraoke.com', 'twinskaraoke.com'
+    'www.twinskaraoke.com', 'twinskaraoke.com',
+    'eu.twinskaraoke.com',
+    'cn.neurokaraoke.com',
+    'discord.com', 'www.discord.com'
   ]);
 
   const isSafeExternalUrl = (u) => {
@@ -95,9 +124,11 @@ function setupViewEvents(view, theme) {
   };
 
   view.webContents.on('will-navigate', (event, url) => {
+    console.log('[will-navigate]', url);
     try {
       const parsed = new URL(url);
       if (!allowedHostnames.has(parsed.hostname)) {
+        console.log('[will-navigate] BLOCKED, opening externally:', parsed.hostname);
         event.preventDefault();
         if (isSafeExternalUrl(url)) shell.openExternal(url);
       }
@@ -106,8 +137,54 @@ function setupViewEvents(view, theme) {
     }
   });
 
-  // Open external links in default browser
+  // Handle popups — open Discord OAuth in a child window, everything else externally
   view.webContents.setWindowOpenHandler(({ url }) => {
+    console.log('[setWindowOpenHandler]', url);
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname === 'discord.com' || parsed.hostname === 'www.discord.com') {
+        // Open Discord OAuth in a child BrowserWindow so the flow stays in-app
+        const authWin = new BrowserWindow({
+          width: 500,
+          height: 750,
+          parent: mainWindow,
+          modal: true,
+          webPreferences: {
+            partition: config.APP.PARTITION
+          }
+        });
+        authWin.setMenuBarVisibility(false);
+        authWin.loadURL(url);
+
+        // When the auth window navigates to a karaoke callback, push it into the main view
+        authWin.webContents.on('will-navigate', (_event, cbUrl) => {
+          try {
+            const cb = new URL(cbUrl);
+            if (allowedHostnames.has(cb.hostname)) {
+              view.webContents.loadURL(cbUrl);
+              authWin.close();
+            }
+          } catch {}
+        });
+
+        // Also catch redirects that happen via new-window inside the auth window
+        authWin.webContents.setWindowOpenHandler(({ url: innerUrl }) => {
+          try {
+            const inner = new URL(innerUrl);
+            if (allowedHostnames.has(inner.hostname)) {
+              view.webContents.loadURL(innerUrl);
+              authWin.close();
+            } else if (isSafeExternalUrl(innerUrl)) {
+              shell.openExternal(innerUrl);
+            }
+          } catch {}
+          return { action: 'deny' };
+        });
+
+        return { action: 'deny' };
+      }
+    } catch {}
+
     if (isSafeExternalUrl(url)) shell.openExternal(url);
     return { action: 'deny' };
   });
@@ -161,6 +238,22 @@ function getOrCreateView(theme) {
 }
 
 /**
+ * Update titlebar and content view bounds to fill the window
+ */
+function updateViewBounds() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const [width, height] = mainWindow.getContentSize();
+  // Content fills entire window — titlebar overlays on top
+  if (currentView) {
+    currentView.setBounds({ x: 0, y: 0, width, height });
+  }
+  if (titlebarView && !titlebarView.webContents.isDestroyed()) {
+    titlebarView.setBounds({ x: 0, y: 0, width, height: TITLEBAR_HEIGHT });
+  }
+}
+
+
+/**
  * Switch the visible site without reloading — preserves login state
  */
 function switchToSite(theme) {
@@ -168,6 +261,8 @@ function switchToSite(theme) {
 
   const view = getOrCreateView(theme);
   if (view === currentView) return;
+
+  saveState({ lastSite: theme });
 
   if (currentView) {
     // Pause audio, clear cache, and destroy the old view to free RAM
@@ -182,11 +277,15 @@ function switchToSite(theme) {
     if (oldTheme) delete views[oldTheme];
   }
   mainWindow.contentView.addChildView(view);
+  // Ensure titlebar stays on top of the content view
+  if (titlebarView) {
+    mainWindow.contentView.removeChildView(titlebarView);
+    mainWindow.contentView.addChildView(titlebarView);
+  }
   view.webContents.setAudioMuted(false);
 
-  const [width, height] = mainWindow.getContentSize();
-  view.setBounds({ x: 0, y: 0, width, height });
   currentView = view;
+  updateViewBounds();
 }
 
 /**
@@ -199,6 +298,7 @@ function createWindow() {
     minWidth: config.WINDOW.MIN_WIDTH,
     minHeight: config.WINDOW.MIN_HEIGHT,
     backgroundColor: config.WINDOW.BACKGROUND_COLOR,
+    frame: false,
     autoHideMenuBar: true,
     icon: getAssetPath('neurokaraoke.ico')
   });
@@ -206,14 +306,44 @@ function createWindow() {
   // Hide menu bar
   mainWindow.setMenuBarVisibility(false);
 
-  // Load the default site
-  switchToSite('neuro');
+  // Create custom titlebar view (local-only HTML, safe to use nodeIntegration)
+  titlebarView = new WebContentsView({
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    }
+  });
+  titlebarView.setBackgroundColor('#00000000');
+  titlebarView.webContents.loadFile(path.join(__dirname, 'titlebar.html'));
+  mainWindow.contentView.addChildView(titlebarView);
+
+  // Load the last-used site, defaulting to neuro
+  const { lastSite } = loadState();
+  const initialTheme = SITE_MAP[lastSite] ? lastSite : 'neuro';
+
+  // Send initial state once titlebar has loaded
+  titlebarView.webContents.once('did-finish-load', () => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      titlebarView.webContents.send('titlebar-maximize-change', mainWindow.isMaximized());
+    }
+  });
+  switchToSite(initialTheme);
 
   // Keep the active view filling the window on resize
   mainWindow.on('resize', () => {
-    if (!currentView || mainWindow.isDestroyed()) return;
-    const [width, height] = mainWindow.getContentSize();
-    currentView.setBounds({ x: 0, y: 0, width, height });
+    updateViewBounds();
+  });
+
+  // Notify titlebar of maximize/restore state changes
+  mainWindow.on('maximize', () => {
+    if (titlebarView && !titlebarView.webContents.isDestroyed()) {
+      titlebarView.webContents.send('titlebar-maximize-change', true);
+    }
+  });
+  mainWindow.on('unmaximize', () => {
+    if (titlebarView && !titlebarView.webContents.isDestroyed()) {
+      titlebarView.webContents.send('titlebar-maximize-change', false);
+    }
   });
 
   // Minimize to tray instead of closing (only if tray is available)
@@ -240,6 +370,23 @@ function createWindow() {
  * Setup IPC handlers for communication with preload script
  */
 function setupIpcHandlers() {
+  // Titlebar window controls
+  ipcMain.on('titlebar-minimize', () => {
+    mainWindow?.minimize();
+  });
+
+  ipcMain.on('titlebar-maximize', () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+
+  ipcMain.on('titlebar-close', () => {
+    mainWindow?.close();
+  });
+
   // Playlist ID updates
   ipcMain.on('playlist-id', async (_event, playlistId) => {
     if (playlistId !== currentPlaylistId) {
@@ -398,7 +545,11 @@ async function initialize() {
     : 'neurokaraoke.png';
   trayManager = new TrayManager(getAssetPath(trayIconName));
   try {
-    trayManager.create(mainWindow, handleQuit, switchToSite);
+    trayManager.create(mainWindow, handleQuit, switchToSite, () => {
+      if (currentView && !currentView.webContents.isDestroyed()) {
+        currentView.webContents.reloadIgnoringCache();
+      }
+    });
     trayAvailable = trayManager.isAvailable();
   } catch (error) {
     console.error('Failed to create tray icon:', error);

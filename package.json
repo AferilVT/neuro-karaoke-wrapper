@@ -41,6 +41,7 @@
       "tray-manager.js",
       "neurokaraoke-api.js",
       "update-checker.js",
+      "titlebar.html",
       "package.json"
     ],
     "extraResources": [
@@ -77,10 +78,30 @@
       "target": [
         "AppImage",
         "deb",
-        "rpm"
+        "rpm",
+        "flatpak"
       ],
       "icon": "assets/neurokaraoke.png",
       "category": "AudioVideo"
+    },
+    "flatpak": {
+      "runtime": "org.freedesktop.Platform",
+      "runtimeVersion": "24.08",
+      "sdk": "org.freedesktop.Sdk",
+      "base": "org.electronjs.Electron2.BaseApp",
+      "baseVersion": "24.08",
+      "finishArgs": [
+        "--share=ipc",
+        "--socket=x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--share=network",
+        "--device=dri",
+        "--talk-name=org.freedesktop.Notifications",
+        "--talk-name=org.kde.StatusNotifierWatcher",
+        "--own-name=org.kde.StatusNotifierItem-2-1"
+      ],
+      "useWaylandFlags": true
     },
     "mac": {
       "target": [

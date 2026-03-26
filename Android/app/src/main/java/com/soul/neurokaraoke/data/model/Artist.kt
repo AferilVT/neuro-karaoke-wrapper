@@ -5,5 +5,6 @@ data class Artist(
     val name: String,
     val imageUrl: String,
     val songCount: Int = 0,
+    val summary: String = "",
     val songs: List<Song> = emptyList()
 )

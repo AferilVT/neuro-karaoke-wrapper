@@ -39,6 +39,7 @@ The project is a single-module Android application with the following structure:
         -   **`ui`:** Contains the UI layer.
             -   **`MainScreen.kt`:** Main screen with navigation drawer, scaffold, and mini player.
             -   **`components/`:** Reusable UI components.
+                -   `AddToPlaylistSheet.kt` - Bottom sheet for adding songs to user playlists
             -   **`screens/`:** The different screens:
                 -   `home/HomeScreen.kt` - Main home with Cover Distribution & Top Genres
                 -   `setlist/SetlistScreen.kt` - Playlist grid with 2x2 cover previews
@@ -47,6 +48,7 @@ The project is a single-module Android application with the following structure:
                 -   `search/SearchScreen.kt` - Search across ALL playlists
                 -   `library/FavoritesScreen.kt` - Favorites with Discord sign-in
                 -   `library/PlaylistsScreen.kt` - User-created playlists
+                -   `library/UserPlaylistDetailScreen.kt` - User playlist detail with Play/Shuffle/Download All
             -   **`theme/`:** Theme colors and styling (Neuro/Evil themes).
         -   **`viewmodel/`:**
             -   `PlayerViewModel.kt` - Manages player state via MediaController
@@ -67,10 +69,15 @@ The project is a single-module Android application with the following structure:
 ## API Integration
 
 - **Base URL:** `https://idk.neurokaraoke.com`
+- **API URL:** `https://api.neurokaraoke.com`
 - **Endpoints:**
-  - `GET /public/playlist/{playlistId}` - Returns playlist info and songs
+  - `GET /public/playlist/{playlistId}` (base URL) - Returns playlist info and songs
+  - `GET /api/playlists?startIndex=0&pageSize=200&isSetlist=True&year=0` (API URL) - Official setlists
+  - `GET /api/playlist/public` (API URL) - Public playlists
+  - `GET /api/stats/cover-distribution` (API URL) - Cover distribution stats (totalSongs, neuroCount, evilCount, duetCount, otherCount)
 - **Storage URL:** `https://storage.neurokaraoke.com` - Audio and images
-- **Lyrics API:** `https://lrclib.net/api/search` - Synced lyrics fetching
+- **Lyrics API (primary):** `GET /api/songs/{songId}/lyrics` (API URL) - Synced lyrics as `[{time, text}]` array
+- **Lyrics API (fallback):** `https://lrclib.net/api/search` - Synced lyrics fetching
 
 ## Features Implemented
 
@@ -90,11 +97,16 @@ The project is a single-module Android application with the following structure:
 - Shows "Now Playing" and "Up Next" sections
 - Tap songs in queue to play them
 
-### 4. Lyrics (lrclib.net)
-- Fetches synced lyrics from lrclib.net API
+### 4. Lyrics (NeuroKaraoke API + lrclib.net fallback)
+- **Primary:** Fetches synced lyrics from NeuroKaraoke API (`GET /api/songs/{songId}/lyrics`)
+  - Song ID lookup via `audioUrl` → `absolutePath` matching against setlist data
+  - Lazy-built map of ~1264 songs cached in `NeuroKaraokeApi.songIdMap`
+  - TimeSpan format (`HH:mm:ss.fffffff`) parsed into milliseconds
+- **Fallback:** lrclib.net API when NeuroKaraoke lyrics unavailable
 - Auto-scrolls to current lyric line during playback
 - Falls back to plain lyrics if synced not available
-- Shows loading/error/not found states
+- Lyrics cached locally with source tracking (`"neurokaraoke"` or `"lrclib"`)
+- Credit text shows source: "Lyrics provided by NeuroKaraoke" or "Lyrics provided by LRCLIB"
 
 ### 5. Audio Caching (Spotify-like)
 - 500MB disk cache for audio files
@@ -117,6 +129,11 @@ The project is a single-module Android application with the following structure:
 ### 8. User Playlists
 - Create custom playlists with name and cover image
 - Delete playlists
+- **Add songs to playlists** from any song list via "..." menu → "Add to Playlist"
+- Remove songs from playlists in user playlist detail screen
+- User playlist detail screen with Play All, Shuffle, Download All buttons
+- `AddToPlaylistSheet` bottom sheet with inline "Create New Playlist" option
+- `UserPlaylistDetailScreen` with header, action buttons, and song list
 - Stored locally via SharedPreferences
 
 ### 9. Theme Support
@@ -144,6 +161,18 @@ The project is a single-module Android application with the following structure:
   ```
 - Find image hashes by visiting `https://www.last.fm/music/[ArtistName]` and inspecting the profile image URL
 
+### 14. Playback State Persistence
+- Remembers last played song and position across app restarts
+- **Save points (3 independent locations for reliability):**
+  - `Activity.onStop()` — saves when app goes to background
+  - `MediaPlaybackService.onTaskRemoved()` — saves from service when app swiped from recents
+  - `PlayerViewModel` — saves on `playSong()`, play/pause, song transitions, every 30s during playback, and `onCleared()`
+- **Restore:** Runs immediately in `PlayerViewModel.init()` (before MediaController connects)
+  - Mini player shows correct song instantly on app launch
+  - Progress bar reflects saved position
+- **Queue fallback on resume:** If restored song isn't in current queue, tries `allSongs`, then single-item queue
+- SharedPreferences file: `"playback_state"` with keys: `last_song_id`, `last_song_title`, `last_song_artist`, `last_song_cover_url`, `last_song_audio_url`, `last_song_singer`, `last_playlist_id`, `last_position`, `last_duration`
+
 ### 10. Discord Sign-in (Prepared)
 - Discord OAuth2 flow set up
 - Sign-in button in navigation drawer
@@ -155,22 +184,18 @@ The project is a single-module Android application with the following structure:
 - Ready to display favorites when synced from server
 - Heart icon on player (needs backend integration)
 
-## Hardcoded Stats (Pending Database Access)
+## Stats
 
-**Cover Distribution (Total: 1267):**
-- Neuro V3: 516
-- Evil: 424
-- Duet: 174
-- Other: 153
+**Cover Distribution:** Fetched live from `GET /api/stats/cover-distribution`. Falls back to hardcoded defaults while loading.
 
-**Top Genres:**
-- Electronic: 402
+**Top Genres (Hardcoded):**
+- Electronic: 403
 - J-Pop: 363
-- Alternative Rock: 278
-- Vocaloid: 264
-- Pop: 262
+- Alternative Rock: 279
+- Vocaloid: 265
+- Pop: 263
 - Rock: 184
-- Anime: 149
+- Anime: 148
 - Pop Rock: 139
 
 ## Building and Running the App
@@ -189,6 +214,8 @@ The project is a single-module Android application with the following structure:
 - **API calls:** `data/api/NeuroKaraokeApi.kt`
 - **Authentication:** `data/repository/AuthRepository.kt`, `viewmodel/AuthViewModel.kt`
 - **User playlists:** `data/repository/UserPlaylistRepository.kt`
+- **Add to playlist sheet:** `ui/components/AddToPlaylistSheet.kt`
+- **User playlist detail:** `ui/screens/library/UserPlaylistDetailScreen.kt`
 - **Setlist grid:** `ui/screens/setlist/SetlistScreen.kt`
 - **Setlist detail:** `ui/screens/setlist/SetlistDetailScreen.kt`
 - **Home screen:** `ui/screens/home/HomeScreen.kt`
@@ -202,8 +229,6 @@ The project is a single-module Android application with the following structure:
 
 2. **Favorites Sync:** Once authentication works, favorites can be synced from the server
 
-3. **Dynamic Stats:** Replace hardcoded Cover Distribution and Top Genres with actual database values when available
+3. **Dynamic Top Genres:** Replace hardcoded Top Genres with API values when endpoint is available
 
 4. **Android Auto & TV Support:** Prepared but disabled for now - requires additional testing and MediaLibraryService implementation
-
-5. **Add Songs to User Playlists:** UI exists but functionality to add songs to custom playlists not yet implemented

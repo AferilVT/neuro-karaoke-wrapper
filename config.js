@@ -19,11 +19,12 @@ module.exports = {
   URL: {
     NEURO: 'https://www.neurokaraoke.com/',
     EVIL: 'https://www.evilkaraoke.com/',
-    SMOCUS: 'https://www.twinskaraoke.com/',
+    SMOCUS: 'https://twinskaraoke.com/',
     ALLOWED_HOSTS: [
       'https://www.neurokaraoke.com', 'https://neurokaraoke.com',
       'https://www.evilkaraoke.com', 'https://evilkaraoke.com',
-      'https://www.twinskaraoke.com', 'https://twinskaraoke.com'
+      'https://www.twinskaraoke.com', 'https://twinskaraoke.com',
+      'https://eu.twinskaraoke.com'
     ]
   },
 

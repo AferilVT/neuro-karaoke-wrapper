@@ -25,9 +25,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.border
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.soul.neurokaraoke.ui.theme.NeonTheme
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -172,13 +175,22 @@ private fun PageButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val neonColors = NeonTheme.colors
+
     Box(
         modifier = Modifier
             .height(32.dp)
             .widthIn(min = 32.dp)
             .clip(RoundedCornerShape(6.dp))
+            .then(
+                if (isSelected) Modifier.border(
+                    width = 1.dp,
+                    brush = Brush.horizontalGradient(neonColors.gradientColors),
+                    shape = RoundedCornerShape(6.dp)
+                ) else Modifier
+            )
             .background(
-                if (isSelected) MaterialTheme.colorScheme.primary
+                if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 else MaterialTheme.colorScheme.surface
             )
             .clickable(enabled = !isSelected, onClick = onClick)
@@ -189,7 +201,7 @@ private fun PageButton(
             text = page.toString(),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+            color = if (isSelected) MaterialTheme.colorScheme.primary
                    else MaterialTheme.colorScheme.onSurface,
             maxLines = 1
         )
