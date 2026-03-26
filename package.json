@@ -111,6 +111,9 @@
       "category": "public.app-category.music"
     }
   },
+  "resolutions": {
+    "register-scheme": "0.0.2"
+  },
   "dependencies": {
     "discord-rpc": "^4.0.1"
   }

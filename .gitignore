@@ -21,6 +21,9 @@ Thumbs.db
 *.log
 npm-debug.log*
 
+# npm (using yarn)
+package-lock.json
+
 # Environment
 .env
 .env.local
