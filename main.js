@@ -247,17 +247,19 @@ function getOrCreateView(theme) {
   });
   
   // Hide titlebarView when DevTools is open
-  view.webContents.on('devtools-opened', () => {
-    if (titlebarView) {
-      mainWindow.contentView.removeChildView(titlebarView);
-    }
-  });
-  view.webContents.on('devtools-closed', () => {
-    if (titlebarView) {
-      mainWindow.contentView.removeChildView(titlebarView);
-      mainWindow.contentView.addChildView(titlebarView);
-    }
-  });
+  if (!process.env.DISABLE_CUSTOM_TITLEBAR) {
+    view.webContents.on('devtools-opened', () => {
+      if (titlebarView) {
+        mainWindow.contentView.removeChildView(titlebarView);
+      }
+    });
+    view.webContents.on('devtools-closed', () => {
+      if (titlebarView) {
+        mainWindow.contentView.removeChildView(titlebarView);
+        mainWindow.contentView.addChildView(titlebarView);
+      }
+    });
+  }
 
   views[theme] = view;
   return view;
