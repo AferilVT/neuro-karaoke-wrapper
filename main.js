@@ -231,6 +231,38 @@ function getOrCreateView(theme) {
   // Auto-select the matching theme button once the site has rendered
   view.webContents.once('did-finish-load', () => {
     autoSelectTheme(view, THEME_LABELS[theme]);
+    
+    // Fix chat close button
+    view.webContents.executeJavaScript(`
+      function waitForElement(selector, timeout = 5000) {
+        return new Promise((resolve, reject) => {
+          const interval = 50;
+          let elapsed = 0;
+          const timer = setInterval(() => {
+            const el = document.querySelector(selector);
+            if (el) {
+              clearInterval(timer);
+              resolve(el);
+            } else if (elapsed >= timeout) {
+              clearInterval(timer);
+              reject(new Error("Element not found: " + selector));
+            }
+            elapsed += interval;
+          }, interval);
+        });
+      }
+  
+      (async () => {
+        try {
+          const rightPanel = await waitForElement('#rc-panel .rc-panel-header .rc-panel-header-right');
+          const leftPanel = await waitForElement('#rc-panel .rc-panel-header .rc-panel-header-left');
+          console.log("Fixing chat panels", leftPanel, rightPanel);
+          while (rightPanel.firstChild) leftPanel.appendChild(rightPanel.firstChild);
+        } catch (err) {
+          console.error(err);
+        }
+      })();
+    `);
   });
 
   views[theme] = view;
