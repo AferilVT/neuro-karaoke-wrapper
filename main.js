@@ -61,13 +61,16 @@ function saveState(patch) {
 
 /**
  * Get asset path (works in both dev and production)
+ * Uses packaged assets from inside the .asar
  */
 function getAssetPath(filename) {
-  if (isDev) {
-    return path.join(__dirname, 'assets', filename);
-  }
-  return path.join(process.resourcesPath, 'assets', filename);
+  return path.join(app.getAppPath(), 'assets', filename);
 }
+
+/** @type {string} */
+const iconPath = process.platform === 'win32'
+  ? getAssetPath('neurokaraoke.ico')
+  : getAssetPath('neurokaraoke.png');
 
 // The theme button label each site should have auto-selected on load
 const THEME_LABELS = { neuro: 'NEURO', evil: 'EVIL', smocus: 'SMOCUS' };
@@ -300,7 +303,7 @@ function createWindow() {
     backgroundColor: config.WINDOW.BACKGROUND_COLOR,
     frame: false,
     autoHideMenuBar: true,
-    icon: getAssetPath('neurokaraoke.ico')
+    icon: iconPath
   });
 
   // Hide menu bar
@@ -539,11 +542,7 @@ function handleQuit() {
 async function initialize() {
   createWindow();
 
-  // Create system tray (Linux and macOS use PNG, Windows uses ICO)
-  const trayIconName = process.platform === 'win32'
-    ? 'neurokaraoke.ico'
-    : 'neurokaraoke.png';
-  trayManager = new TrayManager(getAssetPath(trayIconName));
+  trayManager = new TrayManager(iconPath);
   try {
     trayManager.create(mainWindow, handleQuit, switchToSite, () => {
       if (currentView && !currentView.webContents.isDestroyed()) {

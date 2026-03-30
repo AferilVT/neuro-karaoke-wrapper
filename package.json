@@ -42,13 +42,8 @@
       "neurokaraoke-api.js",
       "update-checker.js",
       "titlebar.html",
-      "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "assets",
-        "to": "assets"
-      }
+      "package.json",
+      "assets/**/*"
     ],
     "directories": {
       "buildResources": "assets",
