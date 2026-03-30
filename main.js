@@ -274,6 +274,7 @@ function getOrCreateView(theme) {
           const leftPanel = await waitForElement('#rc-panel .rc-panel-header .rc-panel-header-left');
           console.log("Fixing chat panels", leftPanel, rightPanel);
           while (rightPanel.firstChild) leftPanel.appendChild(rightPanel.firstChild);
+          leftPanel.style.marginTop = "${TITLEBAR_HEIGHT / 2}px";
         } catch (err) {
           console.error(err);
         }

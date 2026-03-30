@@ -21,8 +21,10 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# npm (using yarn)
+# Other lockfiles (using yarn)
 package-lock.json
+pnpm-lock.yaml
+bun.lock
 
 # Environment
 .env
