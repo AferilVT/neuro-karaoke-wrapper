@@ -104,12 +104,18 @@
       ],
       "icon": "assets/neurokaraoke.png",
       "category": "public.app-category.music"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "aferilvt",
+      "repo": "neuro-karaoke-wrapper"
     }
   },
   "resolutions": {
     "register-scheme": "0.0.2"
   },
   "dependencies": {
-    "discord-rpc": "^4.0.1"
+    "discord-rpc": "^4.0.1",
+    "electron-updater": "^6.8.3"
   }
 }
