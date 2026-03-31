@@ -151,7 +151,7 @@ private fun PlaylistCard(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         cornerRadius = 12.dp,
-        borderColors = if (isSelected) neonColors.neonBorderColors
+        borderColors = if (isSelected) neonColors.borderColors
                        else listOf(
                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
                            MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)

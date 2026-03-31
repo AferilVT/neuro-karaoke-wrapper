@@ -26,28 +26,32 @@ data class NeonThemeColors(
     val glowColor: Color,
     val glowColorDim: Color,
     val gradientColors: List<Color>,
-    val neonBorderColors: List<Color>
+    val borderColors: List<Color>,
+    val accentGradient: List<Color>  // 2-stop for simple gradients
 )
 
 private val NeuroNeonColors = NeonThemeColors(
     glowColor = NeuroGlow,
-    glowColorDim = NeuroGlow.copy(alpha = 0.5f),
+    glowColorDim = NeuroGlow.copy(alpha = 0.4f),
     gradientColors = NeuroGradientColors,
-    neonBorderColors = listOf(NeuroGlow.copy(alpha = 0.6f), NeuroPrimary.copy(alpha = 0.2f))
+    borderColors = listOf(NeuroGlow.copy(alpha = 0.4f), NeuroPrimary.copy(alpha = 0.1f)),
+    accentGradient = listOf(NeuroGradientStart, NeuroGradientEnd)
 )
 
 private val EvilNeonColors = NeonThemeColors(
     glowColor = EvilGlow,
-    glowColorDim = EvilGlow.copy(alpha = 0.5f),
+    glowColorDim = EvilGlow.copy(alpha = 0.4f),
     gradientColors = EvilGradientColors,
-    neonBorderColors = listOf(EvilGlow.copy(alpha = 0.6f), EvilPrimary.copy(alpha = 0.2f))
+    borderColors = listOf(EvilGlow.copy(alpha = 0.4f), EvilPrimary.copy(alpha = 0.1f)),
+    accentGradient = listOf(EvilGradientStart, EvilGradientEnd)
 )
 
 private val DuetNeonColors = NeonThemeColors(
     glowColor = DuetGlow,
-    glowColorDim = DuetGlow.copy(alpha = 0.5f),
+    glowColorDim = DuetGlow.copy(alpha = 0.4f),
     gradientColors = DuetGradientColors,
-    neonBorderColors = listOf(DuetGlow.copy(alpha = 0.6f), DuetPrimary.copy(alpha = 0.2f))
+    borderColors = listOf(DuetGlow.copy(alpha = 0.4f), DuetPrimary.copy(alpha = 0.1f)),
+    accentGradient = listOf(DuetGradientStart, DuetGradientEnd)
 )
 
 val LocalNeonColors = staticCompositionLocalOf { NeuroNeonColors }
@@ -122,9 +126,9 @@ private val DuetColorScheme = darkColorScheme(
 private val NeuroKaraokeShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
     small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(24.dp)
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 @Composable

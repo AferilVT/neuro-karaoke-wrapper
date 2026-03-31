@@ -78,7 +78,7 @@ fun SearchBar(
             .height(56.dp)
             .then(
                 if (isFocused) Modifier.neonBorder(
-                    colors = neonColors.neonBorderColors,
+                    colors = neonColors.borderColors,
                     borderWidth = 1.dp,
                     cornerRadius = 24.dp,
                     glowRadius = 6.dp

@@ -245,7 +245,7 @@ fun PlayerScreen(
                 .fillMaxWidth(0.85f)
                 .aspectRatio(1f)
                 .neonBorder(
-                    colors = NeonTheme.colors.neonBorderColors,
+                    colors = NeonTheme.colors.borderColors,
                     borderWidth = 1.dp,
                     cornerRadius = 16.dp,
                     glowRadius = 4.dp
