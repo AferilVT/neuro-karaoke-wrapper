@@ -13,9 +13,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,27 +33,27 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Simulated glow via drawBehind with 3 layered blurred rounded rects.
- * Works on all API levels (no Modifier.blur needed).
+ * Subtle ambient glow — drawn as layered translucent rounded rects behind the content.
+ * Used sparingly: player controls, active nav item, key CTAs.
  */
-fun Modifier.neonGlow(
+fun Modifier.ambientGlow(
     color: Color,
-    radius: Dp = 8.dp,
-    cornerRadius: Dp = 12.dp,
-    alpha: Float = 0.15f
+    radius: Dp = 12.dp,
+    cornerRadius: Dp = 16.dp,
+    alpha: Float = 0.10f
 ): Modifier = this.drawBehind {
     val radiusPx = radius.toPx()
     val cornerPx = cornerRadius.toPx()
-    // Outer glow layer
+    // Outer diffuse layer
     drawRoundRect(
-        color = color.copy(alpha = alpha * 0.25f),
+        color = color.copy(alpha = alpha * 0.3f),
         topLeft = Offset(-radiusPx, -radiusPx),
         size = Size(size.width + radiusPx * 2, size.height + radiusPx * 2),
         cornerRadius = CornerRadius(cornerPx + radiusPx * 0.5f)
     )
-    // Inner glow layer
+    // Inner concentrated layer
     drawRoundRect(
-        color = color.copy(alpha = alpha * 0.5f),
+        color = color.copy(alpha = alpha * 0.6f),
         topLeft = Offset(-radiusPx * 0.3f, -radiusPx * 0.3f),
         size = Size(size.width + radiusPx * 0.6f, size.height + radiusPx * 0.6f),
         cornerRadius = CornerRadius(cornerPx + radiusPx * 0.15f)
@@ -63,104 +61,109 @@ fun Modifier.neonGlow(
 }
 
 /**
- * Gradient border + outer glow layer.
+ * Hairline border with optional gradient — the primary card treatment.
  */
-fun Modifier.neonBorder(
-    colors: List<Color>,
-    borderWidth: Dp = 1.dp,
-    cornerRadius: Dp = 12.dp,
-    glowRadius: Dp = 4.dp
-): Modifier = this
-    .drawBehind {
-        val glowPx = glowRadius.toPx()
-        val cornerPx = cornerRadius.toPx()
-        val glowColor = colors.first()
-        // Subtle outer glow
-        drawRoundRect(
-            color = glowColor.copy(alpha = 0.08f),
-            topLeft = Offset(-glowPx, -glowPx),
-            size = Size(size.width + glowPx * 2, size.height + glowPx * 2),
-            cornerRadius = CornerRadius(cornerPx + glowPx * 0.5f)
-        )
-    }
-    .border(
-        width = borderWidth,
-        brush = Brush.horizontalGradient(colors),
-        shape = RoundedCornerShape(cornerRadius)
-    )
+fun Modifier.subtleBorder(
+    color: Color,
+    alpha: Float = 0.08f,
+    cornerRadius: Dp = 16.dp,
+    width: Dp = 1.dp
+): Modifier = this.border(
+    width = width,
+    color = color.copy(alpha = alpha),
+    shape = RoundedCornerShape(cornerRadius)
+)
 
 /**
- * Pulsing glow using infiniteTransition — for play button, active elements.
+ * Gradient border for accent cards (player, featured items).
+ */
+fun Modifier.gradientBorder(
+    colors: List<Color>,
+    borderWidth: Dp = 1.dp,
+    cornerRadius: Dp = 16.dp
+): Modifier = this.border(
+    width = borderWidth,
+    brush = Brush.horizontalGradient(colors.map { it.copy(alpha = 0.3f) }),
+    shape = RoundedCornerShape(cornerRadius)
+)
+
+/**
+ * Pulsing glow for active/playing elements — play button, now-playing indicator.
  */
 @Composable
-fun Modifier.animatedNeonGlow(
+fun Modifier.pulsingGlow(
     color: Color,
     baseRadius: Dp = 16.dp,
     cornerRadius: Dp = 50.dp,
-    minAlpha: Float = 0.08f,
-    maxAlpha: Float = 0.2f,
-    durationMs: Int = 1500
+    minAlpha: Float = 0.05f,
+    maxAlpha: Float = 0.15f,
+    durationMs: Int = 2000
 ): Modifier {
-    val infiniteTransition = rememberInfiniteTransition(label = "neonPulse")
-    val pulseAlpha by infiniteTransition.animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "glow")
+    val alpha by infiniteTransition.animateFloat(
         initialValue = minAlpha,
         targetValue = maxAlpha,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMs, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "pulseAlpha"
+        label = "glowAlpha"
     )
-    return this.neonGlow(
-        color = color,
-        radius = baseRadius,
-        cornerRadius = cornerRadius,
-        alpha = pulseAlpha
-    )
+    return this.ambientGlow(color = color, radius = baseRadius, cornerRadius = cornerRadius, alpha = alpha)
 }
 
 /**
- * Semi-transparent bg + neon gradient border + optional glow.
- * Replaces Card everywhere for glassmorphic look.
+ * Glass card — the standard elevated container.
+ * Semi-transparent surface + hairline border + optional accent glow.
  */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     glowColor: Color = MaterialTheme.colorScheme.primary,
-    borderColors: List<Color> = listOf(
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
-    ),
-    backgroundAlpha: Float = 0.5f,
-    cornerRadius: Dp = 12.dp,
+    borderAlpha: Float = 0.08f,
+    backgroundAlpha: Float = 0.6f,
+    cornerRadius: Dp = 16.dp,
     showGlow: Boolean = false,
-    glowRadius: Dp = 8.dp,
+    glowRadius: Dp = 12.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
         modifier = modifier
             .then(
-                if (showGlow) Modifier.neonGlow(
+                if (showGlow) Modifier.ambientGlow(
                     color = glowColor,
                     radius = glowRadius,
                     cornerRadius = cornerRadius,
-                    alpha = 0.1f
+                    alpha = 0.08f
                 ) else Modifier
             )
-            .neonBorder(
-                colors = borderColors,
-                borderWidth = 1.dp,
-                cornerRadius = cornerRadius,
-                glowRadius = if (showGlow) glowRadius else 4.dp
-            )
             .clip(RoundedCornerShape(cornerRadius))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = backgroundAlpha)),
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = backgroundAlpha))
+            .subtleBorder(
+                color = Color.White,
+                alpha = borderAlpha,
+                cornerRadius = cornerRadius
+            ),
         content = content
     )
 }
 
+// Backward-compat overload for callers that pass borderColors
+@Composable
+fun GlassCard(
+    modifier: Modifier = Modifier,
+    glowColor: Color = MaterialTheme.colorScheme.primary,
+    borderAlpha: Float = 0.08f,
+    backgroundAlpha: Float = 0.6f,
+    cornerRadius: Dp = 16.dp,
+    showGlow: Boolean = false,
+    glowRadius: Dp = 12.dp,
+    borderColors: List<Color>,  // Legacy parameter — ignored, uses borderAlpha instead
+    content: @Composable BoxScope.() -> Unit
+) = GlassCard(modifier, glowColor, borderAlpha, backgroundAlpha, cornerRadius, showGlow, glowRadius, content)
+
 /**
- * Text with horizontal gradient brush — for section headers and titles.
+ * Gradient text — for section headers, titles, featured text.
  */
 @Composable
 fun GradientText(
@@ -187,10 +190,10 @@ fun GradientText(
 }
 
 /**
- * Gradient-filled progress bar with glow on filled portion.
+ * Gradient progress bar — for player progress, download progress.
  */
 @Composable
-fun NeonProgressBar(
+fun GradientProgressBar(
     progress: Float,
     modifier: Modifier = Modifier,
     gradientColors: List<Color> = NeonTheme.colors.gradientColors,
@@ -211,16 +214,6 @@ fun NeonProgressBar(
                     .fillMaxWidth(progress.coerceIn(0f, 1f))
                     .height(height)
                     .clip(RoundedCornerShape(cornerRadius))
-                    .drawBehind {
-                        // Subtle glow on filled portion
-                        val glowColor = gradientColors.first()
-                        drawRoundRect(
-                            color = glowColor.copy(alpha = 0.15f),
-                            topLeft = Offset(0f, -size.height * 0.3f),
-                            size = Size(size.width, size.height * 1.6f),
-                            cornerRadius = CornerRadius(cornerRadius.toPx())
-                        )
-                    }
                     .background(Brush.horizontalGradient(gradientColors))
             )
         }
@@ -228,10 +221,10 @@ fun NeonProgressBar(
 }
 
 /**
- * Background with subtle radial gradient mesh (drawBehind circles at low alpha).
+ * Cinematic background with subtle ambient color blobs.
  */
 @Composable
-fun CyberpunkBackground(
+fun CinematicBackground(
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -244,16 +237,17 @@ fun CyberpunkBackground(
             .fillMaxSize()
             .background(bgColor)
             .drawBehind {
-                // Subtle radial gradient circles at low alpha for ambient glow
+                // Top-left primary blob
                 drawCircle(
-                    color = primaryColor.copy(alpha = 0.02f),
-                    radius = size.width * 0.6f,
-                    center = Offset(size.width * 0.2f, size.height * 0.15f)
+                    color = primaryColor.copy(alpha = 0.018f),
+                    radius = size.width * 0.7f,
+                    center = Offset(size.width * 0.15f, size.height * 0.1f)
                 )
+                // Bottom-right secondary blob
                 drawCircle(
-                    color = secondaryColor.copy(alpha = 0.015f),
+                    color = secondaryColor.copy(alpha = 0.012f),
                     radius = size.width * 0.5f,
-                    center = Offset(size.width * 0.8f, size.height * 0.5f)
+                    center = Offset(size.width * 0.85f, size.height * 0.6f)
                 )
             },
         content = content
@@ -261,10 +255,10 @@ fun CyberpunkBackground(
 }
 
 /**
- * Gradient fade line replacing HorizontalDivider (transparent -> primary -> transparent).
+ * Gradient fade divider (transparent → accent → transparent).
  */
 @Composable
-fun NeonDivider(
+fun AccentDivider(
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.primary
 ) {
@@ -276,12 +270,64 @@ fun NeonDivider(
                 Brush.horizontalGradient(
                     colors = listOf(
                         Color.Transparent,
+                        color.copy(alpha = 0.2f),
                         color.copy(alpha = 0.3f),
-                        color.copy(alpha = 0.4f),
-                        color.copy(alpha = 0.3f),
+                        color.copy(alpha = 0.2f),
                         Color.Transparent
                     )
                 )
             )
     )
 }
+
+// ==========================================
+// BACKWARD COMPATIBILITY ALIASES
+// ==========================================
+// These map old names → new names so existing screens compile during migration.
+// Remove these once all screens are updated.
+
+fun Modifier.neonGlow(
+    color: Color,
+    radius: Dp = 8.dp,
+    cornerRadius: Dp = 12.dp,
+    alpha: Float = 0.15f
+): Modifier = this.ambientGlow(color, radius, cornerRadius, alpha)
+
+fun Modifier.neonBorder(
+    colors: List<Color>,
+    borderWidth: Dp = 1.dp,
+    cornerRadius: Dp = 12.dp,
+    glowRadius: Dp = 4.dp
+): Modifier = this.gradientBorder(colors, borderWidth, cornerRadius)
+
+@Composable
+fun Modifier.animatedNeonGlow(
+    color: Color,
+    baseRadius: Dp = 16.dp,
+    cornerRadius: Dp = 50.dp,
+    minAlpha: Float = 0.08f,
+    maxAlpha: Float = 0.2f,
+    durationMs: Int = 1500
+): Modifier = this.pulsingGlow(color, baseRadius, cornerRadius, minAlpha, maxAlpha, durationMs)
+
+@Composable
+fun NeonProgressBar(
+    progress: Float,
+    modifier: Modifier = Modifier,
+    gradientColors: List<Color> = NeonTheme.colors.gradientColors,
+    height: Dp = 4.dp,
+    cornerRadius: Dp = 2.dp,
+    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant
+) = GradientProgressBar(progress, modifier, gradientColors, height, cornerRadius, trackColor)
+
+@Composable
+fun CyberpunkBackground(
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit
+) = CinematicBackground(modifier, content)
+
+@Composable
+fun NeonDivider(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary
+) = AccentDivider(modifier, color)
