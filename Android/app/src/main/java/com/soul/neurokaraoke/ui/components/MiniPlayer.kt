@@ -62,14 +62,12 @@ fun MiniPlayer(
     GlassCard(
         modifier = modifier
             .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .clickable(onClick = onExpandClick),
-        backgroundAlpha = 0.8f,
-        cornerRadius = 0.dp,
-        showGlow = false,
-        borderColors = listOf(
-            MaterialTheme.colorScheme.primary.copy(alpha = if (isPlaying) 0.3f else 0.1f),
-            MaterialTheme.colorScheme.primary.copy(alpha = 0.05f)
-        )
+        backgroundAlpha = 0.85f,
+        cornerRadius = 16.dp,
+        showGlow = isPlaying,
+        glowRadius = 8.dp
     ) {
         Column {
             if (isRadioMode) {
