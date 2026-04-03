@@ -218,7 +218,11 @@ fun MainScreen(
                 },
                 isRadioPlaying = playerState.isRadioMode && playerState.isPlaying,
                 onRadioListen = { playerViewModel.playRadio() },
-                onRadioStop = { playerViewModel.stopRadio() }
+                onRadioStop = { playerViewModel.stopRadio() },
+                authUser = authState.user,
+                isLoggedIn = authState.isLoggedIn,
+                onSignInClick = { context.startActivity(authViewModel.getSignInIntent()) },
+                // settingsRepository is a singleton, accessed directly by SettingsScreen
             )
         }
     }

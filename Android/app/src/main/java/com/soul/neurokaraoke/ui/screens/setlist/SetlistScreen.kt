@@ -45,6 +45,7 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.ui.components.FilterChipsRow
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.GlassCard
+import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 
 @Composable
@@ -78,11 +79,10 @@ fun SetlistScreen(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
+        GradientText(
             text = "Karaoke Setlists",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -150,7 +150,7 @@ private fun PlaylistCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        cornerRadius = 12.dp,
+        cornerRadius = 16.dp,
         borderColors = if (isSelected) neonColors.borderColors
                        else listOf(
                            MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
@@ -164,8 +164,8 @@ private fun PlaylistCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
                 contentAlignment = Alignment.Center
             ) {
                 if (playlist.previewCovers.isNotEmpty()) {

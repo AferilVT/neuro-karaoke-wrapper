@@ -5,8 +5,11 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.GraphicEq
@@ -28,10 +31,16 @@ sealed class Screen(
     data object Radio : Screen("radio", "Radio", Icons.Default.Radio)
     data object Soundbites : Screen("soundbites", "Soundbites", Icons.Default.GraphicEq)
     data object About : Screen("about", "About", Icons.Default.Info)
+    data object Settings : Screen("settings", "Settings", Icons.Default.Settings)
+    data object UploadSongs : Screen("upload_songs", "Local Music", Icons.Default.FileUpload)
 
-    // Library screens
+    // Bottom nav screens
+    data object Library : Screen("library", "Library", Icons.Default.LibraryMusic)
+    data object More : Screen("more", "More", Icons.Default.MoreHoriz)
+
+    // Library sub-screens
     data object Downloads : Screen("downloads", "Downloads", Icons.Default.Download)
-    data object Favorites : Screen("favorites", "Library", Icons.Default.Favorite)
+    data object Favorites : Screen("favorites", "Favorites", Icons.Default.Favorite)
     data object Playlists : Screen("playlists", "Your Playlists", Icons.Default.LibraryMusic)
 
     // Detail screens
@@ -53,15 +62,15 @@ sealed class Screen(
 
     companion object {
         // Bottom navigation bar tabs (max 5)
-        val bottomNavItems = listOf(Home, Search, Explore, Favorites, Radio)
+        val bottomNavItems by lazy { listOf(Home, Radio, Search, Library, More) }
 
         // Items accessible from within Explore (browse) tab
-        val exploreSubItems = listOf(Setlists, Artists)
+        val exploreSubItems by lazy { listOf(Setlists, Artists) }
 
-        // Library sub-items (accessible from Favorites screen or profile)
-        val libraryItems = listOf(Downloads, Favorites, Playlists)
+        // Library tab items
+        val libraryItems by lazy { listOf(Favorites, Playlists, Downloads) }
 
-        // Legacy — kept for any remaining references during migration
-        val mainNavItems = listOf(Home, Search, Explore, Artists, Setlists, Radio, Soundbites, About)
+        // More screen items
+        val moreItems by lazy { listOf(Radio, Soundbites, Setlists, Artists, About) }
     }
 }

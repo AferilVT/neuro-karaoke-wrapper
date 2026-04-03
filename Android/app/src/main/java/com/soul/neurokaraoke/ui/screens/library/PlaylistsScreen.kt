@@ -33,8 +33,6 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -67,6 +65,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
+import com.soul.neurokaraoke.ui.theme.GlassCard
+import com.soul.neurokaraoke.ui.theme.GradientText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,11 +98,10 @@ fun PlaylistsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
+                GradientText(
                     text = "Your Playlists",
                     style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
+                    fontWeight = FontWeight.Bold
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -161,7 +160,7 @@ fun PlaylistsScreen(
                     Icon(
                         imageVector = Icons.Default.MusicNote,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
                         modifier = Modifier.size(64.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -257,14 +256,13 @@ private fun UserPlaylistCard(
     onClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
-    Card(
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
+        cornerRadius = 16.dp,
+        backgroundAlpha = 0.4f,
+        borderAlpha = 0.1f
     ) {
         Column {
             // Cover image or placeholder
@@ -310,7 +308,7 @@ private fun UserPlaylistCard(
                         modifier = Modifier
                             .size(32.dp)
                             .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                 RoundedCornerShape(16.dp)
                             )
                     ) {

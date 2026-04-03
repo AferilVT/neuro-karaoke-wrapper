@@ -554,14 +554,15 @@ private fun SectionCard(
 
 @Composable
 private fun WarningBox(text: String) {
+    val warningColor = MaterialTheme.colorScheme.error
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0xFFFF9800).copy(alpha = 0.15f))
+            .background(warningColor.copy(alpha = 0.15f))
             .border(
                 width = 1.dp,
-                color = Color(0xFFFF9800).copy(alpha = 0.5f),
+                color = warningColor.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(8.dp)
             )
             .padding(12.dp),
@@ -570,14 +571,14 @@ private fun WarningBox(text: String) {
         Icon(
             imageVector = Icons.Default.Warning,
             contentDescription = null,
-            tint = Color(0xFFFF9800),
+            tint = warningColor,
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFFFF9800)
+            color = warningColor
         )
     }
 }

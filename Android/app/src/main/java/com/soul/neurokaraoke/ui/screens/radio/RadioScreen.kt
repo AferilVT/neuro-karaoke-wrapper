@@ -59,7 +59,7 @@ import com.soul.neurokaraoke.data.api.RadioState
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientText
-import com.soul.neurokaraoke.ui.theme.NeonDivider
+import com.soul.neurokaraoke.ui.theme.AccentDivider
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -76,9 +76,12 @@ fun RadioScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var listenerCount by remember { mutableIntStateOf(0) }
+    var retryTrigger by remember { mutableIntStateOf(0) }
 
-    // Poll radio state every 15 seconds
-    LaunchedEffect(Unit) {
+    // Poll radio state every 15 seconds, re-launch on retry
+    LaunchedEffect(retryTrigger) {
+        isLoading = true
+        error = null
         while (isActive) {
             radioApi.fetchCurrentState().fold(
                 onSuccess = { state ->
@@ -138,6 +141,48 @@ fun RadioScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator(color = primaryColor)
+                }
+            }
+        } else if (error != null && radioState == null) {
+            item {
+                GlassCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundAlpha = 0.6f,
+                    showGlow = false
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.WifiOff,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Couldn't connect to radio",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = error ?: "",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(
+                            onClick = { retryTrigger++ },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Retry")
+                        }
+                    }
                 }
             }
         } else if (radioState?.offline == true) {
@@ -243,7 +288,7 @@ fun RadioScreen(
             val upcoming = radioState?.upcoming ?: emptyList()
             if (upcoming.isNotEmpty()) {
                 item {
-                    NeonDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    AccentDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
                         text = "UP NEXT",
                         style = CyberLabelStyle,
@@ -260,7 +305,7 @@ fun RadioScreen(
             val history = radioState?.history ?: emptyList()
             if (history.isNotEmpty()) {
                 item {
-                    NeonDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    AccentDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
                         text = "RECENTLY PLAYED",
                         style = CyberLabelStyle,
@@ -307,15 +352,15 @@ private fun LiveIndicator(
                     .size(10.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isPlaying) Color.Red.copy(alpha = pulseAlpha)
-                        else Color.Red.copy(alpha = 0.6f)
+                        if (isPlaying) MaterialTheme.colorScheme.error.copy(alpha = pulseAlpha)
+                        else MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
                     )
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "LIVE",
                 style = CyberLabelStyle,
-                color = Color.Red.copy(alpha = 0.9f),
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.9f),
                 fontWeight = FontWeight.Bold
             )
             if (listenerCount > 0) {

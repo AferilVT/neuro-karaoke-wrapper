@@ -49,6 +49,11 @@ import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 import com.soul.neurokaraoke.ui.components.SongListItem
+import com.soul.neurokaraoke.ui.theme.AccentDivider
+import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
+import com.soul.neurokaraoke.ui.theme.GradientText
+import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.pulsingGlow
 
 @Composable
 fun UserPlaylistDetailScreen(
@@ -129,8 +134,9 @@ fun UserPlaylistDetailScreen(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
                                 MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.7f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                                 MaterialTheme.colorScheme.background
                             )
                         )
@@ -163,7 +169,7 @@ fun UserPlaylistDetailScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                 CircleShape
                             )
                     ) {
@@ -225,16 +231,14 @@ fun UserPlaylistDetailScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = "YOUR PLAYLIST",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
+                                style = CyberLabelStyle,
+                                color = MaterialTheme.colorScheme.primary
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
+                            GradientText(
                                 text = playlist.title,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -242,7 +246,7 @@ fun UserPlaylistDetailScreen(
                             Text(
                                 text = "${songs.size} song${if (songs.size != 1) "s" else ""}${if (totalDurationMinutes > 0) " · $totalDurationMinutes min" else ""}",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -255,7 +259,7 @@ fun UserPlaylistDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Play button
+                        // Play button with pulsing glow
                         Button(
                             onClick = {
                                 songs.firstOrNull()?.let { onPlaySong(it, songs) }
@@ -266,7 +270,12 @@ fun UserPlaylistDetailScreen(
                                 contentColor = MaterialTheme.colorScheme.onPrimary
                             ),
                             shape = RoundedCornerShape(24.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
+                            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                            modifier = Modifier.pulsingGlow(
+                                color = NeonTheme.colors.glowColor,
+                                baseRadius = 8.dp,
+                                cornerRadius = 24.dp
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
@@ -286,7 +295,7 @@ fun UserPlaylistDetailScreen(
                             modifier = Modifier
                                 .size(44.dp)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                     CircleShape
                                 )
                         ) {
@@ -304,7 +313,7 @@ fun UserPlaylistDetailScreen(
                             modifier = Modifier
                                 .size(44.dp)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant,
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                     CircleShape
                                 )
                         ) {
@@ -321,11 +330,12 @@ fun UserPlaylistDetailScreen(
             // Songs header
             item {
                 Spacer(modifier = Modifier.height(8.dp))
+                AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Songs",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = "SONGS",
+                    style = CyberLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))

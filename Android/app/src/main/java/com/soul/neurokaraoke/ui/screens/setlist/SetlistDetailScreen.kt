@@ -62,6 +62,10 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
+import com.soul.neurokaraoke.ui.theme.AccentDivider
+import com.soul.neurokaraoke.ui.theme.GradientText
+import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.pulsingGlow
 
 @Composable
 fun SetlistDetailScreen(
@@ -95,7 +99,7 @@ fun SetlistDetailScreen(
                     .height(300.dp)
                     .blur(30.dp)
             )
-            // Gradient overlay - balanced for art visibility and text readability
+            // Gradient overlay — cinematic 4-stop fade
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -103,8 +107,9 @@ fun SetlistDetailScreen(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.3f),
-                                MaterialTheme.colorScheme.background.copy(alpha = 0.6f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
                                 MaterialTheme.colorScheme.background
                             )
                         )
@@ -131,14 +136,14 @@ fun SetlistDetailScreen(
                         )
                         .padding(16.dp)
                 ) {
-                    // Back button with neon border
+                    // Back button
                     IconButton(
                         onClick = onBackClick,
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                 CircleShape
                             )
                     ) {
@@ -237,11 +242,10 @@ fun SetlistDetailScreen(
                             Spacer(modifier = Modifier.height(4.dp))
 
                             // Title
-                            Text(
+                            GradientText(
                                 text = playlist.title,
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -252,7 +256,7 @@ fun SetlistDetailScreen(
                             Text(
                                 text = if (hasDurationData) "${songs.size} songs · ${totalDurationMinutes} min" else "${songs.size} songs",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
                             Spacer(modifier = Modifier.height(4.dp))
@@ -261,7 +265,7 @@ fun SetlistDetailScreen(
                             Text(
                                 text = "Tap Play to start",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -274,7 +278,7 @@ fun SetlistDetailScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Play button with neon glow
+                        // Play button with pulsing glow
                         Button(
                             onClick = onPlayClick,
                             colors = ButtonDefaults.buttonColors(
@@ -284,6 +288,11 @@ fun SetlistDetailScreen(
                             shape = RoundedCornerShape(24.dp),
                             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
                             modifier = Modifier
+                                .pulsingGlow(
+                                    color = NeonTheme.colors.glowColor,
+                                    baseRadius = 8.dp,
+                                    cornerRadius = 24.dp
+                                )
                         ) {
                             Icon(
                                 imageVector = Icons.Default.PlayArrow,
@@ -306,7 +315,7 @@ fun SetlistDetailScreen(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                     CircleShape
                                 )
                         ) {
@@ -324,7 +333,7 @@ fun SetlistDetailScreen(
                                 .size(44.dp)
                                 .clip(CircleShape)
                                 .background(
-                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                     CircleShape
                                 )
                         ) {
@@ -343,7 +352,7 @@ fun SetlistDetailScreen(
                                     .size(44.dp)
                                     .clip(CircleShape)
                                     .background(
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
                                         CircleShape
                                     )
                             ) {
@@ -418,11 +427,12 @@ fun SetlistDetailScreen(
             // Songs list header
             item {
                 Spacer(modifier = Modifier.height(8.dp))
+                AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Songs",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = "SONGS",
+                    style = CyberLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))

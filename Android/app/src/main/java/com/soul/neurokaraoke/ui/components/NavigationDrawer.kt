@@ -49,7 +49,7 @@ import com.soul.neurokaraoke.ui.theme.EvilColor
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.LocalThemeMode
 import com.soul.neurokaraoke.ui.theme.LocalThemeToggle
-import com.soul.neurokaraoke.ui.theme.NeonDivider
+import com.soul.neurokaraoke.ui.theme.AccentDivider
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.NeuroColor
 import com.soul.neurokaraoke.ui.theme.ThemeMode
@@ -111,7 +111,7 @@ fun NavigationDrawerContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Main navigation items
-        Screen.mainNavItems.forEach { screen ->
+        listOf(Screen.Home, Screen.Search, Screen.Explore, Screen.Artists, Screen.Setlists, Screen.Radio, Screen.Soundbites, Screen.About).forEach { screen ->
             NavigationDrawerItem(
                 screen = screen,
                 isSelected = currentRoute == screen.route,
@@ -147,7 +147,7 @@ fun NavigationDrawerContent(
             )
         }
 
-        NeonDivider(
+        AccentDivider(
             modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
         )
 
@@ -173,7 +173,7 @@ fun NavigationDrawerContent(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        NeonDivider(
+        AccentDivider(
             modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)
         )
 

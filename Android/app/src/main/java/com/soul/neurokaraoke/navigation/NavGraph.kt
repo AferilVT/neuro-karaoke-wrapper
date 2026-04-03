@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.soul.neurokaraoke.data.model.Artist
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.model.User
 import com.soul.neurokaraoke.ui.screens.about.AboutScreen
 import com.soul.neurokaraoke.ui.screens.artists.ArtistDetailScreen
 import com.soul.neurokaraoke.ui.screens.artists.ArtistsScreen
@@ -16,8 +17,12 @@ import com.soul.neurokaraoke.ui.screens.home.HomeScreen
 import com.soul.neurokaraoke.data.repository.DownloadedSong
 import com.soul.neurokaraoke.ui.screens.library.DownloadsScreen
 import com.soul.neurokaraoke.ui.screens.library.FavoritesScreen
+import com.soul.neurokaraoke.ui.screens.library.LibraryScreen
 import com.soul.neurokaraoke.ui.screens.library.PlaylistsScreen
 import com.soul.neurokaraoke.ui.screens.library.UserPlaylistDetailScreen
+import com.soul.neurokaraoke.ui.screens.more.MoreScreen
+import com.soul.neurokaraoke.ui.screens.more.SettingsScreen
+import com.soul.neurokaraoke.ui.screens.more.UploadSongsScreen
 import com.soul.neurokaraoke.ui.screens.radio.RadioScreen
 import com.soul.neurokaraoke.ui.screens.search.SearchScreen
 import com.soul.neurokaraoke.ui.screens.soundbites.SoundbiteScreen
@@ -73,7 +78,12 @@ fun NavGraph(
     // Radio
     isRadioPlaying: Boolean = false,
     onRadioListen: () -> Unit = {},
-    onRadioStop: () -> Unit = {}
+    onRadioStop: () -> Unit = {},
+    // Auth (for Library screen)
+    authUser: User? = null,
+    isLoggedIn: Boolean = false,
+    onSignInClick: () -> Unit = {},
+    // Settings (initialized as singleton via SettingsRepository.initialize())
 ) {
     NavHost(
         navController = navController,
@@ -266,6 +276,115 @@ fun NavGraph(
                 onRemoveDownload = onRemoveDownload,
                 onRemoveAll = onRemoveAllDownloads,
                 onAddToPlaylist = onAddToPlaylist
+            )
+        }
+
+        composable(Screen.Library.route) {
+            LibraryScreen(
+                user = authUser,
+                isLoggedIn = isLoggedIn,
+                onSignInClick = onSignInClick,
+                favoritesContent = {
+                    FavoritesScreen(
+                        favoriteSongs = favoriteSongs,
+                        onSongClick = { song, queue -> onPlaySongWithQueue(song, queue) },
+                        onToggleFavorite = { song -> favoritesRepository?.toggleFavorite(song, accessToken) },
+                        onAddToPlaylist = onAddToPlaylist,
+                        isRefreshing = isRefreshingFavorites,
+                        onRefresh = onRefreshFavorites,
+                        onPlayAll = {
+                            favoriteSongs.firstOrNull()?.let { onPlaySongWithQueue(it, favoriteSongs) }
+                        },
+                        onShuffleAll = {
+                            val shuffled = favoriteSongs.shuffled()
+                            shuffled.firstOrNull()?.let { onPlaySongWithQueue(it, shuffled) }
+                        }
+                    )
+                },
+                playlistsContent = {
+                    PlaylistsScreen(
+                        onPlaylistClick = { playlistId ->
+                            navController.navigate(Screen.UserPlaylistDetail.createRoute(playlistId))
+                        },
+                        externalRepository = userPlaylistRepository,
+                        accessToken = accessToken,
+                        isSyncing = isSyncingPlaylists,
+                        onRefresh = onRefreshPlaylists
+                    )
+                },
+                downloadsContent = {
+                    DownloadsScreen(
+                        downloads = downloadedSongs,
+                        downloadProgress = downloadProgress,
+                        totalSize = downloadTotalSize,
+                        onSongClick = onPlayDownloaded,
+                        onPlayAll = onPlayAllDownloads,
+                        onShuffleAll = onShuffleDownloads,
+                        onRemoveDownload = onRemoveDownload,
+                        onRemoveAll = onRemoveAllDownloads,
+                        onAddToPlaylist = onAddToPlaylist
+                    )
+                }
+            )
+        }
+
+        composable(Screen.More.route) {
+            MoreScreen(
+                onSoundbitesClick = {
+                    navController.navigate(Screen.Soundbites.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onSetlistsClick = {
+                    navController.navigate(Screen.Setlists.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onArtistsClick = {
+                    navController.navigate(Screen.Artists.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onSettingsClick = {
+                    navController.navigate(Screen.Settings.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onUploadSongsClick = {
+                    navController.navigate(Screen.UploadSongs.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                onAboutClick = {
+                    navController.navigate(Screen.About.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.UploadSongs.route) {
+            UploadSongsScreen(
+                onBackClick = { navController.popBackStack() },
+                onPlaySong = onPlaySongWithQueue
             )
         }
     }

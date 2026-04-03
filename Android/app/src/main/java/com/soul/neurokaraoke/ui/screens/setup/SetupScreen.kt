@@ -37,11 +37,11 @@ import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
-import com.soul.neurokaraoke.ui.theme.CyberpunkBackground
+import com.soul.neurokaraoke.ui.theme.CinematicBackground
 import com.soul.neurokaraoke.ui.theme.GradientText
-import com.soul.neurokaraoke.ui.theme.NeonProgressBar
+import com.soul.neurokaraoke.ui.theme.GradientProgressBar
 import com.soul.neurokaraoke.ui.theme.NeonTheme
-import com.soul.neurokaraoke.ui.theme.neonGlow
+import com.soul.neurokaraoke.ui.theme.ambientGlow
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -177,7 +177,7 @@ fun SetupScreen(
         }
     }
 
-    CyberpunkBackground(modifier = modifier) {
+    CinematicBackground(modifier = modifier) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
@@ -192,7 +192,7 @@ fun SetupScreen(
                 contentDescription = "Neuro Karaoke",
                 modifier = Modifier
                     .size(120.dp)
-                    .neonGlow(
+                    .ambientGlow(
                         color = neonColors.glowColor,
                         radius = 16.dp,
                         cornerRadius = 24.dp,
@@ -221,7 +221,7 @@ fun SetupScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             // Neon progress bar
-            NeonProgressBar(
+            GradientProgressBar(
                 progress = animatedProgress,
                 gradientColors = neonColors.gradientColors,
                 height = 8.dp,

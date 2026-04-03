@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,12 +27,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +42,12 @@ import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.ArtistImageRepository
 import com.soul.neurokaraoke.ui.components.SongListItem
+import com.soul.neurokaraoke.ui.theme.AccentDivider
+import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
+import com.soul.neurokaraoke.ui.theme.GradientText
+import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.gradientBorder
+import com.soul.neurokaraoke.ui.theme.pulsingGlow
 
 @Composable
 fun ArtistDetailScreen(
@@ -59,121 +67,176 @@ fun ArtistDetailScreen(
         ArtistImageRepository.getArtistImageOrDefault(artistName, fallbackImage)
     }
 
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        // Header with back button
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = modifier.fillMaxSize()) {
+        // Blurred background
+        AsyncImage(
+            model = coverImage,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp)
-        ) {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onBackground
+                .height(300.dp)
+                .blur(30.dp)
+        )
+        // Gradient overlay — cinematic 4-stop fade
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.1f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                            MaterialTheme.colorScheme.background.copy(alpha = 0.85f),
+                            MaterialTheme.colorScheme.background
+                        )
+                    )
                 )
-            }
-            Text(
-                text = "Artist",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
+        )
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 100.dp)
         ) {
-            // Artist header
+            // Header section
             item {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp)
+                        .padding(16.dp)
                 ) {
-                    // Artist image
-                    Box(
+                    // Back button
+                    IconButton(
+                        onClick = onBackClick,
                         modifier = Modifier
-                            .size(150.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                        contentAlignment = Alignment.Center
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                CircleShape
+                            )
                     ) {
-                        AsyncImage(
-                            model = coverImage,
-                            contentDescription = artistName,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.matchParentSize()
-                        )
-                        // Fallback icon
                         Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                            modifier = Modifier.size(64.dp)
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = artistName,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "${artistSongs.size} songs covered",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Play and Shuffle buttons
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    // Artist image — centered with gradient border
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Button(
-                            onClick = {
-                                artistSongs.firstOrNull()?.let { onSongClick(it.id) }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
-                            ),
-                            shape = RoundedCornerShape(24.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .gradientBorder(
+                                    colors = NeonTheme.colors.borderColors,
+                                    borderWidth = 1.dp,
+                                    cornerRadius = 75.dp
+                                )
+                                .padding(1.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                            AsyncImage(
+                                model = coverImage,
+                                contentDescription = artistName,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.matchParentSize()
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Play")
+                            // Fallback icon
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                                modifier = Modifier.size(64.dp)
+                            )
                         }
 
-                        OutlinedButton(
-                            onClick = {
-                                artistSongs.randomOrNull()?.let { onSongClick(it.id) }
-                            },
-                            shape = RoundedCornerShape(24.dp)
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Label
+                        Text(
+                            text = "ARTIST",
+                            style = CyberLabelStyle,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Artist name
+                        GradientText(
+                            text = artistName,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = "${artistSongs.size} songs covered",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Play and Shuffle buttons
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Shuffle,
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Shuffle")
+                            // Play button with pulsing glow
+                            Button(
+                                onClick = {
+                                    artistSongs.firstOrNull()?.let { onSongClick(it.id) }
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary
+                                ),
+                                shape = RoundedCornerShape(24.dp),
+                                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
+                                modifier = Modifier.pulsingGlow(
+                                    color = NeonTheme.colors.glowColor,
+                                    baseRadius = 8.dp,
+                                    cornerRadius = 24.dp
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PlayArrow,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("PLAY", fontWeight = FontWeight.Bold)
+                            }
+
+                            // Shuffle button
+                            IconButton(
+                                onClick = {
+                                    artistSongs.randomOrNull()?.let { onSongClick(it.id) }
+                                },
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
+                                        CircleShape
+                                    )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Shuffle,
+                                    contentDescription = "Shuffle",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -181,13 +244,16 @@ fun ArtistDetailScreen(
 
             // Songs section header
             item {
+                Spacer(modifier = Modifier.height(8.dp))
+                AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Songs",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    text = "SONGS",
+                    style = CyberLabelStyle,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             // Songs list
@@ -198,11 +264,6 @@ fun ArtistDetailScreen(
                     onClick = { onSongClick(song.id) },
                     onAddToPlaylistClick = { onAddToPlaylist(song) }
                 )
-            }
-
-            // Bottom spacing for mini player
-            item {
-                Spacer(modifier = Modifier.height(100.dp))
             }
         }
     }

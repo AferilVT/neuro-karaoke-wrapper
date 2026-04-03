@@ -1,7 +1,6 @@
 package com.soul.neurokaraoke.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +28,9 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Artist
 import com.soul.neurokaraoke.ui.theme.GlassCard
+import com.soul.neurokaraoke.ui.theme.GradientText
+import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.gradientBorder
 
 @Composable
 fun ArtistCard(
@@ -40,7 +42,7 @@ fun ArtistCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        cornerRadius = 12.dp
+        cornerRadius = 16.dp
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -52,10 +54,10 @@ fun ArtistCard(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        shape = CircleShape
+                    .gradientBorder(
+                        colors = NeonTheme.colors.borderColors,
+                        borderWidth = 1.dp,
+                        cornerRadius = 50.dp
                     )
                     .padding(1.dp)
                     .clip(CircleShape)
@@ -79,11 +81,10 @@ fun ArtistCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Text(
+            GradientText(
                 text = artist.name,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center

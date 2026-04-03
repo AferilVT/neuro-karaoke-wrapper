@@ -19,8 +19,8 @@ android {
         applicationId = "com.soul.neurokaraoke"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.5.1"
+        versionCode = 6
+        versionName = "1.5.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

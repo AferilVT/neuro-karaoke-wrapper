@@ -1,6 +1,15 @@
 package com.soul.neurokaraoke.data.repository
 
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import com.soul.neurokaraoke.MainActivity
+import com.soul.neurokaraoke.NeuroKaraokeApp
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +25,7 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.atomic.AtomicInteger
 
 data class DownloadedSong(
     val id: String,
@@ -56,6 +66,14 @@ object DownloadRepository {
 
     private val downloadSemaphore = Semaphore(3)
 
+    // Notification tracking
+    private const val NOTIFICATION_ID_PROGRESS = 9001
+    private const val NOTIFICATION_ID_COMPLETE = 9002
+    private val activeDownloadCount = AtomicInteger(0)
+    private val completedDownloadCount = AtomicInteger(0)
+    private val failedDownloadCount = AtomicInteger(0)
+    private var totalQueuedCount = AtomicInteger(0)
+
     @Synchronized
     fun initialize(context: Context) {
         if (this.context != null) return
@@ -74,8 +92,7 @@ object DownloadRepository {
     }
 
     fun getLocalAudioPath(audioUrl: String): String? {
-        val songId = audioUrl.hashCode().toString()
-        val downloaded = _downloads.value.find { it.id == songId } ?: return null
+        val downloaded = _downloads.value.find { it.audioUrl == audioUrl } ?: return null
         val file = File(downloaded.localAudioPath)
         return if (file.exists()) downloaded.localAudioPath else null
     }
@@ -84,11 +101,15 @@ object DownloadRepository {
         if (isDownloaded(song.id)) return
         if (song.audioUrl.isBlank()) return
 
+        beginDownloadBatch(1)
+        activeDownloadCount.incrementAndGet()
+
         downloadSemaphore.withPermit {
             withContext(Dispatchers.IO) {
                 try {
                     // Update progress
                     updateProgress(song.id, 0f)
+                    showProgressNotification(song.title)
 
                     val audioFile = File(audioDir, "${song.id}.mp3")
                     val coverFile = File(coversDir, "${song.id}.jpg")
@@ -132,13 +153,24 @@ object DownloadRepository {
                     _downloads.value = current
 
                     saveMetadata()
+                    completedDownloadCount.incrementAndGet()
                 } catch (e: Exception) {
                     e.printStackTrace()
                     // Clean up partial files
                     File(audioDir, "${song.id}.mp3").delete()
                     File(coversDir, "${song.id}.jpg").delete()
+                    failedDownloadCount.incrementAndGet()
                 } finally {
                     removeProgress(song.id)
+                    if (activeDownloadCount.decrementAndGet() == 0) {
+                        showCompletionNotification()
+                    } else {
+                        // Update progress notification with next song info
+                        val nextSongId = _downloadProgress.value.keys.firstOrNull()
+                        if (nextSongId != null) {
+                            showProgressNotification(song.title)
+                        }
+                    }
                 }
             }
         }
@@ -220,6 +252,110 @@ object DownloadRepository {
         } finally {
             connection?.disconnect()
         }
+    }
+
+    /**
+     * Call before starting a batch (or single) download to reset counters.
+     */
+    private fun beginDownloadBatch(count: Int) {
+        if (activeDownloadCount.get() == 0) {
+            // New batch — reset counters
+            completedDownloadCount.set(0)
+            failedDownloadCount.set(0)
+            totalQueuedCount.set(count)
+        } else {
+            // Downloads already in flight — just grow the total
+            totalQueuedCount.addAndGet(count)
+        }
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        val ctx = context ?: return false
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ctx.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun showProgressNotification(songTitle: String) {
+        val ctx = context ?: return
+        if (!hasNotificationPermission()) return
+
+        val done = completedDownloadCount.get() + failedDownloadCount.get()
+        val total = totalQueuedCount.get()
+        val remaining = total - done
+
+        val contentText = if (total > 1) {
+            "Downloading \"$songTitle\" ($remaining remaining)"
+        } else {
+            "Downloading \"$songTitle\""
+        }
+
+        val intent = Intent(ctx, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            ctx, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(ctx, NeuroKaraokeApp.CHANNEL_DOWNLOADS)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Downloading songs")
+            .setContentText(contentText)
+            .setProgress(total, done, false)
+            .setOngoing(true)
+            .setSilent(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        val manager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(NOTIFICATION_ID_PROGRESS, notification)
+    }
+
+    private fun showCompletionNotification() {
+        val ctx = context ?: return
+        if (!hasNotificationPermission()) return
+
+        val manager = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        // Dismiss progress notification
+        manager.cancel(NOTIFICATION_ID_PROGRESS)
+
+        val completed = completedDownloadCount.get()
+        val failed = failedDownloadCount.get()
+
+        val title = when {
+            failed == 0 -> "Download complete"
+            completed == 0 -> "Download failed"
+            else -> "Download complete"
+        }
+        val text = when {
+            failed == 0 && completed == 1 -> "1 song downloaded"
+            failed == 0 -> "$completed songs downloaded"
+            completed == 0 && failed == 1 -> "1 song failed to download"
+            completed == 0 -> "$failed songs failed to download"
+            else -> "$completed downloaded, $failed failed"
+        }
+
+        val intent = Intent(ctx, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            ctx, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val notification = NotificationCompat.Builder(ctx, NeuroKaraokeApp.CHANNEL_DOWNLOADS)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(text)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        manager.notify(NOTIFICATION_ID_COMPLETE, notification)
     }
 
     private fun loadMetadata() {

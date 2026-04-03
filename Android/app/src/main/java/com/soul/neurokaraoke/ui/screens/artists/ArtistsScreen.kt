@@ -29,6 +29,7 @@ import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.ArtistImageRepository
 import com.soul.neurokaraoke.ui.components.ArtistCard
 import com.soul.neurokaraoke.ui.components.SearchBar
+import com.soul.neurokaraoke.ui.theme.GradientText
 
 @Composable
 fun ArtistsScreen(
@@ -81,11 +82,10 @@ fun ArtistsScreen(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
+        GradientText(
             text = "Artists",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(4.dp))

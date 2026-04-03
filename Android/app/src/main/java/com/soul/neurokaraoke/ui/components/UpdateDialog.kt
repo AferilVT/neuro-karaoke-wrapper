@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.api.GitHubRelease
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.NeonTheme
-import com.soul.neurokaraoke.ui.theme.neonGlow
+import com.soul.neurokaraoke.ui.theme.ambientGlow
 
 @Composable
 fun UpdateDialog(
@@ -97,7 +97,7 @@ fun UpdateDialog(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .neonGlow(
+                        .ambientGlow(
                             color = neonColors.glowColor,
                             radius = 6.dp,
                             cornerRadius = 20.dp,

@@ -69,8 +69,26 @@ fun BottomNavBar(
             horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Routes that should highlight the More tab
+            val moreRoutes = setOf(
+                Screen.Soundbites.route,
+                Screen.Setlists.route, Screen.Artists.route,
+                Screen.About.route, Screen.SetlistDetail.route,
+                Screen.ArtistDetail.route, Screen.Settings.route,
+                Screen.UploadSongs.route
+            )
+            // Routes that should highlight the Library tab
+            val libraryRoutes = setOf(
+                Screen.Favorites.route, Screen.Playlists.route,
+                Screen.Downloads.route, Screen.UserPlaylistDetail.route
+            )
+
             Screen.bottomNavItems.forEach { screen ->
-                val isSelected = currentRoute == screen.route
+                val isSelected = when (screen) {
+                    Screen.More -> currentRoute == Screen.More.route || currentRoute in moreRoutes
+                    Screen.Library -> currentRoute == Screen.Library.route || currentRoute in libraryRoutes
+                    else -> currentRoute == screen.route
+                }
                 BottomNavItem(
                     screen = screen,
                     isSelected = isSelected,

@@ -38,7 +38,7 @@ import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GlassCard
-import com.soul.neurokaraoke.ui.theme.NeonProgressBar
+import com.soul.neurokaraoke.ui.theme.GradientProgressBar
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 
 @Composable
@@ -80,7 +80,7 @@ fun MiniPlayer(
                 )
             } else {
                 // Neon progress bar at top
-                NeonProgressBar(
+                GradientProgressBar(
                     progress = progress,
                     gradientColors = neonColors.gradientColors,
                     height = 2.dp

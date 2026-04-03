@@ -22,7 +22,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.ui.theme.NeonTheme
-import com.soul.neurokaraoke.ui.theme.neonBorder
+import com.soul.neurokaraoke.ui.theme.gradientBorder
 
 @Composable
 fun SearchBar(
@@ -77,11 +77,10 @@ fun SearchBar(
             .fillMaxWidth()
             .height(56.dp)
             .then(
-                if (isFocused) Modifier.neonBorder(
+                if (isFocused) Modifier.gradientBorder(
                     colors = neonColors.borderColors,
                     borderWidth = 1.dp,
-                    cornerRadius = 24.dp,
-                    glowRadius = 6.dp
+                    cornerRadius = 24.dp
                 ) else Modifier
             )
             .onFocusChanged {

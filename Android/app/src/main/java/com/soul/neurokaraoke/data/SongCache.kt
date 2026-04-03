@@ -20,7 +20,7 @@ class SongCache(private val context: Context) {
     private val setupCompleteKey = "setup_complete"
     private val cacheVersionKey = "cache_version"
     private val playlistCountKey = "cached_playlist_count"
-    private val currentCacheVersion = 2
+    private val currentCacheVersion = 3
 
     private val file: File
         get() = File(context.filesDir, fileName)
@@ -93,12 +93,29 @@ class SongCache(private val context: Context) {
     }
 
     /**
-     * Check if cache is stale because new playlists were added
+     * Check if cache is stale.
+     * Stale when: new playlists added, or cache older than 6 hours.
      */
     fun isCacheStale(currentPlaylistCount: Int): Boolean {
         if (currentPlaylistCount <= 0) return false
         val cachedCount = prefs.getInt(playlistCountKey, 0)
-        return cachedCount in 1 until currentPlaylistCount
+        if (cachedCount in 1 until currentPlaylistCount) return true
+
+        // Time-based expiry: refresh every 6 hours
+        if (!file.exists()) return true
+        try {
+            val json = file.readText()
+            val root = JSONObject(json)
+            val cachedAt = root.optLong("cachedAt", 0)
+            if (cachedAt > 0) {
+                val ageMs = System.currentTimeMillis() - cachedAt
+                if (ageMs > 6 * 60 * 60 * 1000) return true
+            }
+        } catch (_: Exception) {
+            return true
+        }
+
+        return false
     }
 
     /**

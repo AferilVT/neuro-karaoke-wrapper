@@ -58,9 +58,11 @@ import com.soul.neurokaraoke.data.api.SoundbiteApi
 import com.soul.neurokaraoke.data.model.Soundbite
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
+import com.soul.neurokaraoke.ui.theme.EvilColor
 import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.ui.theme.NeuroColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -364,8 +366,8 @@ private fun SoundbiteRow(
     onClick: () -> Unit
 ) {
     val tagColor = when (soundbite.tag) {
-        0 -> Color(0xFF00E5FF) // Neuro cyan
-        1 -> Color(0xFFFF69B4) // Evil pink
+        0 -> NeuroColor // Neuro cyan
+        1 -> EvilColor // Evil pink
         2 -> Color(0xFF4CAF50) // Vedal green
         else -> Color(0xFF9E9E9E) // Other gray
     }
