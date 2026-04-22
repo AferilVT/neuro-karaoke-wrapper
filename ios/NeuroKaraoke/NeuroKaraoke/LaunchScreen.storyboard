@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="23504" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+    <device id="retina6_12" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="23506"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="System colors in document resources" minToolsVersion="11.0"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <scenes>
+        <!--View Controller-->
+        <scene sceneID="EHf-IW-A2E">
+            <objects>
+                <viewController id="01J-lp-oVM" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="Ze5-6b-2t3">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="NeuroLogo" translatesAutoresizingMaskIntoConstraints="NO" id="aqQ-X2-f2P">
+                                <rect key="frame" x="160.5" y="319" width="72" height="72"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="72" id="3zK-wK-Q2g"/>
+                                    <constraint firstAttribute="height" constant="72" id="xxV-2W-HtW"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Neuro Karaoke" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="plR-3U-Eoc">
+                                <rect key="frame" x="78.5" y="415" width="236" height="37"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="30"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="Loading setlists and audio" textAlignment="center" lineBreakMode="wordWrap" numberOfLines="2" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="1an-sI-X1R">
+                                <rect key="frame" x="88.5" y="464" width="216" height="20.5"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" white="1" alpha="0.72" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
+                        <color key="backgroundColor" name="LaunchBackground"/>
+                        <constraints>
+                            <constraint firstItem="1an-sI-X1R" firstAttribute="top" secondItem="plR-3U-Eoc" secondAttribute="bottom" constant="12" id="2xl-r1-RMS"/>
+                            <constraint firstItem="plR-3U-Eoc" firstAttribute="top" secondItem="aqQ-X2-f2P" secondAttribute="bottom" constant="24" id="5hR-oM-cm8"/>
+                            <constraint firstItem="plR-3U-Eoc" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="68t-6L-8eP"/>
+                            <constraint firstItem="aqQ-X2-f2P" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="-45" id="QmI-Vk-zkl"/>
+                            <constraint firstItem="aqQ-X2-f2P" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="bfl-Zo-uXQ"/>
+                            <constraint firstItem="1an-sI-X1R" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="c3Q-s2-gdW"/>
+                        </constraints>
+                    </view>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="80" y="4"/>
+        </scene>
+    </scenes>
+    <resources>
+        <image name="NeuroLogo" width="1024" height="1024"/>
+        <namedColor name="LaunchBackground">
+            <color red="0.070000000298023224" green="0.079999998211860657" blue="0.10999999940395355" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+    </resources>
+</document>

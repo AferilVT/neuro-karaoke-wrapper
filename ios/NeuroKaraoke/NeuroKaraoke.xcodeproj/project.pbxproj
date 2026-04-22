@@ -29,19 +29,45 @@
 		7B589AAF2F768EC400C3BF6A /* NeuroKaraokeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NeuroKaraokeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		7B75955D2F76ADBD000AC8D0 /* Exceptions for "NeuroKaraokeUITests" folder in "NeuroKaraokeTests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NeuroKaraokeTests/NeuroKaraokeTests.swift,
+			);
+			target = 7B589AA42F768EC400C3BF6A /* NeuroKaraokeTests */;
+		};
+		7B75955E2F76ADBD000AC8D0 /* Exceptions for "NeuroKaraokeUITests" folder in "NeuroKaraokeUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NeuroKaraokeTests/NeuroKaraokeTests.swift,
+			);
+			target = 7B589AAE2F768EC400C3BF6A /* NeuroKaraokeUITests */;
+		};
+		7B9000012F76B00000C3BF6A /* Exceptions for "NeuroKaraoke" folder in "NeuroKaraoke" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 7B589A972F768EC300C3BF6A /* NeuroKaraoke */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7B589A9A2F768EC300C3BF6A /* NeuroKaraoke */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7B9000012F76B00000C3BF6A /* Exceptions for "NeuroKaraoke" folder in "NeuroKaraoke" target */,
+			);
 			path = NeuroKaraoke;
-			sourceTree = "<group>";
-		};
-		7B589AA82F768EC400C3BF6A /* NeuroKaraokeTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = NeuroKaraokeTests;
 			sourceTree = "<group>";
 		};
 		7B589AB22F768EC400C3BF6A /* NeuroKaraokeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				7B75955D2F76ADBD000AC8D0 /* Exceptions for "NeuroKaraokeUITests" folder in "NeuroKaraokeTests" target */,
+				7B75955E2F76ADBD000AC8D0 /* Exceptions for "NeuroKaraokeUITests" folder in "NeuroKaraokeUITests" target */,
+			);
 			path = NeuroKaraokeUITests;
 			sourceTree = "<group>";
 		};
@@ -76,7 +102,6 @@
 			isa = PBXGroup;
 			children = (
 				7B589A9A2F768EC300C3BF6A /* NeuroKaraoke */,
-				7B589AA82F768EC400C3BF6A /* NeuroKaraokeTests */,
 				7B589AB22F768EC400C3BF6A /* NeuroKaraokeUITests */,
 				7B589A992F768EC300C3BF6A /* Products */,
 			);
@@ -129,9 +154,6 @@
 			);
 			dependencies = (
 				7B589AA72F768EC400C3BF6A /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				7B589AA82F768EC400C3BF6A /* NeuroKaraokeTests */,
 			);
 			name = NeuroKaraokeTests;
 			packageProductDependencies = (
@@ -397,17 +419,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				EXCLUDED_SOURCE_FILE_NAMES = Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NeuroKaraoke/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
@@ -441,17 +455,9 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
-				GENERATE_INFOPLIST_FILE = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
-				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
-				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				EXCLUDED_SOURCE_FILE_NAMES = Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = NeuroKaraoke/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
