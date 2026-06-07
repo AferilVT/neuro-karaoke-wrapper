@@ -11,6 +11,7 @@ import java.util.Locale
 object LocaleManager {
 
     private var prefs: SharedPreferences? = null
+    private var appContext: Context? = null
 
     val SUPPORTED_LANGUAGES: Set<String> = setOf("en", "zh-CN")
     val DEFAULT_LANGUAGE: String = "en"
@@ -23,6 +24,7 @@ object LocaleManager {
         if (prefs != null) return
         // Use context directly — applicationContext is null during attachBaseContext()
         val ctx = context.applicationContext ?: context
+        appContext = ctx
         prefs = ctx.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val stored = prefs?.getString(KEY_LANGUAGE, null)
         val language = if (stored != null && stored in SUPPORTED_LANGUAGES) {
@@ -45,7 +47,17 @@ object LocaleManager {
         // Async persist via apply()
         prefs?.edit()?.putString(KEY_LANGUAGE, validCode)?.apply()
 
-        // Update StateFlow
+        // Update the app-level resources Configuration so stringResource() picks up
+        // the new locale without needing Activity.recreate()
+        appContext?.let { ctx ->
+            val locale = getLocaleForCode(validCode)
+            val config = Configuration(ctx.resources.configuration)
+            config.setLocale(locale)
+            @Suppress("DEPRECATION")
+            ctx.resources.updateConfiguration(config, ctx.resources.displayMetrics)
+        }
+
+        // Update StateFlow (triggers Compose recomposition)
         _currentLanguage.value = validCode
     }
 

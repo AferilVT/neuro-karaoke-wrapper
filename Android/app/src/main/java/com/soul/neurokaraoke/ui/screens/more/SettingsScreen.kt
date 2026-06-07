@@ -46,7 +46,6 @@ fun SettingsScreen(
     val normalizeVolume by SettingsRepository.normalizeVolume.collectAsState()
     val autoPlay by SettingsRepository.autoPlay.collectAsState()
     val currentLanguage by LocaleManager.currentLanguage.collectAsState()
-    val activity = LocalContext.current as? android.app.Activity
 
     Column(
         modifier = modifier
@@ -188,10 +187,7 @@ fun SettingsScreen(
 
         LanguageSelector(
             currentLanguage = currentLanguage,
-            onLanguageSelected = {
-                LocaleManager.setLanguage(it)
-                activity?.recreate()
-            }
+            onLanguageSelected = { LocaleManager.setLanguage(it) }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
