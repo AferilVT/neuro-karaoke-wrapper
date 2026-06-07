@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Neuro Karaoke</string>
+    <string name="app_name">Neuro 卡拉OK</string>
 
     <!-- Brand names (keep untranslated) -->
-    <string name="brand_neuro_karaoke">Neuro Karaoke</string>
-    <string name="brand_neuro_21_station">Neuro 21 Station</string>
+    <string name="brand_neuro_karaoke">Neuro 卡拉OK</string>
+    <string name="brand_neuro_21_station">Neuro 21 电台</string>
     <string name="brand_name_discord">Discord</string>
 
     <!-- Bottom navigation bar -->
@@ -15,7 +15,7 @@
     <string name="nav_tab_more">更多</string>
 
     <!-- Top bar / Profile -->
-    <string name="topbar_content_description_logo">NeuroKaraoke 标志</string>
+    <string name="topbar_content_description_logo">Neuro 卡拉OK标志</string>
     <string name="topbar_content_description_profile">个人资料</string>
     <string name="topbar_menu_pair_car">配对车机</string>
     <string name="topbar_menu_sign_out">退出登录</string>
@@ -80,7 +80,7 @@
     <string name="lyrics_status_loading">正在搜索歌词…</string>
     <string name="lyrics_empty_title">未找到歌词</string>
     <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
-    <string name="lyrics_credit_neurokaraoke">歌词由 NeuroKaraoke 提供</string>
+    <string name="lyrics_credit_neurokaraoke">歌词由 Neuro卡拉OK 提供</string>
     <string name="lyrics_credit_lrclib">歌词由 LRCLIB 提供</string>
 
     <!-- Queue -->
@@ -149,7 +149,7 @@
     <string name="library_tab_favorites">收藏</string>
     <string name="library_tab_playlists">播放列表</string>
     <string name="library_tab_downloads">下载</string>
-    <string name="library_profile_sync_status">Discord + NeuroKaraoke 同步</string>
+    <string name="library_profile_sync_status">Discord + Neuro卡拉OK 同步</string>
     <string name="library_sign_in_title">登录</string>
     <string name="library_sign_in_subtitle">通过 Discord 连接以同步数据</string>
 
@@ -243,7 +243,7 @@
     <string name="settings_language_chinese">简体中文</string>
 
     <!-- Radio screen -->
-    <string name="radio_station_title">NEURO 21 STATION</string>
+    <string name="radio_station_title">NEURO 21 电台</string>
     <string name="radio_label_live">直播</string>
     <string name="radio_label_offline">离线</string>
     <string name="radio_label_now_playing">正在播放</string>
@@ -256,7 +256,7 @@
     <string name="radio_offline_title">电台当前离线</string>
     <string name="radio_offline_subtitle">请稍后再试！</string>
     <string name="radio_default_title">24/7 卡拉OK电台</string>
-    <string name="radio_station_badge_live">NEURO 21 STATION · 直播</string>
+    <string name="radio_station_badge_live">NEURO 21 电台 · 直播</string>
     <string name="radio_covered_by">%1$s  ·  翻唱：%2$s</string>
 
     <!-- Pair car dialog -->
@@ -277,7 +277,7 @@
     <string name="update_dialog_button_dismiss">暂不更新</string>
 
     <!-- Navigation drawer -->
-    <string name="drawer_brand_title">Neuro Karaoke</string>
+    <string name="drawer_brand_title">Neuro 卡拉OK</string>
     <string name="drawer_button_random_song">随机歌曲</string>
     <string name="drawer_section_library">我的曲库</string>
     <string name="drawer_section_theme">主题</string>
@@ -345,7 +345,7 @@
     <string name="car_title_radio">电台</string>
     <string name="car_empty_no_songs">暂无缓存歌曲，请先在手机上打开应用。</string>
     <string name="car_empty_no_playlists">暂无播放列表</string>
-    <string name="car_radio_station_title">Neuro 21 Station</string>
+    <string name="car_radio_station_title">Neuro 21 电台</string>
     <string name="car_radio_subtitle">直播 · 24/7 卡拉OK电台</string>
     <string name="car_radio_button_listen">收听直播</string>
     <string name="car_playlist_button_play">播放</string>
