@@ -378,6 +378,52 @@
     <string name="common_content_description_more_options">More options</string>
     <string name="common_label_songs_format">%1$d songs</string>
 
+    <!-- Soundbites screen -->
+    <string name="soundbites_header_title">Soundbites</string>
+    <string name="soundbites_header_subtitle">A collection of soundbites featuring Neuro and Evil captured from streams. Soundbites created and edited by Rachinova and CJ</string>
+    <string name="soundbites_search_placeholder">Search videos by name, description, or uploader…</string>
+    <string name="soundbites_sort_most_played">Most Played</string>
+    <string name="soundbites_sort_newest">Newest</string>
+    <string name="soundbites_sort_title_az">Title A-Z</string>
+    <string name="soundbites_sort_shortest">Shortest</string>
+    <string name="soundbites_sort_longest">Longest</string>
+    <string name="soundbites_filter_all">All</string>
+    <string name="soundbites_filter_neuro">Neuro</string>
+    <string name="soundbites_filter_evil">Evil</string>
+    <string name="soundbites_filter_vedal">Vedal</string>
+    <string name="soundbites_filter_other">Other</string>
+    <string name="soundbites_content_description_sort">Sort</string>
+    <string name="soundbites_label_count">%1$d soundbites</string>
+    <string name="soundbites_empty_no_match">No soundbites found</string>
+    <string name="soundbites_empty_none">No soundbites available</string>
+    <string name="soundbites_content_description_stop">Stop</string>
+    <string name="soundbites_content_description_play">Play</string>
+
+    <!-- Setlists screen -->
+    <string name="setlists_header_title">Karaoke Setlists</string>
+    <string name="setlists_label_count">%1$d setlists available</string>
+    <string name="setlists_search_placeholder">Search setlists</string>
+    <string name="setlists_filter_all">All</string>
+    <string name="setlists_label_song_count">%1$d songs</string>
+    <string name="setlists_label_tap_to_load">Tap to load</string>
+    <string name="setlists_label_setlist_id">Setlist %1$s…</string>
+
+    <!-- Artists screen -->
+    <string name="artists_header_title">Artists</string>
+    <string name="artists_header_subtitle">Browse songs by original artists covered by Neuro and Evil</string>
+    <string name="artists_search_placeholder">Search artists</string>
+    <string name="artists_label_count">%1$d artists</string>
+    <string name="artists_status_loading">Loading artists…</string>
+    <string name="artists_empty_none">No artists found</string>
+
+    <!-- Artist detail screen -->
+    <string name="artist_detail_content_description_back">Back</string>
+    <string name="artist_detail_label_artist">ARTIST</string>
+    <string name="artist_detail_label_songs_covered">%1$d songs covered</string>
+    <string name="artist_detail_button_play">PLAY</string>
+    <string name="artist_detail_content_description_shuffle">Shuffle</string>
+    <string name="artist_detail_section_songs">SONGS</string>
+
     <!-- Upload / Local Music screen -->
     <string name="upload_header_title">Local Music</string>
     <string name="upload_content_description_back">Back</string>

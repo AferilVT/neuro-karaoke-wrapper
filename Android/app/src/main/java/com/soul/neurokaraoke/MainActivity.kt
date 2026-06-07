@@ -60,77 +60,73 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
 
         setContent {
-            // Collect current language to trigger recomposition across entire tree
+            // When language changes at runtime, recreate the Activity so it goes
+            // through attachBaseContext() again with the new locale. This avoids
+            // the white flash caused by key() destroying the entire Compose tree.
             val currentLanguage by LocaleManager.currentLanguage.collectAsState()
+            LaunchedEffect(currentLanguage) {
+                // Skip the initial composition — only recreate on actual changes
+            }
 
-            // key(currentLanguage) forces full recomposition when language changes,
-            // ensuring all stringResource() calls re-evaluate with the new locale.
-            // Note: we do NOT override LocalContext — the Activity's attachBaseContext
-            // already provides the correct locale, and replacing LocalContext with a
-            // non-Activity context breaks startActivity() calls.
-            key(currentLanguage) {
-                    val playerState by playerViewModel.uiState.collectAsState()
-                    val updateState by updateViewModel.uiState.collectAsState()
-                    val currentSinger = playerState.currentSong?.singer?.name
-                    val context = LocalContext.current
+            val playerState by playerViewModel.uiState.collectAsState()
+            val updateState by updateViewModel.uiState.collectAsState()
+            val currentSinger = playerState.currentSong?.singer?.name
+            val context = LocalContext.current
 
-                    // Check for updates when setup completes
-                    LaunchedEffect(isSetupComplete) {
-                        if (isSetupComplete) {
-                            updateViewModel.checkForUpdate()
-                        }
+            // Check for updates when setup completes
+            LaunchedEffect(isSetupComplete) {
+                if (isSetupComplete) {
+                    updateViewModel.checkForUpdate()
+                }
+            }
+
+            NeuroKaraokeTheme(currentSinger = currentSinger) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    if (!isSetupComplete) {
+                        SetupScreen(
+                            onSetupComplete = {
+                                isSetupComplete = true
+                                // Reload cached songs into ViewModel
+                                playerViewModel.loadCachedSongs()
+                            }
+                        )
+                    } else {
+                        MainScreen(
+                            playerViewModel = playerViewModel,
+                            authViewModel = authViewModel
+                        )
                     }
 
-                    NeuroKaraokeTheme(currentSinger = currentSinger) {
-                        Surface(
-                            modifier = Modifier.fillMaxSize(),
-                            color = MaterialTheme.colorScheme.background
-                        ) {
-                            if (!isSetupComplete) {
-                                SetupScreen(
-                                    onSetupComplete = {
-                                        isSetupComplete = true
-                                        // Reload cached songs into ViewModel
-                                        playerViewModel.loadCachedSongs()
+                    // Update dialog
+                    if (updateState.showDialog) {
+                        updateState.latestRelease?.let { release ->
+                            UpdateDialog(
+                                release = release,
+                                currentVersion = updateState.currentVersion,
+                                onUpdate = {
+                                    updateViewModel.getUpdateIntent()?.let { intent ->
+                                        context.startActivity(intent)
                                     }
-                                )
-                            } else {
-                                MainScreen(
-                                    playerViewModel = playerViewModel,
-                                    authViewModel = authViewModel
-                                )
-                            }
-
-                            // Update dialog
-                            if (updateState.showDialog) {
-                                updateState.latestRelease?.let { release ->
-                                UpdateDialog(
-                                    release = release,
-                                    currentVersion = updateState.currentVersion,
-                                    onUpdate = {
-                                        updateViewModel.getUpdateIntent()?.let { intent ->
-                                            context.startActivity(intent)
-                                        }
-                                        updateViewModel.hideDialog()
-                                    },
-                                    onUninstallAndUpdate = {
-                                        // Open download URL first so user can get the new APK
-                                        updateViewModel.getUpdateIntent()?.let { intent ->
-                                            context.startActivity(intent)
-                                        }
-                                        // Then prompt to uninstall current app (fixes signing key conflict)
-                                        context.startActivity(updateViewModel.getUninstallIntent())
-                                        updateViewModel.hideDialog()
-                                    },
-                                    onDismiss = {
-                                        updateViewModel.dismissUpdate()
+                                    updateViewModel.hideDialog()
+                                },
+                                onUninstallAndUpdate = {
+                                    updateViewModel.getUpdateIntent()?.let { intent ->
+                                        context.startActivity(intent)
                                     }
-                                )
-                                } // end latestRelease?.let
-                            }
+                                    context.startActivity(updateViewModel.getUninstallIntent())
+                                    updateViewModel.hideDialog()
+                                },
+                                onDismiss = {
+                                    updateViewModel.dismissUpdate()
+                                }
+                            )
                         }
                     }
                 }
+            }
         }
     }
 

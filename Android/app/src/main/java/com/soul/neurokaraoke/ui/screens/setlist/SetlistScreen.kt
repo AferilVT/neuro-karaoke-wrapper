@@ -42,6 +42,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
+import com.soul.neurokaraoke.R
+import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.ui.components.FilterChipsRow
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.GlassCard
@@ -80,7 +82,7 @@ fun SetlistScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         GradientText(
-            text = "Karaoke Setlists",
+            text = stringResource(R.string.setlists_header_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -88,7 +90,7 @@ fun SetlistScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${playlists.size} setlists available",
+            text = stringResource(R.string.setlists_label_count, playlists.size),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -98,7 +100,7 @@ fun SetlistScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search setlists"
+            placeholder = stringResource(R.string.setlists_search_placeholder)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -231,8 +233,8 @@ private fun PlaylistCard(
                 )
                 Text(
                     text = when {
-                        playlist.songCount > 0 -> "${playlist.songCount} songs"
-                        playlist.title.isEmpty() -> "Tap to load"
+                        playlist.songCount > 0 -> stringResource(R.string.setlists_label_song_count, playlist.songCount)
+                        playlist.title.isEmpty() -> stringResource(R.string.setlists_label_tap_to_load)
                         else -> ""
                     },
                     style = MaterialTheme.typography.bodySmall,

@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Artist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.ArtistImageRepository
+import com.soul.neurokaraoke.R
+import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.ui.components.ArtistCard
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.GradientText
@@ -83,7 +85,7 @@ fun ArtistsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         GradientText(
-            text = "Artists",
+            text = stringResource(R.string.artists_header_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold
         )
@@ -91,7 +93,7 @@ fun ArtistsScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Browse songs by original artists covered by Neuro and Evil",
+            text = stringResource(R.string.artists_header_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -101,13 +103,13 @@ fun ArtistsScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search artists"
+            placeholder = stringResource(R.string.artists_search_placeholder)
         )
 
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "${filteredArtists.size} artists",
+            text = stringResource(R.string.artists_label_count, filteredArtists.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -123,7 +125,7 @@ fun ArtistsScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Loading artists...",
+                        text = stringResource(R.string.artists_status_loading),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

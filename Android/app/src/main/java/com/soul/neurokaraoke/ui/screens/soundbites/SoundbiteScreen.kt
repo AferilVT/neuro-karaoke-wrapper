@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.api.SoundbiteApi
 import com.soul.neurokaraoke.data.model.Soundbite
+import com.soul.neurokaraoke.R
+import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.EvilColor
@@ -68,20 +70,20 @@ import kotlinx.coroutines.launch
 
 private const val PAGE_SIZE = 30
 
-private enum class SoundbiteSortOption(val label: String) {
-    DEFAULT("Most Played"),
-    NEWEST("Newest"),
-    TITLE_AZ("Title A-Z"),
-    SHORTEST("Shortest"),
-    LONGEST("Longest")
+private enum class SoundbiteSortOption(val labelRes: Int) {
+    DEFAULT(R.string.soundbites_sort_most_played),
+    NEWEST(R.string.soundbites_sort_newest),
+    TITLE_AZ(R.string.soundbites_sort_title_az),
+    SHORTEST(R.string.soundbites_sort_shortest),
+    LONGEST(R.string.soundbites_sort_longest)
 }
 
 private val TAG_FILTERS = listOf(
-    -1 to "All",
-    0 to "Neuro",
-    1 to "Evil",
-    2 to "Vedal",
-    3 to "Other"
+    -1 to R.string.soundbites_filter_all,
+    0 to R.string.soundbites_filter_neuro,
+    1 to R.string.soundbites_filter_evil,
+    2 to R.string.soundbites_filter_vedal,
+    3 to R.string.soundbites_filter_other
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -200,14 +202,14 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
         item {
             Column(modifier = Modifier.padding(16.dp)) {
                 GradientText(
-                    text = "Soundbites",
+                    text = stringResource(R.string.soundbites_header_title),
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
                     gradientColors = NeonTheme.colors.gradientColors
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "A collection of soundbites featuring Neuro and Evil captured from streams. Soundbites created and edited by Rachinova and CJ",
+                    text = stringResource(R.string.soundbites_header_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -219,7 +221,7 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = { searchQuery = it },
-                placeholder = "Search videos by name, description, or uploader...",
+                placeholder = stringResource(R.string.soundbites_search_placeholder),
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
@@ -237,11 +239,11 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TAG_FILTERS.forEach { (tag, label) ->
+                    TAG_FILTERS.forEach { (tag, labelRes) ->
                         FilterChip(
                             selected = selectedTag == tag,
                             onClick = { selectedTag = tag },
-                            label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+                            label = { Text(stringResource(labelRes), style = MaterialTheme.typography.labelMedium) },
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                                 selectedLabelColor = MaterialTheme.colorScheme.primary
@@ -254,7 +256,7 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
                     IconButton(onClick = { showSortMenu = true }) {
                         Icon(
                             Icons.AutoMirrored.Filled.Sort,
-                            contentDescription = "Sort",
+                            contentDescription = stringResource(R.string.soundbites_content_description_sort),
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
                     }
@@ -264,7 +266,7 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
                     ) {
                         SoundbiteSortOption.entries.forEach { option ->
                             DropdownMenuItem(
-                                text = { Text(option.label) },
+                                text = { Text(stringResource(option.labelRes)) },
                                 onClick = {
                                     sortOption = option
                                     showSortMenu = false
@@ -289,7 +291,7 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
         // Results count
         item {
             Text(
-                text = "$totalCount soundbites",
+                text = stringResource(R.string.soundbites_label_count, totalCount),
                 style = CyberLabelStyle,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -316,8 +318,8 @@ fun SoundbiteScreen(modifier: Modifier = Modifier) {
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "No soundbites found"
-                        else "No soundbites available",
+                        text = if (searchQuery.isNotBlank()) stringResource(R.string.soundbites_empty_no_match)
+                        else stringResource(R.string.soundbites_empty_none),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     )
                 }
@@ -482,7 +484,7 @@ private fun SoundbiteRow(
             ) {
                 Icon(
                     if (isPlaying) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = if (isPlaying) "Stop" else "Play",
+                    contentDescription = if (isPlaying) stringResource(R.string.soundbites_content_description_stop) else stringResource(R.string.soundbites_content_description_play),
                     tint = if (isPlaying) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.size(20.dp)
