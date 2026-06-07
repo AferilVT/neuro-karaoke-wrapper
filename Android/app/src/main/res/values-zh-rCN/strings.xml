@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Neuro 卡拉OK</string>
+    <string name="app_name">Neuro Karaoke</string>
 
     <!-- Brand names (keep untranslated) -->
     <string name="brand_neuro_karaoke">Neuro 卡拉OK</string>
@@ -375,4 +375,16 @@
     <string name="common_content_description_close">关闭</string>
     <string name="common_content_description_more_options">更多选项</string>
     <string name="common_label_songs_format">%1$d 首歌曲</string>
+
+    <!-- Upload / Local Music screen -->
+    <string name="upload_header_title">本地音乐</string>
+    <string name="upload_content_description_back">返回</string>
+    <string name="upload_empty_title">暂无本地歌曲</string>
+    <string name="upload_empty_subtitle">点按 + 从设备导入 .mp3 文件。</string>
+    <string name="upload_button_import">导入音乐</string>
+    <string name="upload_button_play">播放</string>
+    <string name="upload_button_shuffle">随机播放</string>
+    <string name="upload_label_song_count">%1$d 首歌曲</string>
+    <string name="upload_content_description_remove">移除</string>
+    <string name="upload_content_description_import">导入音乐</string>
 </resources>

@@ -62,11 +62,11 @@ import com.soul.neurokaraoke.R
 
 private const val PAGE_SIZE = 20
 
-enum class SortOption(val label: String) {
-    TITLE_ASC("Title A-Z"),
-    TITLE_DESC("Title Z-A"),
-    ARTIST_ASC("Artist A-Z"),
-    ARTIST_DESC("Artist Z-A")
+enum class SortOption(val labelRes: Int) {
+    TITLE_ASC(R.string.search_sort_title_asc),
+    TITLE_DESC(R.string.search_sort_title_desc),
+    ARTIST_ASC(R.string.search_sort_artist_asc),
+    ARTIST_DESC(R.string.search_sort_artist_desc)
 }
 
 @Composable
@@ -262,7 +262,7 @@ fun SearchScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = sortOption.label,
+                                text = stringResource(sortOption.labelRes),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -281,7 +281,7 @@ fun SearchScreen(
                         ) {
                             SortOption.entries.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(option.label) },
+                                    text = { Text(stringResource(option.labelRes)) },
                                     onClick = {
                                         sortOption = option
                                         showSortMenu = false

@@ -377,4 +377,16 @@
     <string name="common_content_description_close">Close</string>
     <string name="common_content_description_more_options">More options</string>
     <string name="common_label_songs_format">%1$d songs</string>
+
+    <!-- Upload / Local Music screen -->
+    <string name="upload_header_title">Local Music</string>
+    <string name="upload_content_description_back">Back</string>
+    <string name="upload_empty_title">No local songs</string>
+    <string name="upload_empty_subtitle">Tap + to import .mp3 files from your device.</string>
+    <string name="upload_button_import">Import Music</string>
+    <string name="upload_button_play">Play</string>
+    <string name="upload_button_shuffle">Shuffle</string>
+    <string name="upload_label_song_count">%1$d songs</string>
+    <string name="upload_content_description_remove">Remove</string>
+    <string name="upload_content_description_import">Import music</string>
 </resources>
