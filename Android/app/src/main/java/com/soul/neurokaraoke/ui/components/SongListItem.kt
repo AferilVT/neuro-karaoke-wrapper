@@ -2,6 +2,8 @@ package com.soul.neurokaraoke.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -190,7 +192,7 @@ fun SongListItem(
             ) {
                 if (onAddToPlaylistClick != null) {
                     DropdownMenuItem(
-                        text = { Text("Add to Playlist") },
+                        text = { Text(stringResource(R.string.song_menu_add_to_playlist)) },
                         onClick = {
                             showMenu = false
                             onAddToPlaylistClick()
@@ -205,7 +207,7 @@ fun SongListItem(
                 }
                 if (isDownloaded) {
                     DropdownMenuItem(
-                        text = { Text("Remove Download") },
+                        text = { Text(stringResource(R.string.song_menu_remove_download)) },
                         onClick = {
                             showMenu = false
                             onRemoveDownloadClick?.invoke()

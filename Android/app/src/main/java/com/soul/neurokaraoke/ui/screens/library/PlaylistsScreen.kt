@@ -101,7 +101,7 @@ fun PlaylistsScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 GradientText(
-                    text = "Your Playlists",
+                    text = stringResource(R.string.playlists_header_title),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -316,7 +316,7 @@ private fun UserPlaylistCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = stringResource(R.string.playlists_content_description_delete),
                             tint = MaterialTheme.colorScheme.error,
                             modifier = Modifier.size(18.dp)
                         )
@@ -344,7 +344,7 @@ private fun UserPlaylistCard(
                     if (isServerPlaylist) {
                         Icon(
                             imageVector = Icons.Default.Cloud,
-                            contentDescription = "Synced",
+                            contentDescription = stringResource(R.string.playlists_content_description_synced),
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(14.dp)
                         )
@@ -427,7 +427,7 @@ private fun CreatePlaylistSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Create playlist",
+                    text = stringResource(R.string.playlists_create_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -435,7 +435,7 @@ private fun CreatePlaylistSheet(
                 IconButton(onClick = onDismiss) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Close",
+                        contentDescription = stringResource(R.string.playlists_create_content_description_close),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -464,7 +464,7 @@ private fun CreatePlaylistSheet(
                     if (coverUri != null) {
                         AsyncImage(
                             model = coverUri,
-                            contentDescription = "Playlist cover",
+                            contentDescription = stringResource(R.string.playlists_create_content_description_cover),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -486,7 +486,7 @@ private fun CreatePlaylistSheet(
                     OutlinedTextField(
                         value = playlistName,
                         onValueChange = { if (it.length <= 200) playlistName = it },
-                        label = { Text("Playlist Name") },
+                        label = { Text(stringResource(R.string.playlists_create_label_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -506,7 +506,7 @@ private fun CreatePlaylistSheet(
                     OutlinedTextField(
                         value = description,
                         onValueChange = { if (it.length <= 200) description = it },
-                        label = { Text("Write a description") },
+                        label = { Text(stringResource(R.string.playlists_create_label_description)) },
                         minLines = 3,
                         maxLines = 3,
                         modifier = Modifier.fillMaxWidth(),
@@ -538,7 +538,7 @@ private fun CreatePlaylistSheet(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("CHOOSE IMAGE")
+                Text(stringResource(R.string.playlists_create_button_choose_image))
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -551,13 +551,13 @@ private fun CreatePlaylistSheet(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Make it public",
+                        text = stringResource(R.string.playlists_create_toggle_public),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Your playlist will be visible on your Profile and accessible by anyone.",
+                        text = stringResource(R.string.playlists_create_toggle_public_description),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -589,7 +589,7 @@ private fun CreatePlaylistSheet(
                     enabled = playlistName.isNotBlank()
                 ) {
                     Text(
-                        text = "SAVE",
+                        text = stringResource(R.string.playlists_create_button_save),
                         color = if (playlistName.isNotBlank()) {
                             MaterialTheme.colorScheme.primary
                         } else {

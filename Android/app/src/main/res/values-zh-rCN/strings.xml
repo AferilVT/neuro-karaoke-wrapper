@@ -103,12 +103,12 @@
     <string name="equalizer_label_frequency_bands">频段</string>
 
     <!-- Search screen -->
-    <string name="search_input_placeholder">按名称或歌手搜索</string>
+    <string name="search_input_placeholder">按名称或艺术家搜索</string>
     <string name="search_content_description_search">搜索</string>
     <string name="search_content_description_clear">清除</string>
     <string name="search_filter_button">+ 添加筛选</string>
     <string name="search_filter_button_active">筛选 (%1$d)</string>
-    <string name="search_filter_label_singer">歌手</string>
+    <string name="search_filter_label_singer">艺术家</string>
     <string name="search_filter_label_sort_by">排序方式</string>
     <string name="search_filter_singer_all">全部</string>
     <string name="search_filter_singer_neuro">Neuro</string>
@@ -116,11 +116,11 @@
     <string name="search_filter_singer_duet">Duet</string>
     <string name="search_sort_title_asc">标题 A-Z</string>
     <string name="search_sort_title_desc">标题 Z-A</string>
-    <string name="search_sort_artist_asc">歌手 A-Z</string>
-    <string name="search_sort_artist_desc">歌手 Z-A</string>
+    <string name="search_sort_artist_asc">艺术家 A-Z</string>
+    <string name="search_sort_artist_desc">艺术家 Z-A</string>
     <string name="search_button_clear_filters">清除所有筛选</string>
     <string name="search_loading_with_count">加载歌曲中… (已找到 %1$d 首)</string>
-    <string name="search_loading_setlists">加载所有曲目单…</string>
+    <string name="search_loading_setlists">加载所有歌单…</string>
     <string name="search_empty_no_songs">暂无歌曲</string>
     <string name="search_empty_no_match">没有匹配的歌曲</string>
     <string name="search_button_clear">清除筛选</string>
@@ -205,9 +205,9 @@
 
     <!-- More screen -->
     <string name="more_header_title">更多</string>
-    <string name="more_item_soundbites">声音片段</string>
-    <string name="more_item_setlists">曲目单</string>
-    <string name="more_item_artists">歌手</string>
+    <string name="more_item_soundbites">音频片段</string>
+    <string name="more_item_setlists">歌单</string>
+    <string name="more_item_artists">艺术家</string>
     <string name="more_item_local_music">本地音乐</string>
     <string name="more_item_settings">设置</string>
     <string name="more_item_about">关于应用</string>
@@ -377,8 +377,8 @@
     <string name="common_label_songs_format">%1$d 首歌曲</string>
 
     <!-- Soundbites screen -->
-    <string name="soundbites_header_title">声音片段</string>
-    <string name="soundbites_header_subtitle">来自直播中 Neuro 和 Evil 的声音片段合集。由 Rachinova 和 CJ 创建和编辑</string>
+    <string name="soundbites_header_title">音频片段</string>
+    <string name="soundbites_header_subtitle">来自直播中 Neuro 和 Evil 的音频片段合集。由 Rachinova 和 CJ 创建和编辑</string>
     <string name="soundbites_search_placeholder">按名称、描述或上传者搜索…</string>
     <string name="soundbites_sort_most_played">最多播放</string>
     <string name="soundbites_sort_newest">最新</string>
@@ -398,25 +398,25 @@
     <string name="soundbites_content_description_play">播放</string>
 
     <!-- Setlists screen -->
-    <string name="setlists_header_title">卡拉OK曲目单</string>
-    <string name="setlists_label_count">%1$d 个曲目单可用</string>
-    <string name="setlists_search_placeholder">搜索曲目单</string>
+    <string name="setlists_header_title">卡拉OK歌单</string>
+    <string name="setlists_label_count">%1$d 个歌单可用</string>
+    <string name="setlists_search_placeholder">搜索歌单</string>
     <string name="setlists_filter_all">全部</string>
     <string name="setlists_label_song_count">%1$d 首歌曲</string>
     <string name="setlists_label_tap_to_load">点按加载</string>
-    <string name="setlists_label_setlist_id">曲目单 %1$s…</string>
+    <string name="setlists_label_setlist_id">歌单 %1$s…</string>
 
     <!-- Artists screen -->
-    <string name="artists_header_title">歌手</string>
-    <string name="artists_header_subtitle">浏览 Neuro 和 Evil 翻唱的原唱歌手</string>
-    <string name="artists_search_placeholder">搜索歌手</string>
-    <string name="artists_label_count">%1$d 位歌手</string>
-    <string name="artists_status_loading">加载歌手中…</string>
-    <string name="artists_empty_none">未找到歌手</string>
+    <string name="artists_header_title">艺术家</string>
+    <string name="artists_header_subtitle">浏览 Neuro 和 Evil 翻唱的原唱艺术家</string>
+    <string name="artists_search_placeholder">搜索艺术家</string>
+    <string name="artists_label_count">%1$d 位艺术家</string>
+    <string name="artists_status_loading">加载艺术家中…</string>
+    <string name="artists_empty_none">未找到艺术家</string>
 
     <!-- Artist detail screen -->
     <string name="artist_detail_content_description_back">返回</string>
-    <string name="artist_detail_label_artist">歌手</string>
+    <string name="artist_detail_label_artist">艺术家</string>
     <string name="artist_detail_label_songs_covered">%1$d 首翻唱歌曲</string>
     <string name="artist_detail_button_play">播放</string>
     <string name="artist_detail_content_description_shuffle">随机播放</string>
@@ -426,11 +426,15 @@
     <string name="upload_header_title">本地音乐</string>
     <string name="upload_content_description_back">返回</string>
     <string name="upload_empty_title">暂无本地歌曲</string>
-    <string name="upload_empty_subtitle">点按 + 从设备导入 .mp3 文件。</string>
+    <string name="upload_empty_subtitle">点按导入音乐从设备导入 .mp3 文件。</string>
     <string name="upload_button_import">导入音乐</string>
     <string name="upload_button_play">播放</string>
     <string name="upload_button_shuffle">随机播放</string>
     <string name="upload_label_song_count">%1$d 首歌曲</string>
     <string name="upload_content_description_remove">移除</string>
     <string name="upload_content_description_import">导入音乐</string>
+
+    <!-- Song list item menu -->
+    <string name="song_menu_add_to_playlist">添加到播放列表</string>
+    <string name="song_menu_remove_download">移除下载</string>
 </resources>

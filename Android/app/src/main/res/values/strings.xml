@@ -435,4 +435,8 @@
     <string name="upload_label_song_count">%1$d songs</string>
     <string name="upload_content_description_remove">Remove</string>
     <string name="upload_content_description_import">Import music</string>
+
+    <!-- Song list item menu -->
+    <string name="song_menu_add_to_playlist">Add to Playlist</string>
+    <string name="song_menu_remove_download">Remove Download</string>
 </resources>
