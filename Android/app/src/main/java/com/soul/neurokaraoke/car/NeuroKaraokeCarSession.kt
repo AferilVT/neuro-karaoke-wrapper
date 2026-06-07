@@ -10,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 class NeuroKaraokeCarSession : Session() {
@@ -28,7 +27,6 @@ class NeuroKaraokeCarSession : Session() {
             override fun onCreate(owner: LifecycleOwner) {
                 scope.launch {
                     LocaleManager.currentLanguage
-                        .distinctUntilChanged()
                         .collect {
                             // Invalidate home screen (rebuilds tab/grid templates)
                             homeScreen?.invalidateOnMain()

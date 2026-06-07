@@ -12,7 +12,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,12 +62,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             // Collect current language to trigger recomposition across entire tree
             val currentLanguage by LocaleManager.currentLanguage.collectAsState()
-            val localizedContext = LocaleManager.wrapContext(LocalContext.current)
 
             // key(currentLanguage) forces full recomposition when language changes,
             // ensuring all stringResource() calls re-evaluate with the new locale.
+            // Note: we do NOT override LocalContext — the Activity's attachBaseContext
+            // already provides the correct locale, and replacing LocalContext with a
+            // non-Activity context breaks startActivity() calls.
             key(currentLanguage) {
-                CompositionLocalProvider(LocalContext provides localizedContext) {
                     val playerState by playerViewModel.uiState.collectAsState()
                     val updateState by updateViewModel.uiState.collectAsState()
                     val currentSinger = playerState.currentSong?.singer?.name
@@ -131,7 +131,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
         }
     }
 

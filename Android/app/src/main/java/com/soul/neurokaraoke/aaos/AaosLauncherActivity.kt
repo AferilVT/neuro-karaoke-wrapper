@@ -10,7 +10,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -69,24 +67,21 @@ class AaosLauncherActivity : ComponentActivity() {
         setContent {
             // Collect current language to trigger recomposition across entire tree
             val currentLanguage by LocaleManager.currentLanguage.collectAsState()
-            val localizedContext = LocaleManager.wrapContext(LocalContext.current)
 
             key(currentLanguage) {
-                CompositionLocalProvider(LocalContext provides localizedContext) {
-                    NeuroKaraokeTheme {
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.background)
-                        ) {
-                            val vm: AaosViewModel = viewModel()
-                            LaunchedEffect(Unit) { vm.bootstrap(applicationContext) }
-                            // Discord deep-link path no longer used (pairing code replaces it).
-                            AaosApp(
-                                viewModel = vm,
-                                controllerProvider = { controller }
-                            )
-                        }
+                NeuroKaraokeTheme {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
+                    ) {
+                        val vm: AaosViewModel = viewModel()
+                        LaunchedEffect(Unit) { vm.bootstrap(applicationContext) }
+                        // Discord deep-link path no longer used (pairing code replaces it).
+                        AaosApp(
+                            viewModel = vm,
+                            controllerProvider = { controller }
+                        )
                     }
                 }
             }

@@ -21,7 +21,9 @@ object LocaleManager {
     @Synchronized
     fun initialize(context: Context) {
         if (prefs != null) return
-        prefs = context.applicationContext.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
+        // Use context directly — applicationContext is null during attachBaseContext()
+        val ctx = context.applicationContext ?: context
+        prefs = ctx.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val stored = prefs?.getString(KEY_LANGUAGE, null)
         val language = if (stored != null && stored in SUPPORTED_LANGUAGES) {
             stored
