@@ -295,7 +295,7 @@ function getOrCreateView(site: Site) {
  */
 function updateViewBounds() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const [width, height] = mainWindow.getContentSize();
+  const [width, height] = mainWindow.getSize();
   // Content fills entire window — titlebar overlays on top
   if (currentView) {
     currentView.setBounds({ x: 0, y: 0, width, height });
