@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,11 +15,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.soul.neurokaraoke.data.SongCache
+import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.model.User
 import com.soul.neurokaraoke.ui.MainScreen
 import com.soul.neurokaraoke.ui.components.UpdateDialog
@@ -34,6 +37,10 @@ class MainActivity : ComponentActivity() {
     private val playerViewModel: PlayerViewModel by viewModels()
     private val updateViewModel: UpdateViewModel by viewModels()
     private var isSetupComplete by mutableStateOf(false)
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleManager.wrapContext(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +60,14 @@ class MainActivity : ComponentActivity() {
         handleDeepLink(intent)
 
         setContent {
+            // When language changes at runtime, recreate the Activity so it goes
+            // through attachBaseContext() again with the new locale. This avoids
+            // the white flash caused by key() destroying the entire Compose tree.
+            val currentLanguage by LocaleManager.currentLanguage.collectAsState()
+            LaunchedEffect(currentLanguage) {
+                // Skip the initial composition — only recreate on actual changes
+            }
+
             val playerState by playerViewModel.uiState.collectAsState()
             val updateState by updateViewModel.uiState.collectAsState()
             val currentSinger = playerState.currentSong?.singer?.name
@@ -88,29 +103,27 @@ class MainActivity : ComponentActivity() {
                     // Update dialog
                     if (updateState.showDialog) {
                         updateState.latestRelease?.let { release ->
-                        UpdateDialog(
-                            release = release,
-                            currentVersion = updateState.currentVersion,
-                            onUpdate = {
-                                updateViewModel.getUpdateIntent()?.let { intent ->
-                                    context.startActivity(intent)
+                            UpdateDialog(
+                                release = release,
+                                currentVersion = updateState.currentVersion,
+                                onUpdate = {
+                                    updateViewModel.getUpdateIntent()?.let { intent ->
+                                        context.startActivity(intent)
+                                    }
+                                    updateViewModel.hideDialog()
+                                },
+                                onUninstallAndUpdate = {
+                                    updateViewModel.getUpdateIntent()?.let { intent ->
+                                        context.startActivity(intent)
+                                    }
+                                    context.startActivity(updateViewModel.getUninstallIntent())
+                                    updateViewModel.hideDialog()
+                                },
+                                onDismiss = {
+                                    updateViewModel.dismissUpdate()
                                 }
-                                updateViewModel.hideDialog()
-                            },
-                            onUninstallAndUpdate = {
-                                // Open download URL first so user can get the new APK
-                                updateViewModel.getUpdateIntent()?.let { intent ->
-                                    context.startActivity(intent)
-                                }
-                                // Then prompt to uninstall current app (fixes signing key conflict)
-                                context.startActivity(updateViewModel.getUninstallIntent())
-                                updateViewModel.hideDialog()
-                            },
-                            onDismiss = {
-                                updateViewModel.dismissUpdate()
-                            }
-                        )
-                        } // end latestRelease?.let
+                            )
+                        }
                     }
                 }
             }

@@ -37,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.R
+import androidx.compose.ui.res.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,7 +58,7 @@ fun NeuroTopBar(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
                     painter = painterResource(id = R.mipmap.neuro_foreground),
-                    contentDescription = "NeuroKaraoke Logo",
+                    contentDescription = stringResource(R.string.topbar_content_description_logo),
                     modifier = Modifier.size(40.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -71,7 +72,7 @@ fun NeuroTopBar(
                     if (avatarUrl != null) {
                         AsyncImage(
                             model = avatarUrl,
-                            contentDescription = "Profile",
+                            contentDescription = stringResource(R.string.topbar_content_description_profile),
                             modifier = Modifier
                                 .size(30.dp)
                                 .clip(CircleShape),
@@ -80,7 +81,7 @@ fun NeuroTopBar(
                     } else {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Profile",
+                            contentDescription = stringResource(R.string.topbar_content_description_profile),
                             modifier = Modifier.size(30.dp),
                             tint = primaryColor.copy(alpha = 0.7f)
                         )
@@ -91,12 +92,12 @@ fun NeuroTopBar(
                     onDismissRequest = { showMenu = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Pair Car") },
+                        text = { Text(stringResource(R.string.topbar_menu_pair_car)) },
                         leadingIcon = { Icon(Icons.Default.DirectionsCar, contentDescription = null) },
                         onClick = { showMenu = false; onPairCar() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Sign out") },
+                        text = { Text(stringResource(R.string.topbar_menu_sign_out)) },
                         leadingIcon = { Icon(Icons.Default.Logout, contentDescription = null) },
                         onClick = { showMenu = false; onSignOut() }
                     )

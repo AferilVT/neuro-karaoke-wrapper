@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.DownloadedSong
 import com.soul.neurokaraoke.ui.components.SongListItem
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun DownloadsScreen(
@@ -58,7 +60,7 @@ fun DownloadsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Downloads",
+            text = stringResource(R.string.downloads_header_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -72,7 +74,7 @@ fun DownloadsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${downloads.size} songs · $totalSize",
+                text = stringResource(R.string.downloads_label_stats, downloads.size, totalSize),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -84,7 +86,7 @@ fun DownloadsScreen(
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Remove All")
+                    Text(stringResource(R.string.downloads_button_remove_all))
                 }
             }
         }
@@ -109,7 +111,7 @@ fun DownloadsScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Play All")
+                    Text(stringResource(R.string.downloads_button_play_all))
                 }
 
                 Button(
@@ -126,7 +128,7 @@ fun DownloadsScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("Shuffle")
+                    Text(stringResource(R.string.downloads_button_shuffle))
                 }
             }
 
@@ -154,7 +156,7 @@ fun DownloadsScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "No downloads yet",
+                        text = stringResource(R.string.downloads_empty_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -164,7 +166,7 @@ fun DownloadsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = "Download songs to play them offline. Tap the menu on any song and select Download.",
+                        text = stringResource(R.string.downloads_empty_subtitle),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center

@@ -40,6 +40,8 @@ import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientProgressBar
 import com.soul.neurokaraoke.ui.theme.NeonTheme
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun MiniPlayer(
@@ -130,7 +132,7 @@ fun MiniPlayer(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "LIVE",
+                                text = stringResource(R.string.mini_player_label_live),
                                 style = CyberLabelStyle,
                                 color = Color.Red.copy(alpha = 0.9f),
                                 fontWeight = FontWeight.Bold
@@ -150,7 +152,7 @@ fun MiniPlayer(
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = Icons.Default.Bedtime,
-                                contentDescription = "Sleep timer active",
+                                contentDescription = stringResource(R.string.mini_player_content_description_sleep_timer),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(14.dp)
                             )
@@ -170,7 +172,7 @@ fun MiniPlayer(
                     IconButton(onClick = onPlayPauseClick) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            contentDescription = if (isPlaying) stringResource(R.string.mini_player_content_description_pause) else stringResource(R.string.mini_player_content_description_play),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.size(32.dp)
                         )
@@ -179,7 +181,7 @@ fun MiniPlayer(
                     IconButton(onClick = onRadioStopClick) {
                         Icon(
                             imageVector = Icons.Default.Stop,
-                            contentDescription = "Stop radio",
+                            contentDescription = stringResource(R.string.mini_player_content_description_stop_radio),
                             tint = MaterialTheme.colorScheme.error
                         )
                     }
@@ -188,7 +190,7 @@ fun MiniPlayer(
                     IconButton(onClick = onPreviousClick) {
                         Icon(
                             imageVector = Icons.Default.SkipPrevious,
-                            contentDescription = "Previous",
+                            contentDescription = stringResource(R.string.mini_player_content_description_previous),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
@@ -196,7 +198,7 @@ fun MiniPlayer(
                     IconButton(onClick = onPlayPauseClick) {
                         Icon(
                             imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            contentDescription = if (isPlaying) stringResource(R.string.mini_player_content_description_pause) else stringResource(R.string.mini_player_content_description_play),
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.size(32.dp)
                         )
@@ -205,7 +207,7 @@ fun MiniPlayer(
                     IconButton(onClick = onNextClick) {
                         Icon(
                             imageVector = Icons.Default.SkipNext,
-                            contentDescription = "Next",
+                            contentDescription = stringResource(R.string.mini_player_content_description_next),
                             tint = MaterialTheme.colorScheme.onBackground
                         )
                     }

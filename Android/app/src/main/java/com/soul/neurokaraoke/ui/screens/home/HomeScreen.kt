@@ -52,6 +52,8 @@ import com.soul.neurokaraoke.ui.theme.NeuroColor
 import com.soul.neurokaraoke.ui.theme.OtherColor
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GradientText
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun HomeScreen(
@@ -108,7 +110,7 @@ fun HomeScreen(
         // Setlist Songs Section
         item {
             SectionHeader(
-                title = "Songs",
+                title = stringResource(R.string.home_section_header_songs),
                 onSeeAllClick = if (latestPlaylist != null) {
                     { onSetlistClick(latestPlaylist.id) }
                 } else {
@@ -157,7 +159,7 @@ fun HomeScreen(
                 }
             } else {
                 Text(
-                    text = "No songs loaded yet",
+                    text = stringResource(R.string.home_empty_no_songs),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -168,7 +170,7 @@ fun HomeScreen(
         if (madeForYouSongs.isNotEmpty()) {
             item {
                 SectionHeader(
-                    title = "Made for You",
+                    title = stringResource(R.string.home_section_header_made_for_you),
                     onSeeAllClick = onSeeAllClick
                 )
             }
@@ -192,7 +194,7 @@ fun HomeScreen(
         if (trendingSongs.isNotEmpty()) {
             item {
                 SectionHeader(
-                    title = "Trending This Week",
+                    title = stringResource(R.string.home_section_header_trending),
                     onSeeAllClick = onSeeAllClick
                 )
             }
@@ -256,7 +258,7 @@ private fun CoverDistributionCard(coverDistribution: CoverDistribution? = null) 
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Cover Distribution",
+                    text = stringResource(R.string.home_section_header_cover_distribution),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -390,7 +392,7 @@ private fun TopGenresCard() {
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Top Genres",
+                text = stringResource(R.string.home_section_header_top_genres),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -452,7 +454,7 @@ private fun SectionHeader(
         if (onSeeAllClick != null) {
             TextButton(onClick = onSeeAllClick) {
                 Text(
-                    text = "SEE ALL",
+                    text = stringResource(R.string.home_button_see_all),
                     style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
                 )

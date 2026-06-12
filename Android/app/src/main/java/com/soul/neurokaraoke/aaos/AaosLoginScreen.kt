@@ -28,9 +28,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.soul.neurokaraoke.R
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
@@ -51,13 +53,13 @@ fun AaosLoginScreen(
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.aaos_login_content_description_back),
                     tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             Spacer(Modifier.width(16.dp))
             Text(
-                "Sign in with Discord",
+                stringResource(R.string.aaos_login_title),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold

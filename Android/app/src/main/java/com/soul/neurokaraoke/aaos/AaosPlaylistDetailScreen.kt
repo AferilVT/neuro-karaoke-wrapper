@@ -35,11 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
@@ -82,11 +84,11 @@ fun AaosPlaylistDetailScreen(
         Spacer(Modifier.height(24.dp))
         if (!loaded) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Loading…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.aaos_playlist_detail_loading), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else if (songs.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("No songs", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.aaos_playlist_detail_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
@@ -128,7 +130,7 @@ private fun Header(
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.aaos_playlist_detail_content_description_back),
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }
@@ -160,14 +162,14 @@ private fun Header(
                 overflow = TextOverflow.Ellipsis
             )
             Text(
-                text = if (playlist.songCount > 0) "${playlist.songCount} songs" else "Playlist",
+                text = if (playlist.songCount > 0) stringResource(R.string.common_label_songs_format, playlist.songCount) else stringResource(R.string.playlists_label_playlist),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 ActionButton(
-                    label = "Play",
+                    label = stringResource(R.string.aaos_playlist_detail_button_play),
                     icon = Icons.Default.PlayArrow,
                     primary = true,
                     onClick = {
@@ -176,7 +178,7 @@ private fun Header(
                     }
                 )
                 ActionButton(
-                    label = "Shuffle",
+                    label = stringResource(R.string.aaos_playlist_detail_button_shuffle),
                     icon = Icons.Default.Shuffle,
                     primary = false,
                     onClick = {
@@ -232,7 +234,7 @@ private fun TrackRow(index: Int, song: Song, onClick: () -> Unit) {
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = song.title.ifBlank { "Untitled" },
+                text = song.title.ifBlank { stringResource(R.string.aaos_label_untitled) },
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,

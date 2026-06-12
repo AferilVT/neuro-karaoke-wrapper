@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,7 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import androidx.compose.ui.draw.blur
+import com.soul.neurokaraoke.R
 import kotlinx.coroutines.delay
 
 @Composable
@@ -128,7 +130,7 @@ fun AaosNowPlayingScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = title.ifBlank { "Nothing playing" },
+                text = title.ifBlank { stringResource(R.string.aaos_now_playing_nothing) },
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
@@ -213,7 +215,7 @@ private fun BackButton(onBack: () -> Unit) {
         ) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = stringResource(R.string.aaos_now_playing_content_description_back),
                 tint = MaterialTheme.colorScheme.onBackground
             )
         }

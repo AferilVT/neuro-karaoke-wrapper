@@ -53,6 +53,7 @@ import com.soul.neurokaraoke.ui.theme.AccentDivider
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.NeuroColor
 import com.soul.neurokaraoke.ui.theme.ThemeMode
+import androidx.compose.ui.res.stringResource
 
 @Composable
 fun NavigationDrawerContent(
@@ -96,7 +97,7 @@ fun NavigationDrawerContent(
         ) {
             Image(
                 painter = painterResource(id = R.mipmap.neuro_foreground),
-                contentDescription = "NeuroKaraoke Logo",
+                contentDescription = stringResource(R.string.topbar_content_description_logo),
                 modifier = Modifier.size(40.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -140,7 +141,7 @@ fun NavigationDrawerContent(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Text(
-                text = "Random Song",
+                text = stringResource(R.string.drawer_button_random_song),
                 style = MaterialTheme.typography.bodyLarge,
                 color = primaryColor,
                 fontWeight = FontWeight.Medium
@@ -153,7 +154,7 @@ fun NavigationDrawerContent(
 
         // Library section with CyberLabelStyle
         Text(
-            text = "YOUR LIBRARY",
+            text = stringResource(R.string.drawer_section_library),
             style = CyberLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -179,7 +180,7 @@ fun NavigationDrawerContent(
 
         // Theme selector with CyberLabelStyle
         Text(
-            text = "THEME",
+            text = stringResource(R.string.drawer_section_theme),
             style = CyberLabelStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -265,7 +266,7 @@ fun NavigationDrawerContent(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Signed in with Discord",
+                        text = stringResource(R.string.drawer_user_signed_in),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -273,7 +274,7 @@ fun NavigationDrawerContent(
                 IconButton(onClick = onSignOutClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Logout,
-                        contentDescription = "Sign Out",
+                        contentDescription = stringResource(R.string.drawer_content_description_sign_out),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -304,13 +305,13 @@ fun NavigationDrawerContent(
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Sign In",
+                        text = stringResource(R.string.drawer_sign_in_title),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Connect with Discord",
+                        text = stringResource(R.string.drawer_sign_in_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.soul.neurokaraoke.data.api.SyncApi
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 import kotlinx.coroutines.delay
 
 /**
@@ -58,11 +60,11 @@ fun PairCarDialog(jwt: String, onDismiss: () -> Unit) {
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Pair Car") },
+        title = { Text(stringResource(R.string.pair_car_title)) },
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Enter this 6-character code on your car's screen.",
+                    stringResource(R.string.pair_car_instruction),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center
                 )
@@ -73,7 +75,7 @@ fun PairCarDialog(jwt: String, onDismiss: () -> Unit) {
                 ) {
                     when {
                         expired -> Text(
-                            "Code expired",
+                            stringResource(R.string.pair_car_code_expired),
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.error
@@ -85,10 +87,10 @@ fun PairCarDialog(jwt: String, onDismiss: () -> Unit) {
                             color = MaterialTheme.colorScheme.primary
                         )
                         error != null -> Text(
-                            "Error: $error",
+                            stringResource(R.string.pair_car_error, error ?: ""),
                             color = MaterialTheme.colorScheme.error
                         )
-                        else -> Text("Generating…", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        else -> Text(stringResource(R.string.pair_car_generating), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -96,7 +98,7 @@ fun PairCarDialog(jwt: String, onDismiss: () -> Unit) {
                     val m = secondsLeft / 60
                     val s = secondsLeft % 60
                     Text(
-                        "Expires in %d:%02d".format(m, s),
+                        stringResource(R.string.pair_car_expires_in, m, s),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (secondsLeft <= 60) MaterialTheme.colorScheme.error
                                 else MaterialTheme.colorScheme.onSurfaceVariant
@@ -104,6 +106,6 @@ fun PairCarDialog(jwt: String, onDismiss: () -> Unit) {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.pair_car_button_done)) } }
     )
 }

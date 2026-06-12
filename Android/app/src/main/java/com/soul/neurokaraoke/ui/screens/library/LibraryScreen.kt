@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.User
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun LibraryScreen(
@@ -46,14 +48,14 @@ fun LibraryScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    val tabs = listOf("Favorites", "Playlists", "Downloads")
+    val tabs = listOf(stringResource(R.string.library_tab_favorites), stringResource(R.string.library_tab_playlists), stringResource(R.string.library_tab_downloads))
 
     Column(
         modifier = modifier.fillMaxSize()
     ) {
         // Title
         Text(
-            text = "Library",
+            text = stringResource(R.string.library_header_title),
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -90,7 +92,7 @@ fun LibraryScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Discord + NeuroKaraoke sync",
+                        text = stringResource(R.string.library_profile_sync_status),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -135,13 +137,13 @@ fun LibraryScreen(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Sign in",
+                        text = stringResource(R.string.library_sign_in_title),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Connect with Discord to sync your data",
+                        text = stringResource(R.string.library_sign_in_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

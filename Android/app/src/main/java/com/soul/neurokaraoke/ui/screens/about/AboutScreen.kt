@@ -46,13 +46,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.ui.theme.EvilColor
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun AboutScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("About", "Credits", "Privacy", "Contact")
+    val tabs = listOf(stringResource(R.string.about_tab_about), stringResource(R.string.about_tab_credits), stringResource(R.string.about_tab_privacy), stringResource(R.string.about_tab_contact))
 
     Column(
         modifier = modifier

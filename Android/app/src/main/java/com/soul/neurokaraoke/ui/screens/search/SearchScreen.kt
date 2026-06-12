@@ -57,14 +57,16 @@ import com.soul.neurokaraoke.ui.components.Pagination
 import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.components.SongListItem
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 private const val PAGE_SIZE = 20
 
-enum class SortOption(val label: String) {
-    TITLE_ASC("Title A-Z"),
-    TITLE_DESC("Title Z-A"),
-    ARTIST_ASC("Artist A-Z"),
-    ARTIST_DESC("Artist Z-A")
+enum class SortOption(val labelRes: Int) {
+    TITLE_ASC(R.string.search_sort_title_asc),
+    TITLE_DESC(R.string.search_sort_title_desc),
+    ARTIST_ASC(R.string.search_sort_artist_asc),
+    ARTIST_DESC(R.string.search_sort_artist_desc)
 }
 
 @Composable
@@ -160,7 +162,7 @@ fun SearchScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search by name or artist",
+            placeholder = stringResource(R.string.search_input_placeholder),
             onFocusChanged = { isSearchFocused = it }
         )
 
@@ -179,7 +181,7 @@ fun SearchScreen(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = if (activeFilterCount > 0) "Filters ($activeFilterCount)" else "+ Add filters",
+                    text = if (activeFilterCount > 0) stringResource(R.string.search_filter_button_active, activeFilterCount) else stringResource(R.string.search_filter_button),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 4.dp)
                 )
@@ -205,7 +207,7 @@ fun SearchScreen(
             ) {
                 // Singer filter
                 Text(
-                    text = "SINGER",
+                    text = stringResource(R.string.search_filter_label_singer),
                     style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -217,22 +219,22 @@ fun SearchScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     SingerFilterChip(
-                        label = "All",
+                        label = stringResource(R.string.search_filter_singer_all),
                         selected = selectedSinger == null,
                         onClick = { selectedSinger = null }
                     )
                     SingerFilterChip(
-                        label = "Neuro",
+                        label = stringResource(R.string.search_filter_singer_neuro),
                         selected = selectedSinger == Singer.NEURO,
                         onClick = { selectedSinger = Singer.NEURO }
                     )
                     SingerFilterChip(
-                        label = "Evil",
+                        label = stringResource(R.string.search_filter_singer_evil),
                         selected = selectedSinger == Singer.EVIL,
                         onClick = { selectedSinger = Singer.EVIL }
                     )
                     SingerFilterChip(
-                        label = "Duet",
+                        label = stringResource(R.string.search_filter_singer_duet),
                         selected = selectedSinger == Singer.DUET,
                         onClick = { selectedSinger = Singer.DUET }
                     )
@@ -245,7 +247,7 @@ fun SearchScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "SORT BY",
+                        text = stringResource(R.string.search_filter_label_sort_by),
                         style = CyberLabelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -260,7 +262,7 @@ fun SearchScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = sortOption.label,
+                                text = stringResource(sortOption.labelRes),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -279,7 +281,7 @@ fun SearchScreen(
                         ) {
                             SortOption.entries.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(option.label) },
+                                    text = { Text(stringResource(option.labelRes)) },
                                     onClick = {
                                         sortOption = option
                                         showSortMenu = false
@@ -316,7 +318,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Clear all filters",
+                            text = stringResource(R.string.search_button_clear_filters),
                             color = MaterialTheme.colorScheme.error
                         )
                     }
@@ -343,7 +345,7 @@ fun SearchScreen(
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = if (songs.isNotEmpty()) "Loading songs... (${songs.size} found)" else "Loading all setlists...",
+                        text = if (songs.isNotEmpty()) stringResource(R.string.search_loading_with_count, songs.size) else stringResource(R.string.search_loading_setlists),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -355,7 +357,7 @@ fun SearchScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No songs available",
+                    text = stringResource(R.string.search_empty_no_songs),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -367,7 +369,7 @@ fun SearchScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "No songs match your filters",
+                        text = stringResource(R.string.search_empty_no_match),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -379,7 +381,7 @@ fun SearchScreen(
                             sortOption = SortOption.TITLE_ASC
                         }
                     ) {
-                        Text("Clear filters")
+                        Text(stringResource(R.string.search_button_clear))
                     }
                 }
             }

@@ -54,6 +54,8 @@ import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.pulsingGlow
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun UserPlaylistDetailScreen(
@@ -301,7 +303,7 @@ fun UserPlaylistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Shuffle",
+                                contentDescription = stringResource(R.string.playlist_detail_content_description_shuffle),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -356,7 +358,7 @@ fun UserPlaylistDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "Loading songs...",
+                                text = stringResource(R.string.playlist_detail_loading_songs),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

@@ -29,9 +29,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.soul.neurokaraoke.R
 
 @Composable
 fun AaosPairingScreen(
@@ -52,11 +54,11 @@ fun AaosPairingScreen(
                     .clickable(onClick = onBack),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back",
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.aaos_pairing_content_description_back),
                      tint = MaterialTheme.colorScheme.onBackground)
             }
             Spacer(Modifier.width(16.dp))
-            Text("Pair with phone", color = MaterialTheme.colorScheme.onBackground,
+            Text(stringResource(R.string.aaos_pairing_title), color = MaterialTheme.colorScheme.onBackground,
                  style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         }
 
@@ -73,19 +75,19 @@ fun AaosPairingScreen(
                 verticalArrangement = Arrangement.Top
             ) {
                 Text(
-                    "1. On your phone: tap Profile → Pair Car",
+                    stringResource(R.string.aaos_pairing_step_1),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "2. A 6-character code will appear on your phone",
+                    stringResource(R.string.aaos_pairing_step_2),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "3. Enter that code with the keypad",
+                    stringResource(R.string.aaos_pairing_step_3),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -166,7 +168,7 @@ private fun Keypad(modifier: Modifier = Modifier, onKey: (Char) -> Unit, onBacks
                         contentAlignment = Alignment.Center
                     ) {
                         if (key == "⌫") {
-                            Icon(Icons.Default.Backspace, contentDescription = "Backspace",
+                            Icon(Icons.Default.Backspace, contentDescription = stringResource(R.string.aaos_pairing_content_description_backspace),
                                  tint = MaterialTheme.colorScheme.onBackground)
                         } else {
                             Text(key, color = MaterialTheme.colorScheme.onBackground,

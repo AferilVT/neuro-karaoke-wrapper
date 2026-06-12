@@ -100,9 +100,9 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         builder.setHeaderAction(Action.APP_ICON)
         builder.setActiveTabContentId(activeTab)
 
-        builder.addTab(tab(TAB_LIBRARY, "Library", R.drawable.ic_car_library))
-        builder.addTab(tab(TAB_PLAYLISTS, "Playlists", R.drawable.ic_car_browse))
-        builder.addTab(tab(TAB_RADIO, "Radio", R.drawable.ic_car_radio))
+        builder.addTab(tab(TAB_LIBRARY, carContext.getString(R.string.car_tab_library), R.drawable.ic_car_library))
+        builder.addTab(tab(TAB_PLAYLISTS, carContext.getString(R.string.car_tab_playlists), R.drawable.ic_car_browse))
+        builder.addTab(tab(TAB_RADIO, carContext.getString(R.string.car_tab_radio), R.drawable.ic_car_radio))
 
         val content = when (activeTab) {
             TAB_PLAYLISTS -> playlistsContent()
@@ -129,16 +129,16 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private fun libraryContent(): Template {
         if (!initialLoaded) {
             return GridTemplate.Builder()
-                .setTitle("Library")
+                .setTitle(carContext.getString(R.string.car_title_library))
                 .setLoading(true)
                 .setHeaderAction(Action.APP_ICON)
                 .build()
         }
         if (allSongs.isEmpty()) {
             return GridTemplate.Builder()
-                .setTitle("Library")
+                .setTitle(carContext.getString(R.string.car_title_library))
                 .setSingleList(
-                    ItemList.Builder().setNoItemsMessage("No songs cached. Open the app on phone first.").build()
+                    ItemList.Builder().setNoItemsMessage(carContext.getString(R.string.car_empty_no_songs)).build()
                 )
                 .setHeaderAction(Action.APP_ICON)
                 .build()
@@ -149,7 +149,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             items.addItem(songTile(song) { carPlayer.playSongs(allSongs, idx) })
         }
         return GridTemplate.Builder()
-            .setTitle("Library")
+            .setTitle(carContext.getString(R.string.car_title_library))
             .setSingleList(items.build())
             .setHeaderAction(Action.APP_ICON)
             .build()
@@ -161,16 +161,16 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         val combined = (userRepo.playlists.value + setlists).filter { it.title.isNotBlank() }
         if (!initialLoaded) {
             return GridTemplate.Builder()
-                .setTitle("Playlists")
+                .setTitle(carContext.getString(R.string.car_title_playlists))
                 .setLoading(true)
                 .setHeaderAction(Action.APP_ICON)
                 .build()
         }
         if (combined.isEmpty()) {
             return GridTemplate.Builder()
-                .setTitle("Playlists")
+                .setTitle(carContext.getString(R.string.car_title_playlists))
                 .setSingleList(
-                    ItemList.Builder().setNoItemsMessage("No playlists yet").build()
+                    ItemList.Builder().setNoItemsMessage(carContext.getString(R.string.car_empty_no_playlists)).build()
                 )
                 .setHeaderAction(Action.APP_ICON)
                 .build()
@@ -181,7 +181,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             items.addItem(playlistTile(pl))
         }
         return GridTemplate.Builder()
-            .setTitle("Playlists")
+            .setTitle(carContext.getString(R.string.car_title_playlists))
             .setSingleList(items.build())
             .setHeaderAction(Action.APP_ICON)
             .build()
@@ -195,13 +195,13 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         ).build()
 
         val infoRow = Row.Builder()
-            .setTitle("Neuro 21 Station")
-            .addText("Live • 24/7 karaoke radio")
+            .setTitle(carContext.getString(R.string.car_radio_station_title))
+            .addText(carContext.getString(R.string.car_radio_subtitle))
             .setImage(radioIcon, Row.IMAGE_TYPE_LARGE)
             .build()
 
         val playAction = Action.Builder()
-            .setTitle("Listen Live")
+            .setTitle(carContext.getString(R.string.car_radio_button_listen))
             .setBackgroundColor(CarColor.PRIMARY)
             .setIcon(
                 CarIcon.Builder(
@@ -217,7 +217,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             .build()
 
         return PaneTemplate.Builder(pane)
-            .setTitle("Radio")
+            .setTitle(carContext.getString(R.string.car_title_radio))
             .setHeaderAction(Action.APP_ICON)
             .build()
     }
@@ -225,20 +225,20 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     // ---- Tile builders --------------------------------------------------------
 
     private fun songTile(song: Song, onClick: () -> Unit): GridItem {
-        val title = song.title.ifBlank { "Untitled" }.take(30)
+        val title = song.title.ifBlank { carContext.getString(R.string.car_label_untitled) }.take(30)
         val builder = GridItem.Builder()
             .setTitle(title)
-            .setText(song.artist.ifBlank { "Unknown" }.take(30))
+            .setText(song.artist.ifBlank { carContext.getString(R.string.car_label_unknown_artist) }.take(30))
             .setOnClickListener(onClick)
         attachImage(builder, song.coverUrl)
         return builder.build()
     }
 
     private fun playlistTile(pl: Playlist): GridItem {
-        val title = pl.title.ifBlank { "Untitled Playlist" }.take(30)
+        val title = pl.title.ifBlank { carContext.getString(R.string.car_label_untitled_playlist) }.take(30)
         val builder = GridItem.Builder()
             .setTitle(title)
-            .setText(if (pl.songCount > 0) "${pl.songCount} songs" else "Playlist")
+            .setText(if (pl.songCount > 0) carContext.getString(R.string.common_label_songs_format, pl.songCount) else carContext.getString(R.string.car_label_playlist))
             .setOnClickListener {
                 screenManager.push(
                     PlaylistDetailCarScreen(

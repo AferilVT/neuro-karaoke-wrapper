@@ -25,8 +25,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.navigation.Screen
 
 @Composable
@@ -112,6 +114,16 @@ private fun BottomNavItem(
     val iconColor = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
     val labelColor = if (isSelected) primaryColor else MaterialTheme.colorScheme.onSurfaceVariant
 
+    // Use localized string resource for label text
+    val label = when (screen) {
+        Screen.Home -> stringResource(R.string.nav_tab_home)
+        Screen.Radio -> stringResource(R.string.nav_tab_radio)
+        Screen.Search -> stringResource(R.string.nav_tab_search)
+        Screen.Library -> stringResource(R.string.nav_tab_library)
+        Screen.More -> stringResource(R.string.nav_tab_more)
+        else -> screen.title
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -126,13 +138,13 @@ private fun BottomNavItem(
         screen.icon?.let { icon ->
             Icon(
                 imageVector = icon,
-                contentDescription = screen.title,
+                contentDescription = label,
                 tint = iconColor,
                 modifier = Modifier.size(24.dp)
             )
         }
         Text(
-            text = screen.title,
+            text = label,
             style = MaterialTheme.typography.labelSmall,
             color = labelColor,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal

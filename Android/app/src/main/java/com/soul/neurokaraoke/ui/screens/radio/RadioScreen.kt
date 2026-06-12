@@ -61,6 +61,8 @@ import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.AccentDivider
 import com.soul.neurokaraoke.ui.theme.NeonTheme
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -164,7 +166,7 @@ fun RadioScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Couldn't connect to radio",
+                            text = stringResource(R.string.radio_error_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -180,7 +182,7 @@ fun RadioScreen(
                             onClick = { retryTrigger++ },
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Retry")
+                            Text(stringResource(R.string.radio_button_retry))
                         }
                     }
                 }
@@ -206,12 +208,12 @@ fun RadioScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Radio is currently offline",
+                            text = stringResource(R.string.radio_offline_title),
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "Check back later!",
+                            text = stringResource(R.string.radio_offline_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -253,7 +255,7 @@ fun RadioScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Stop Listening",
+                            text = stringResource(R.string.radio_button_stop_listening),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -276,7 +278,7 @@ fun RadioScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Listen Live",
+                            text = stringResource(R.string.radio_button_listen_live),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -290,7 +292,7 @@ fun RadioScreen(
                 item {
                     AccentDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
-                        text = "UP NEXT",
+                        text = stringResource(R.string.radio_label_up_next),
                         style = CyberLabelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -307,7 +309,7 @@ fun RadioScreen(
                 item {
                     AccentDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
-                        text = "RECENTLY PLAYED",
+                        text = stringResource(R.string.radio_label_recently_played),
                         style = CyberLabelStyle,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -358,7 +360,7 @@ private fun LiveIndicator(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "LIVE",
+                text = stringResource(R.string.radio_label_live),
                 style = CyberLabelStyle,
                 color = MaterialTheme.colorScheme.error.copy(alpha = 0.9f),
                 fontWeight = FontWeight.Bold
@@ -380,7 +382,7 @@ private fun LiveIndicator(
             }
         } else {
             Text(
-                text = "OFFLINE",
+                text = stringResource(R.string.radio_label_offline),
                 style = CyberLabelStyle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -408,7 +410,7 @@ private fun NowPlayingCard(
                 .padding(20.dp)
         ) {
             Text(
-                text = "NOW PLAYING",
+                text = stringResource(R.string.radio_label_now_playing),
                 style = CyberLabelStyle,
                 color = primaryColor
             )

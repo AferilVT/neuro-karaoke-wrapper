@@ -21,6 +21,8 @@ import com.soul.neurokaraoke.data.api.GitHubRelease
 import com.soul.neurokaraoke.ui.theme.GradientText
 import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.ambientGlow
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun UpdateDialog(
@@ -41,14 +43,14 @@ fun UpdateDialog(
         title = {
             Column {
                 Text(
-                    text = "Update Available",
+                    text = stringResource(R.string.update_dialog_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 GradientText(
-                    text = "v$currentVersion → v$newVersion",
+                    text = stringResource(R.string.update_dialog_version_format, currentVersion, newVersion),
                     style = MaterialTheme.typography.bodyMedium,
                     gradientColors = neonColors.gradientColors,
                     fontWeight = FontWeight.Medium
@@ -79,7 +81,7 @@ fun UpdateDialog(
                     )
                 } else {
                     Text(
-                        text = "A new version is available.",
+                        text = stringResource(R.string.update_dialog_default_message),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -104,7 +106,7 @@ fun UpdateDialog(
                             alpha = 0.25f
                         )
                 ) {
-                    Text("Update")
+                    Text(stringResource(R.string.update_dialog_button_update))
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Button(
@@ -115,14 +117,14 @@ fun UpdateDialog(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Uninstall & Update")
+                    Text(stringResource(R.string.update_dialog_button_uninstall_update))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Not now",
+                    text = stringResource(R.string.update_dialog_button_dismiss),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,8 +28,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
+import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.repository.SettingsRepository
 
 @Composable
@@ -40,6 +45,7 @@ fun SettingsScreen(
     val gapless by SettingsRepository.gaplessPlayback.collectAsState()
     val normalizeVolume by SettingsRepository.normalizeVolume.collectAsState()
     val autoPlay by SettingsRepository.autoPlay.collectAsState()
+    val currentLanguage by LocaleManager.currentLanguage.collectAsState()
 
     Column(
         modifier = modifier
@@ -56,12 +62,12 @@ fun SettingsScreen(
             IconButton(onClick = onBackClick) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
+                    contentDescription = stringResource(R.string.settings_content_description_back),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
-                text = "Settings",
+                text = stringResource(R.string.settings_header_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -76,7 +82,7 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // --- Playback section ---
-        SectionHeader("Playback")
+        SectionHeader(stringResource(R.string.settings_section_playback))
 
         // Crossfade
         Column(
@@ -91,18 +97,18 @@ fun SettingsScreen(
             ) {
                 Column {
                     Text(
-                        text = "Crossfade",
+                        text = stringResource(R.string.settings_crossfade_title),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "Smooth transition between songs",
+                        text = stringResource(R.string.settings_crossfade_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Text(
-                    text = if (crossfade == 0) "Off" else "${crossfade}s",
+                    text = if (crossfade == 0) stringResource(R.string.settings_crossfade_off) else stringResource(R.string.settings_crossfade_value, crossfade),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.primary
@@ -128,12 +134,12 @@ fun SettingsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Off",
+                    text = stringResource(R.string.settings_crossfade_label_off),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "12s",
+                    text = stringResource(R.string.settings_crossfade_label_max),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -142,24 +148,24 @@ fun SettingsScreen(
 
         // Gapless Playback
         SettingsToggle(
-            title = "Gapless Playback",
-            subtitle = "No silence between songs",
+            title = stringResource(R.string.settings_gapless_title),
+            subtitle = stringResource(R.string.settings_gapless_subtitle),
             checked = gapless,
             onCheckedChange = { SettingsRepository.setGaplessPlayback(it) }
         )
 
         // Normalize Volume
         SettingsToggle(
-            title = "Normalize Volume",
-            subtitle = "Set the same volume level for all songs",
+            title = stringResource(R.string.settings_normalize_title),
+            subtitle = stringResource(R.string.settings_normalize_subtitle),
             checked = normalizeVolume,
             onCheckedChange = { SettingsRepository.setNormalizeVolume(it) }
         )
 
         // Autoplay
         SettingsToggle(
-            title = "Autoplay",
-            subtitle = "Play similar songs when your queue ends",
+            title = stringResource(R.string.settings_autoplay_title),
+            subtitle = stringResource(R.string.settings_autoplay_subtitle),
             checked = autoPlay,
             onCheckedChange = { SettingsRepository.setAutoPlay(it) }
         )
@@ -167,11 +173,21 @@ fun SettingsScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- Audio section ---
-        SectionHeader("Audio")
+        SectionHeader(stringResource(R.string.settings_section_audio))
 
         SettingsInfoRow(
-            title = "Equalizer",
-            subtitle = "Adjust the equalizer from the player screen"
+            title = stringResource(R.string.settings_equalizer_title),
+            subtitle = stringResource(R.string.settings_equalizer_subtitle)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Language section ---
+        SectionHeader(stringResource(R.string.settings_section_language))
+
+        LanguageSelector(
+            currentLanguage = currentLanguage,
+            onLanguageSelected = { LocaleManager.setLanguage(it) }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -247,5 +263,53 @@ private fun SettingsInfoRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+@Composable
+private fun LanguageSelector(
+    currentLanguage: String,
+    onLanguageSelected: (String) -> Unit
+) {
+    Column {
+        LanguageOptionRow(
+            label = stringResource(R.string.settings_language_english),
+            isSelected = currentLanguage == "en",
+            onClick = { if (currentLanguage != "en") onLanguageSelected("en") }
+        )
+        LanguageOptionRow(
+            label = stringResource(R.string.settings_language_chinese),
+            isSelected = currentLanguage == "zh-CN",
+            onClick = { if (currentLanguage != "zh-CN") onLanguageSelected("zh-CN") }
+        )
+    }
+}
+
+@Composable
+private fun LanguageOptionRow(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
     }
 }

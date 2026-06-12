@@ -3,14 +3,21 @@ package com.soul.neurokaraoke
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
+import com.soul.neurokaraoke.data.repository.LocaleManager
 
 class NeuroKaraokeApp : Application(), ImageLoaderFactory {
+
+    override fun attachBaseContext(base: Context) {
+        LocaleManager.initialize(base)
+        super.attachBaseContext(LocaleManager.wrapContext(base))
+    }
 
     override fun onCreate() {
         super.onCreate()

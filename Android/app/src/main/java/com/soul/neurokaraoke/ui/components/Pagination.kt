@@ -31,6 +31,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.ui.theme.NeonTheme
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -53,7 +55,7 @@ fun Pagination(
     ) {
         // Showing X - Y of Z
         Text(
-            text = "Showing $startItem - $endItem of $totalItems",
+            text = stringResource(R.string.pagination_label_showing, startItem, endItem, totalItems),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -90,7 +92,7 @@ fun Pagination(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                    contentDescription = "Previous",
+                    contentDescription = stringResource(R.string.pagination_content_description_previous),
                     tint = if (currentPage > 1) MaterialTheme.colorScheme.onSurface
                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 )
@@ -111,7 +113,7 @@ fun Pagination(
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                    contentDescription = "Next",
+                    contentDescription = stringResource(R.string.pagination_content_description_next),
                     tint = if (currentPage < totalPages) MaterialTheme.colorScheme.onSurface
                           else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 )

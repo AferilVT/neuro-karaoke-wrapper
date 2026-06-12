@@ -42,6 +42,8 @@ import com.soul.neurokaraoke.ui.theme.LocalThemeMode
 import com.soul.neurokaraoke.ui.theme.LocalThemeToggle
 import com.soul.neurokaraoke.ui.theme.NeuroColor
 import com.soul.neurokaraoke.ui.theme.ThemeMode
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 data class MoreMenuItem(
     val title: String,
@@ -60,12 +62,12 @@ fun MoreScreen(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        MoreMenuItem("Soundbites", Icons.Default.GraphicEq, onSoundbitesClick),
-        MoreMenuItem("Setlists", Icons.AutoMirrored.Filled.QueueMusic, onSetlistsClick),
-        MoreMenuItem("Artists", Icons.Default.Groups, onArtistsClick),
-        MoreMenuItem("Local Music", Icons.Default.FileUpload, onUploadSongsClick),
-        MoreMenuItem("Settings", Icons.Default.Settings, onSettingsClick),
-        MoreMenuItem("About App", Icons.Default.Info, onAboutClick)
+        MoreMenuItem(stringResource(R.string.more_item_soundbites), Icons.Default.GraphicEq, onSoundbitesClick),
+        MoreMenuItem(stringResource(R.string.more_item_setlists), Icons.AutoMirrored.Filled.QueueMusic, onSetlistsClick),
+        MoreMenuItem(stringResource(R.string.more_item_artists), Icons.Default.Groups, onArtistsClick),
+        MoreMenuItem(stringResource(R.string.more_item_local_music), Icons.Default.FileUpload, onUploadSongsClick),
+        MoreMenuItem(stringResource(R.string.more_item_settings), Icons.Default.Settings, onSettingsClick),
+        MoreMenuItem(stringResource(R.string.more_item_about), Icons.Default.Info, onAboutClick)
     )
 
     val themeMode = LocalThemeMode.current
@@ -76,7 +78,7 @@ fun MoreScreen(
     ) {
         // Title
         Text(
-            text = "More",
+            text = stringResource(R.string.more_header_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -118,7 +120,7 @@ fun MoreScreen(
         )
 
         Text(
-            text = "Theme",
+            text = stringResource(R.string.more_section_theme),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -131,10 +133,10 @@ fun MoreScreen(
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ThemeOption("Auto", themeMode == ThemeMode.AUTO, MaterialTheme.colorScheme.primary, { setThemeMode(ThemeMode.AUTO) }, Modifier.weight(1f))
-            ThemeOption("Neuro", themeMode == ThemeMode.NEURO, NeuroColor, { setThemeMode(ThemeMode.NEURO) }, Modifier.weight(1f))
-            ThemeOption("Evil", themeMode == ThemeMode.EVIL, EvilColor, { setThemeMode(ThemeMode.EVIL) }, Modifier.weight(1f))
-            ThemeOption("Duet", themeMode == ThemeMode.DUET, DuetColor, { setThemeMode(ThemeMode.DUET) }, Modifier.weight(1f))
+            ThemeOption(stringResource(R.string.theme_option_auto), themeMode == ThemeMode.AUTO, MaterialTheme.colorScheme.primary, { setThemeMode(ThemeMode.AUTO) }, Modifier.weight(1f))
+            ThemeOption(stringResource(R.string.theme_option_neuro), themeMode == ThemeMode.NEURO, NeuroColor, { setThemeMode(ThemeMode.NEURO) }, Modifier.weight(1f))
+            ThemeOption(stringResource(R.string.theme_option_evil), themeMode == ThemeMode.EVIL, EvilColor, { setThemeMode(ThemeMode.EVIL) }, Modifier.weight(1f))
+            ThemeOption(stringResource(R.string.theme_option_duet), themeMode == ThemeMode.DUET, DuetColor, { setThemeMode(ThemeMode.DUET) }, Modifier.weight(1f))
         }
 
         Spacer(modifier = Modifier.height(24.dp))

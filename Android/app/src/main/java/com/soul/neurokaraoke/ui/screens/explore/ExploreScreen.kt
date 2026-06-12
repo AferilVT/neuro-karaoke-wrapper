@@ -32,6 +32,8 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.ui.components.Pagination
 import com.soul.neurokaraoke.ui.components.PlaylistCard
 import com.soul.neurokaraoke.ui.components.SearchBar
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 private const val PAGE_SIZE = 20
 
@@ -102,7 +104,7 @@ fun ExploreScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Explore Playlists",
+            text = stringResource(R.string.explore_header_title),
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -111,7 +113,7 @@ fun ExploreScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Public playlists created by our community",
+            text = stringResource(R.string.explore_header_subtitle),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -121,7 +123,7 @@ fun ExploreScreen(
         SearchBar(
             query = searchQuery,
             onQueryChange = { searchQuery = it },
-            placeholder = "Search playlists"
+            placeholder = stringResource(R.string.explore_search_placeholder)
         )
 
         // Pagination
@@ -146,7 +148,7 @@ fun ExploreScreen(
                         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "Loading playlists...",
+                            text = stringResource(R.string.explore_status_loading),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -171,7 +173,7 @@ fun ExploreScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (searchQuery.isNotBlank()) "No playlists match your search" else "No playlists available",
+                        text = if (searchQuery.isNotBlank()) stringResource(R.string.explore_empty_no_match) else stringResource(R.string.explore_empty_no_playlists),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

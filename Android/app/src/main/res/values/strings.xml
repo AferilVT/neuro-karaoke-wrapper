@@ -1,3 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Neuro Karaoke</string>
+
+    <!-- Brand names (keep untranslated) -->
+    <string name="brand_neuro_karaoke">Neuro Karaoke</string>
+    <string name="brand_neuro_21_station">Neuro 21 Station</string>
+    <string name="brand_name_discord">Discord</string>
+
+    <!-- Bottom navigation bar -->
+    <string name="nav_tab_home">Home</string>
+    <string name="nav_tab_radio">Radio</string>
+    <string name="nav_tab_search">Search</string>
+    <string name="nav_tab_library">Library</string>
+    <string name="nav_tab_more">More</string>
+
+    <!-- Top bar / Profile -->
+    <string name="topbar_content_description_logo">NeuroKaraoke Logo</string>
+    <string name="topbar_content_description_profile">Profile</string>
+    <string name="topbar_menu_pair_car">Pair Car</string>
+    <string name="topbar_menu_sign_out">Sign out</string>
+
+    <!-- Mini player -->
+    <string name="mini_player_label_live">LIVE</string>
+    <string name="mini_player_content_description_sleep_timer">Sleep timer active</string>
+    <string name="mini_player_content_description_pause">Pause</string>
+    <string name="mini_player_content_description_play">Play</string>
+    <string name="mini_player_content_description_stop_radio">Stop radio</string>
+    <string name="mini_player_content_description_previous">Previous</string>
+    <string name="mini_player_content_description_next">Next</string>
+
+    <!-- Home screen -->
+    <string name="home_section_header_songs">Songs</string>
+    <string name="home_section_header_made_for_you">Made for You</string>
+    <string name="home_section_header_trending">Trending This Week</string>
+    <string name="home_section_header_cover_distribution">Cover Distribution</string>
+    <string name="home_section_header_top_genres">Top Genres</string>
+    <string name="home_button_see_all">SEE ALL</string>
+    <string name="home_empty_no_songs">No songs loaded yet</string>
+
+    <!-- Now playing / Player screen -->
+    <string name="player_title_now_playing">Now Playing</string>
+    <string name="player_content_description_collapse">Collapse</string>
+    <string name="player_content_description_downloaded">Downloaded</string>
+    <string name="player_content_description_download">Download</string>
+    <string name="player_content_description_add_to_playlist">Add to playlist</string>
+    <string name="player_content_description_sleep_timer">Sleep timer</string>
+    <string name="player_content_description_equalizer">Equalizer</string>
+    <string name="player_content_description_art_credit">Art credit</string>
+    <string name="player_content_description_view_lyrics">View lyrics</string>
+    <string name="player_content_description_remove_favorite">Remove from favorites</string>
+    <string name="player_content_description_add_favorite">Add to favorites</string>
+    <string name="player_content_description_shuffle">Shuffle</string>
+    <string name="player_content_description_previous">Previous</string>
+    <string name="player_content_description_pause">Pause</string>
+    <string name="player_content_description_play">Play</string>
+    <string name="player_content_description_next">Next</string>
+    <string name="player_content_description_repeat">Repeat</string>
+    <string name="player_content_description_stop">Stop</string>
+    <string name="player_content_description_listen">Listen</string>
+    <string name="player_button_view_queue">VIEW QUEUE</string>
+    <string name="player_label_stop_listening">STOP LISTENING</string>
+    <string name="player_label_listen_live">LISTEN LIVE</string>
+    <string name="player_label_live">LIVE</string>
+    <string name="player_label_listening_count">%1$d listening</string>
+
+    <!-- Sleep timer -->
+    <string name="sleep_timer_title">Sleep Timer</string>
+    <string name="sleep_timer_content_description_close">Close</string>
+    <string name="sleep_timer_label_active">Timer Active</string>
+    <string name="sleep_timer_label_end_of_song">End of current song</string>
+    <string name="sleep_timer_button_cancel">Cancel Timer</string>
+    <string name="sleep_timer_label_stop_after">Stop playing after</string>
+    <string name="sleep_timer_chip_end_of_song">End of current song</string>
+
+    <!-- Lyrics -->
+    <string name="lyrics_sheet_title">Lyrics</string>
+    <string name="lyrics_subtitle_synced">Synced • Tap to seek</string>
+    <string name="lyrics_label_offset">Offset:</string>
+    <string name="lyrics_status_loading">Searching for lyrics…</string>
+    <string name="lyrics_empty_title">No lyrics found</string>
+    <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
+    <string name="lyrics_credit_neurokaraoke">Lyrics provided by NeuroKaraoke</string>
+    <string name="lyrics_credit_lrclib">Lyrics provided by LRCLIB</string>
+
+    <!-- Queue -->
+    <string name="queue_sheet_title">Queue</string>
+    <string name="queue_label_now_playing">Now Playing</string>
+    <string name="queue_label_up_next">Up Next (%1$d songs)</string>
+    <string name="queue_label_empty">No more songs in queue</string>
+    <string name="queue_content_description_playing">Playing</string>
+
+    <!-- Audio effects / Equalizer -->
+    <string name="equalizer_sheet_title">Audio Effects</string>
+    <string name="equalizer_tab_equalizer">Equalizer</string>
+    <string name="equalizer_tab_bass_boost">Bass Boost</string>
+    <string name="equalizer_unavailable_title">Audio effects not available</string>
+    <string name="equalizer_unavailable_subtitle">Start playing a song to enable</string>
+    <string name="equalizer_not_available_device">Equalizer not available on this device</string>
+    <string name="equalizer_toggle_enable">Enable Equalizer</string>
+    <string name="equalizer_label_presets">Presets</string>
+    <string name="equalizer_preset_flat">Flat</string>
+    <string name="equalizer_label_frequency_bands">Frequency Bands</string>
+
+    <!-- Search screen -->
+    <string name="search_input_placeholder">Search by name or artist</string>
+    <string name="search_content_description_search">Search</string>
+    <string name="search_content_description_clear">Clear</string>
+    <string name="search_filter_button">+ Add filters</string>
+    <string name="search_filter_button_active">Filters (%1$d)</string>
+    <string name="search_filter_label_singer">SINGER</string>
+    <string name="search_filter_label_sort_by">SORT BY</string>
+    <string name="search_filter_singer_all">All</string>
+    <string name="search_filter_singer_neuro">Neuro</string>
+    <string name="search_filter_singer_evil">Evil</string>
+    <string name="search_filter_singer_duet">Duet</string>
+    <string name="search_sort_title_asc">Title A-Z</string>
+    <string name="search_sort_title_desc">Title Z-A</string>
+    <string name="search_sort_artist_asc">Artist A-Z</string>
+    <string name="search_sort_artist_desc">Artist Z-A</string>
+    <string name="search_button_clear_filters">Clear all filters</string>
+    <string name="search_loading_with_count">Loading songs… (%1$d found)</string>
+    <string name="search_loading_setlists">Loading all setlists…</string>
+    <string name="search_empty_no_songs">No songs available</string>
+    <string name="search_empty_no_match">No songs match your filters</string>
+    <string name="search_button_clear">Clear filters</string>
+
+    <!-- Explore / Browse screen -->
+    <string name="explore_header_title">Explore Playlists</string>
+    <string name="explore_header_subtitle">Public playlists created by our community</string>
+    <string name="explore_search_placeholder">Search playlists</string>
+    <string name="explore_status_loading">Loading playlists…</string>
+    <string name="explore_empty_no_match">No playlists match your search</string>
+    <string name="explore_empty_no_playlists">No playlists available</string>
+
+    <!-- Playlist detail screen -->
+    <string name="playlist_detail_label_public">PUBLIC PLAYLIST</string>
+    <string name="playlist_detail_loading_title">Loading…</string>
+    <string name="playlist_detail_loading_songs">Loading songs…</string>
+    <string name="playlist_detail_stats">%1$d songs · %2$d min</string>
+    <string name="playlist_detail_content_description_back">Back</string>
+    <string name="playlist_detail_content_description_favorite">Favorite</string>
+    <string name="playlist_detail_content_description_shuffle">Shuffle</string>
+    <string name="playlist_detail_button_play">PLAY</string>
+    <string name="playlist_detail_section_songs">Songs</string>
+
+    <!-- Library screen -->
+    <string name="library_header_title">Library</string>
+    <string name="library_tab_favorites">Favorites</string>
+    <string name="library_tab_playlists">Playlists</string>
+    <string name="library_tab_downloads">Downloads</string>
+    <string name="library_profile_sync_status">Discord + NeuroKaraoke sync</string>
+    <string name="library_sign_in_title">Sign in</string>
+    <string name="library_sign_in_subtitle">Connect with Discord to sync your data</string>
+
+    <!-- Favorites screen -->
+    <string name="favorites_empty_title">No favorites yet</string>
+    <string name="favorites_empty_subtitle">Use the heart action on any song to build your favorites.</string>
+    <string name="favorites_button_play">Play</string>
+    <string name="favorites_button_shuffle">Shuffle</string>
+
+    <!-- Playlists screen -->
+    <string name="playlists_header_title">Your Playlists</string>
+    <string name="playlists_content_description_sync">Sync playlists</string>
+    <string name="playlists_content_description_create">Create playlist</string>
+    <string name="playlists_empty_title">No playlists yet</string>
+    <string name="playlists_empty_subtitle">Tap the + button to create your first playlist</string>
+    <string name="playlists_content_description_synced">Synced</string>
+    <string name="playlists_content_description_delete">Delete</string>
+    <string name="playlists_dialog_delete_title">Delete Playlist</string>
+    <string name="playlists_dialog_delete_message">Are you sure you want to delete \"%1$s\"? This action cannot be undone.</string>
+    <string name="playlists_dialog_button_delete">Delete</string>
+    <string name="playlists_dialog_button_cancel">Cancel</string>
+    <string name="playlists_create_title">Create playlist</string>
+    <string name="playlists_create_content_description_close">Close</string>
+    <string name="playlists_create_label_name">Playlist Name</string>
+    <string name="playlists_create_label_description">Write a description</string>
+    <string name="playlists_create_content_description_cover">Playlist cover</string>
+    <string name="playlists_create_button_choose_image">CHOOSE IMAGE</string>
+    <string name="playlists_create_toggle_public">Make it public</string>
+    <string name="playlists_create_toggle_public_description">Your playlist will be visible on your Profile and accessible by anyone.</string>
+    <string name="playlists_create_button_save">SAVE</string>
+    <string name="playlists_label_playlist">Playlist</string>
+
+    <!-- Downloads screen -->
+    <string name="downloads_header_title">Downloads</string>
+    <string name="downloads_label_stats">%1$d songs · %2$s</string>
+    <string name="downloads_button_remove_all">Remove All</string>
+    <string name="downloads_button_play_all">Play All</string>
+    <string name="downloads_button_shuffle">Shuffle</string>
+    <string name="downloads_empty_title">No downloads yet</string>
+    <string name="downloads_empty_subtitle">Download songs to play them offline. Tap the menu on any song and select Download.</string>
+
+    <!-- Add to playlist sheet -->
+    <string name="add_to_playlist_title">Add to Playlist</string>
+    <string name="add_to_playlist_create_new">Create New Playlist</string>
+    <string name="add_to_playlist_empty">No playlists yet. Create one above!</string>
+    <string name="add_to_playlist_already_added">Already added</string>
+    <string name="add_to_playlist_create_title">Create playlist</string>
+    <string name="add_to_playlist_content_description_cancel">Cancel</string>
+    <string name="add_to_playlist_label_name">Playlist Name</string>
+    <string name="add_to_playlist_label_description">Description</string>
+    <string name="add_to_playlist_toggle_public">Make it public</string>
+    <string name="add_to_playlist_button_create">CREATE &amp; ADD</string>
+
+    <!-- More screen -->
+    <string name="more_header_title">More</string>
+    <string name="more_item_soundbites">Soundbites</string>
+    <string name="more_item_setlists">Setlists</string>
+    <string name="more_item_artists">Artists</string>
+    <string name="more_item_local_music">Local Music</string>
+    <string name="more_item_settings">Settings</string>
+    <string name="more_item_about">About App</string>
+    <string name="more_section_theme">Theme</string>
+
+    <!-- Theme options -->
+    <string name="theme_option_auto">Auto</string>
+    <string name="theme_option_neuro">Neuro</string>
+    <string name="theme_option_evil">Evil</string>
+    <string name="theme_option_duet">Duet</string>
+
+    <!-- Settings screen -->
+    <string name="settings_header_title">Settings</string>
+    <string name="settings_content_description_back">Back</string>
+    <string name="settings_section_playback">Playback</string>
+    <string name="settings_section_audio">Audio</string>
+    <string name="settings_crossfade_title">Crossfade</string>
+    <string name="settings_crossfade_subtitle">Smooth transition between songs</string>
+    <string name="settings_crossfade_off">Off</string>
+    <string name="settings_crossfade_value">%1$ds</string>
+    <string name="settings_crossfade_label_off">Off</string>
+    <string name="settings_crossfade_label_max">12s</string>
+    <string name="settings_gapless_title">Gapless Playback</string>
+    <string name="settings_gapless_subtitle">No silence between songs</string>
+    <string name="settings_normalize_title">Normalize Volume</string>
+    <string name="settings_normalize_subtitle">Set the same volume level for all songs</string>
+    <string name="settings_autoplay_title">Autoplay</string>
+    <string name="settings_autoplay_subtitle">Play similar songs when your queue ends</string>
+    <string name="settings_equalizer_title">Equalizer</string>
+    <string name="settings_equalizer_subtitle">Adjust the equalizer from the player screen</string>
+    <string name="settings_section_language">Language</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_chinese">简体中文</string>
+
+    <!-- Radio screen -->
+    <string name="radio_station_title">NEURO 21 STATION</string>
+    <string name="radio_label_live">LIVE</string>
+    <string name="radio_label_offline">OFFLINE</string>
+    <string name="radio_label_now_playing">NOW PLAYING</string>
+    <string name="radio_label_up_next">UP NEXT</string>
+    <string name="radio_label_recently_played">RECENTLY PLAYED</string>
+    <string name="radio_button_listen_live">Listen Live</string>
+    <string name="radio_button_stop_listening">Stop Listening</string>
+    <string name="radio_error_title">Couldn\'t connect to radio</string>
+    <string name="radio_button_retry">Retry</string>
+    <string name="radio_offline_title">Radio is currently offline</string>
+    <string name="radio_offline_subtitle">Check back later!</string>
+    <string name="radio_default_title">24/7 Karaoke Radio</string>
+    <string name="radio_station_badge_live">NEURO 21 STATION • LIVE</string>
+    <string name="radio_covered_by">%1$s  •  covered by %2$s</string>
+
+    <!-- Pair car dialog -->
+    <string name="pair_car_title">Pair Car</string>
+    <string name="pair_car_instruction">Enter this 6-character code on your car\'s screen.</string>
+    <string name="pair_car_code_expired">Code expired</string>
+    <string name="pair_car_generating">Generating…</string>
+    <string name="pair_car_error">Error: %1$s</string>
+    <string name="pair_car_expires_in">Expires in %1$d:%2$02d</string>
+    <string name="pair_car_button_done">Done</string>
+
+    <!-- Update dialog -->
+    <string name="update_dialog_title">Update Available</string>
+    <string name="update_dialog_version_format">v%1$s → v%2$s</string>
+    <string name="update_dialog_default_message">A new version is available.</string>
+    <string name="update_dialog_button_update">Update</string>
+    <string name="update_dialog_button_uninstall_update">Uninstall &amp; Update</string>
+    <string name="update_dialog_button_dismiss">Not now</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_brand_title">Neuro Karaoke</string>
+    <string name="drawer_button_random_song">Random Song</string>
+    <string name="drawer_section_library">YOUR LIBRARY</string>
+    <string name="drawer_section_theme">THEME</string>
+    <string name="drawer_user_signed_in">Signed in with Discord</string>
+    <string name="drawer_content_description_avatar">Avatar</string>
+    <string name="drawer_content_description_sign_out">Sign Out</string>
+    <string name="drawer_sign_in_title">Sign In</string>
+    <string name="drawer_sign_in_subtitle">Connect with Discord</string>
+    <string name="drawer_label_coming_soon">Coming soon</string>
+
+    <!-- Pagination -->
+    <string name="pagination_label_showing">Showing %1$d - %2$d of %3$d</string>
+    <string name="pagination_content_description_previous">Previous</string>
+    <string name="pagination_content_description_next">Next</string>
+
+    <!-- AAOS Home screen -->
+    <string name="aaos_tab_library">Library</string>
+    <string name="aaos_tab_playlists">Playlists</string>
+    <string name="aaos_tab_radio">Radio</string>
+    <string name="aaos_breadcrumb_songs">Songs</string>
+    <string name="aaos_breadcrumb_playlists">Playlists</string>
+    <string name="aaos_breadcrumb_radio">Radio</string>
+    <string name="aaos_section_songs">Songs</string>
+    <string name="aaos_section_daily_mix">Daily Mix</string>
+    <string name="aaos_section_trending">Trending</string>
+    <string name="aaos_section_community">Community</string>
+    <string name="aaos_section_recently_added">Recently Added</string>
+    <string name="aaos_section_your_playlists">Your Playlists</string>
+    <string name="aaos_label_loading">Loading…</string>
+    <string name="aaos_label_no_songs_cached">No songs cached</string>
+    <string name="aaos_label_untitled">Untitled</string>
+    <string name="aaos_label_favorites">Favorites</string>
+    <string name="aaos_radio_button_stop">Stop</string>
+    <string name="aaos_radio_button_listen_live">Listen Live</string>
+
+    <!-- AAOS Now Playing screen -->
+    <string name="aaos_now_playing_nothing">Nothing playing</string>
+    <string name="aaos_now_playing_content_description_back">Back</string>
+
+    <!-- AAOS Login screen -->
+    <string name="aaos_login_title">Sign in with Discord</string>
+    <string name="aaos_login_content_description_back">Back</string>
+
+    <!-- AAOS Pairing screen -->
+    <string name="aaos_pairing_title">Pair with phone</string>
+    <string name="aaos_pairing_content_description_back">Back</string>
+    <string name="aaos_pairing_content_description_backspace">Backspace</string>
+    <string name="aaos_pairing_step_1">1. On your phone: tap Profile → Pair Car</string>
+    <string name="aaos_pairing_step_2">2. A 6-character code will appear on your phone</string>
+    <string name="aaos_pairing_step_3">3. Enter that code with the keypad</string>
+
+    <!-- AAOS Playlist detail screen -->
+    <string name="aaos_playlist_detail_content_description_back">Back</string>
+    <string name="aaos_playlist_detail_loading">Loading…</string>
+    <string name="aaos_playlist_detail_empty">No songs</string>
+    <string name="aaos_playlist_detail_button_play">Play</string>
+    <string name="aaos_playlist_detail_button_shuffle">Shuffle</string>
+
+    <!-- Android Auto Car library -->
+    <string name="car_tab_library">Library</string>
+    <string name="car_tab_playlists">Playlists</string>
+    <string name="car_tab_radio">Radio</string>
+    <string name="car_title_library">Library</string>
+    <string name="car_title_playlists">Playlists</string>
+    <string name="car_title_radio">Radio</string>
+    <string name="car_empty_no_songs">No songs cached. Open the app on phone first.</string>
+    <string name="car_empty_no_playlists">No playlists yet</string>
+    <string name="car_radio_station_title">Neuro 21 Station</string>
+    <string name="car_radio_subtitle">Live • 24/7 karaoke radio</string>
+    <string name="car_radio_button_listen">Listen Live</string>
+    <string name="car_playlist_button_play">Play</string>
+    <string name="car_playlist_button_shuffle">Shuffle</string>
+    <string name="car_label_untitled">Untitled</string>
+    <string name="car_label_unknown_artist">Unknown</string>
+    <string name="car_label_untitled_playlist">Untitled Playlist</string>
+    <string name="car_label_playlist">Playlist</string>
+
+    <!-- About screen -->
+    <string name="about_tab_about">About</string>
+    <string name="about_tab_credits">Credits</string>
+    <string name="about_tab_privacy">Privacy</string>
+    <string name="about_tab_contact">Contact</string>
+
+    <!-- Plurals -->
+    <plurals name="playlist_song_count">
+        <item quantity="one">%1$d song</item>
+        <item quantity="other">%1$d songs</item>
+    </plurals>
+
+    <plurals name="library_playlist_count">
+        <item quantity="one">%1$d playlist</item>
+        <item quantity="other">%1$d playlists</item>
+    </plurals>
+
+    <!-- Common / shared strings -->
+    <string name="common_content_description_back">Back</string>
+    <string name="common_content_description_close">Close</string>
+    <string name="common_content_description_more_options">More options</string>
+    <string name="common_label_songs_format">%1$d songs</string>
+
+    <!-- Soundbites screen -->
+    <string name="soundbites_header_title">Soundbites</string>
+    <string name="soundbites_header_subtitle">A collection of soundbites featuring Neuro and Evil captured from streams. Soundbites created and edited by Rachinova and CJ</string>
+    <string name="soundbites_search_placeholder">Search videos by name, description, or uploader…</string>
+    <string name="soundbites_sort_most_played">Most Played</string>
+    <string name="soundbites_sort_newest">Newest</string>
+    <string name="soundbites_sort_title_az">Title A-Z</string>
+    <string name="soundbites_sort_shortest">Shortest</string>
+    <string name="soundbites_sort_longest">Longest</string>
+    <string name="soundbites_filter_all">All</string>
+    <string name="soundbites_filter_neuro">Neuro</string>
+    <string name="soundbites_filter_evil">Evil</string>
+    <string name="soundbites_filter_vedal">Vedal</string>
+    <string name="soundbites_filter_other">Other</string>
+    <string name="soundbites_content_description_sort">Sort</string>
+    <string name="soundbites_label_count">%1$d soundbites</string>
+    <string name="soundbites_empty_no_match">No soundbites found</string>
+    <string name="soundbites_empty_none">No soundbites available</string>
+    <string name="soundbites_content_description_stop">Stop</string>
+    <string name="soundbites_content_description_play">Play</string>
+
+    <!-- Setlists screen -->
+    <string name="setlists_header_title">Karaoke Setlists</string>
+    <string name="setlists_label_count">%1$d setlists available</string>
+    <string name="setlists_search_placeholder">Search setlists</string>
+    <string name="setlists_filter_all">All</string>
+    <string name="setlists_label_song_count">%1$d songs</string>
+    <string name="setlists_label_tap_to_load">Tap to load</string>
+    <string name="setlists_label_setlist_id">Setlist %1$s…</string>
+
+    <!-- Artists screen -->
+    <string name="artists_header_title">Artists</string>
+    <string name="artists_header_subtitle">Browse songs by original artists covered by Neuro and Evil</string>
+    <string name="artists_search_placeholder">Search artists</string>
+    <string name="artists_label_count">%1$d artists</string>
+    <string name="artists_status_loading">Loading artists…</string>
+    <string name="artists_empty_none">No artists found</string>
+
+    <!-- Artist detail screen -->
+    <string name="artist_detail_content_description_back">Back</string>
+    <string name="artist_detail_label_artist">ARTIST</string>
+    <string name="artist_detail_label_songs_covered">%1$d songs covered</string>
+    <string name="artist_detail_button_play">PLAY</string>
+    <string name="artist_detail_content_description_shuffle">Shuffle</string>
+    <string name="artist_detail_section_songs">SONGS</string>
+
+    <!-- Upload / Local Music screen -->
+    <string name="upload_header_title">Local Music</string>
+    <string name="upload_content_description_back">Back</string>
+    <string name="upload_empty_title">No local songs</string>
+    <string name="upload_empty_subtitle">Tap + to import .mp3 files from your device.</string>
+    <string name="upload_button_import">Import Music</string>
+    <string name="upload_button_play">Play</string>
+    <string name="upload_button_shuffle">Shuffle</string>
+    <string name="upload_label_song_count">%1$d songs</string>
+    <string name="upload_content_description_remove">Remove</string>
+    <string name="upload_content_description_import">Import music</string>
+
+    <!-- Song list item menu -->
+    <string name="song_menu_add_to_playlist">Add to Playlist</string>
+    <string name="song_menu_remove_download">Remove Download</string>
 </resources>

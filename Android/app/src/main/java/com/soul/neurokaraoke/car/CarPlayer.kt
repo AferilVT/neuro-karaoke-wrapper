@@ -7,6 +7,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.api.RadioApi
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.service.MediaPlaybackService
@@ -57,8 +58,8 @@ class CarPlayer(private val context: Context) {
             .setMediaId("radio_live")
             .setMediaMetadata(
                 MediaMetadata.Builder()
-                    .setTitle("Neuro 21 Station")
-                    .setArtist("LIVE")
+                    .setTitle(context.getString(R.string.car_radio_station_title))
+                    .setArtist(context.getString(R.string.player_label_live))
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setIsPlayable(true)
                     .build()

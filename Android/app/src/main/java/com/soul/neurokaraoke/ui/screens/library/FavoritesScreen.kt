@@ -32,6 +32,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun FavoritesScreen(
@@ -67,7 +69,7 @@ fun FavoritesScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
-                    text = "No favorites yet",
+                    text = stringResource(R.string.favorites_empty_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
@@ -77,7 +79,7 @@ fun FavoritesScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Use the heart action on any song to build your favorites.",
+                    text = stringResource(R.string.favorites_empty_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
@@ -111,7 +113,7 @@ fun FavoritesScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Play", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.favorites_button_play), fontWeight = FontWeight.SemiBold)
                     }
 
                     OutlinedButton(
@@ -125,7 +127,7 @@ fun FavoritesScreen(
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Shuffle", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.favorites_button_shuffle), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

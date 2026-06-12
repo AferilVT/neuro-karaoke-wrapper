@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Neuro Karaoke</string>
+
+    <!-- Brand names (keep untranslated) -->
+    <string name="brand_neuro_karaoke">Neuro 卡拉OK</string>
+    <string name="brand_neuro_21_station">Neuro 21 电台</string>
+    <string name="brand_name_discord">Discord</string>
+
+    <!-- Bottom navigation bar -->
+    <string name="nav_tab_home">首页</string>
+    <string name="nav_tab_radio">电台</string>
+    <string name="nav_tab_search">搜索</string>
+    <string name="nav_tab_library">曲库</string>
+    <string name="nav_tab_more">更多</string>
+
+    <!-- Top bar / Profile -->
+    <string name="topbar_content_description_logo">Neuro 卡拉OK标志</string>
+    <string name="topbar_content_description_profile">个人资料</string>
+    <string name="topbar_menu_pair_car">配对车机</string>
+    <string name="topbar_menu_sign_out">退出登录</string>
+
+    <!-- Mini player -->
+    <string name="mini_player_label_live">直播</string>
+    <string name="mini_player_content_description_sleep_timer">睡眠定时器已启动</string>
+    <string name="mini_player_content_description_pause">暂停</string>
+    <string name="mini_player_content_description_play">播放</string>
+    <string name="mini_player_content_description_stop_radio">停止电台</string>
+    <string name="mini_player_content_description_previous">上一首</string>
+    <string name="mini_player_content_description_next">下一首</string>
+
+    <!-- Home screen -->
+    <string name="home_section_header_songs">歌曲</string>
+    <string name="home_section_header_made_for_you">为你推荐</string>
+    <string name="home_section_header_trending">本周热门</string>
+    <string name="home_section_header_cover_distribution">翻唱分布</string>
+    <string name="home_section_header_top_genres">热门分类</string>
+    <string name="home_button_see_all">查看全部</string>
+    <string name="home_empty_no_songs">暂无歌曲</string>
+
+    <!-- Now playing / Player screen -->
+    <string name="player_title_now_playing">正在播放</string>
+    <string name="player_content_description_collapse">收起</string>
+    <string name="player_content_description_downloaded">已下载</string>
+    <string name="player_content_description_download">下载</string>
+    <string name="player_content_description_add_to_playlist">添加到播放列表</string>
+    <string name="player_content_description_sleep_timer">睡眠定时器</string>
+    <string name="player_content_description_equalizer">均衡器</string>
+    <string name="player_content_description_art_credit">封面来源</string>
+    <string name="player_content_description_view_lyrics">查看歌词</string>
+    <string name="player_content_description_remove_favorite">取消收藏</string>
+    <string name="player_content_description_add_favorite">添加收藏</string>
+    <string name="player_content_description_shuffle">随机播放</string>
+    <string name="player_content_description_previous">上一首</string>
+    <string name="player_content_description_pause">暂停</string>
+    <string name="player_content_description_play">播放</string>
+    <string name="player_content_description_next">下一首</string>
+    <string name="player_content_description_repeat">重复播放</string>
+    <string name="player_content_description_stop">停止</string>
+    <string name="player_content_description_listen">收听</string>
+    <string name="player_button_view_queue">查看队列</string>
+    <string name="player_label_stop_listening">停止收听</string>
+    <string name="player_label_listen_live">收听直播</string>
+    <string name="player_label_live">直播</string>
+    <string name="player_label_listening_count">%1$d 人正在收听</string>
+
+    <!-- Sleep timer -->
+    <string name="sleep_timer_title">睡眠定时器</string>
+    <string name="sleep_timer_content_description_close">关闭</string>
+    <string name="sleep_timer_label_active">定时器已启动</string>
+    <string name="sleep_timer_label_end_of_song">当前歌曲结束时</string>
+    <string name="sleep_timer_button_cancel">取消定时</string>
+    <string name="sleep_timer_label_stop_after">播放后停止</string>
+    <string name="sleep_timer_chip_end_of_song">当前歌曲结束时</string>
+
+    <!-- Lyrics -->
+    <string name="lyrics_sheet_title">歌词</string>
+    <string name="lyrics_subtitle_synced">已同步 · 点按可跳转</string>
+    <string name="lyrics_label_offset">偏移：</string>
+    <string name="lyrics_status_loading">正在搜索歌词…</string>
+    <string name="lyrics_empty_title">未找到歌词</string>
+    <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
+    <string name="lyrics_credit_neurokaraoke">歌词由 Neuro卡拉OK 提供</string>
+    <string name="lyrics_credit_lrclib">歌词由 LRCLIB 提供</string>
+
+    <!-- Queue -->
+    <string name="queue_sheet_title">播放队列</string>
+    <string name="queue_label_now_playing">正在播放</string>
+    <string name="queue_label_up_next">接下来 (%1$d 首)</string>
+    <string name="queue_label_empty">队列中没有更多歌曲</string>
+    <string name="queue_content_description_playing">播放中</string>
+
+    <!-- Audio effects / Equalizer -->
+    <string name="equalizer_sheet_title">音效</string>
+    <string name="equalizer_tab_equalizer">均衡器</string>
+    <string name="equalizer_tab_bass_boost">低音增强</string>
+    <string name="equalizer_unavailable_title">音效不可用</string>
+    <string name="equalizer_unavailable_subtitle">开始播放歌曲以启用</string>
+    <string name="equalizer_not_available_device">此设备不支持均衡器</string>
+    <string name="equalizer_toggle_enable">启用均衡器</string>
+    <string name="equalizer_label_presets">预设</string>
+    <string name="equalizer_preset_flat">平坦</string>
+    <string name="equalizer_label_frequency_bands">频段</string>
+
+    <!-- Search screen -->
+    <string name="search_input_placeholder">按名称或艺术家搜索</string>
+    <string name="search_content_description_search">搜索</string>
+    <string name="search_content_description_clear">清除</string>
+    <string name="search_filter_button">+ 添加筛选</string>
+    <string name="search_filter_button_active">筛选 (%1$d)</string>
+    <string name="search_filter_label_singer">艺术家</string>
+    <string name="search_filter_label_sort_by">排序方式</string>
+    <string name="search_filter_singer_all">全部</string>
+    <string name="search_filter_singer_neuro">Neuro</string>
+    <string name="search_filter_singer_evil">Evil</string>
+    <string name="search_filter_singer_duet">Duet</string>
+    <string name="search_sort_title_asc">标题 A-Z</string>
+    <string name="search_sort_title_desc">标题 Z-A</string>
+    <string name="search_sort_artist_asc">艺术家 A-Z</string>
+    <string name="search_sort_artist_desc">艺术家 Z-A</string>
+    <string name="search_button_clear_filters">清除所有筛选</string>
+    <string name="search_loading_with_count">加载歌曲中… (已找到 %1$d 首)</string>
+    <string name="search_loading_setlists">加载所有歌单…</string>
+    <string name="search_empty_no_songs">暂无歌曲</string>
+    <string name="search_empty_no_match">没有匹配的歌曲</string>
+    <string name="search_button_clear">清除筛选</string>
+
+    <!-- Explore / Browse screen -->
+    <string name="explore_header_title">发现播放列表</string>
+    <string name="explore_header_subtitle">社区创建的公开播放列表</string>
+    <string name="explore_search_placeholder">搜索播放列表</string>
+    <string name="explore_status_loading">加载播放列表…</string>
+    <string name="explore_empty_no_match">没有匹配的播放列表</string>
+    <string name="explore_empty_no_playlists">暂无播放列表</string>
+
+    <!-- Playlist detail screen -->
+    <string name="playlist_detail_label_public">公开播放列表</string>
+    <string name="playlist_detail_loading_title">加载中…</string>
+    <string name="playlist_detail_loading_songs">加载歌曲…</string>
+    <string name="playlist_detail_stats">%1$d 首歌曲 · %2$d 分钟</string>
+    <string name="playlist_detail_content_description_back">返回</string>
+    <string name="playlist_detail_content_description_favorite">收藏</string>
+    <string name="playlist_detail_content_description_shuffle">随机播放</string>
+    <string name="playlist_detail_button_play">播放</string>
+    <string name="playlist_detail_section_songs">歌曲</string>
+
+    <!-- Library screen -->
+    <string name="library_header_title">曲库</string>
+    <string name="library_tab_favorites">收藏</string>
+    <string name="library_tab_playlists">播放列表</string>
+    <string name="library_tab_downloads">下载</string>
+    <string name="library_profile_sync_status">Discord + Neuro卡拉OK 同步</string>
+    <string name="library_sign_in_title">登录</string>
+    <string name="library_sign_in_subtitle">通过 Discord 连接以同步数据</string>
+
+    <!-- Favorites screen -->
+    <string name="favorites_empty_title">暂无收藏</string>
+    <string name="favorites_empty_subtitle">对任意歌曲使用红心按钮来添加收藏。</string>
+    <string name="favorites_button_play">播放</string>
+    <string name="favorites_button_shuffle">随机播放</string>
+
+    <!-- Playlists screen -->
+    <string name="playlists_header_title">我的播放列表</string>
+    <string name="playlists_content_description_sync">同步播放列表</string>
+    <string name="playlists_content_description_create">创建播放列表</string>
+    <string name="playlists_empty_title">暂无播放列表</string>
+    <string name="playlists_empty_subtitle">点按 + 按钮创建第一个播放列表</string>
+    <string name="playlists_content_description_synced">已同步</string>
+    <string name="playlists_content_description_delete">删除</string>
+    <string name="playlists_dialog_delete_title">删除播放列表</string>
+    <string name="playlists_dialog_delete_message">确定要删除\"%1$s\"吗？此操作无法撤销。</string>
+    <string name="playlists_dialog_button_delete">删除</string>
+    <string name="playlists_dialog_button_cancel">取消</string>
+    <string name="playlists_create_title">创建播放列表</string>
+    <string name="playlists_create_content_description_close">关闭</string>
+    <string name="playlists_create_label_name">播放列表名称</string>
+    <string name="playlists_create_label_description">添加描述</string>
+    <string name="playlists_create_content_description_cover">播放列表封面</string>
+    <string name="playlists_create_button_choose_image">选择图片</string>
+    <string name="playlists_create_toggle_public">设为公开</string>
+    <string name="playlists_create_toggle_public_description">你的播放列表将显示在个人资料中，任何人均可访问。</string>
+    <string name="playlists_create_button_save">保存</string>
+    <string name="playlists_label_playlist">播放列表</string>
+
+    <!-- Downloads screen -->
+    <string name="downloads_header_title">下载</string>
+    <string name="downloads_label_stats">%1$d 首歌曲 · %2$s</string>
+    <string name="downloads_button_remove_all">全部移除</string>
+    <string name="downloads_button_play_all">全部播放</string>
+    <string name="downloads_button_shuffle">随机播放</string>
+    <string name="downloads_empty_title">暂无下载</string>
+    <string name="downloads_empty_subtitle">下载歌曲以离线播放。点按任意歌曲菜单并选择下载。</string>
+
+    <!-- Add to playlist sheet -->
+    <string name="add_to_playlist_title">添加到播放列表</string>
+    <string name="add_to_playlist_create_new">新建播放列表</string>
+    <string name="add_to_playlist_empty">暂无播放列表，从上方创建一个！</string>
+    <string name="add_to_playlist_already_added">已添加</string>
+    <string name="add_to_playlist_create_title">创建播放列表</string>
+    <string name="add_to_playlist_content_description_cancel">取消</string>
+    <string name="add_to_playlist_label_name">播放列表名称</string>
+    <string name="add_to_playlist_label_description">描述</string>
+    <string name="add_to_playlist_toggle_public">设为公开</string>
+    <string name="add_to_playlist_button_create">创建并添加</string>
+
+    <!-- More screen -->
+    <string name="more_header_title">更多</string>
+    <string name="more_item_soundbites">音频片段</string>
+    <string name="more_item_setlists">歌单</string>
+    <string name="more_item_artists">艺术家</string>
+    <string name="more_item_local_music">本地音乐</string>
+    <string name="more_item_settings">设置</string>
+    <string name="more_item_about">关于应用</string>
+    <string name="more_section_theme">主题</string>
+
+    <!-- Theme options -->
+    <string name="theme_option_auto">自动</string>
+    <string name="theme_option_neuro">Neuro</string>
+    <string name="theme_option_evil">Evil</string>
+    <string name="theme_option_duet">Duet</string>
+
+    <!-- Settings screen -->
+    <string name="settings_header_title">设置</string>
+    <string name="settings_content_description_back">返回</string>
+    <string name="settings_section_playback">播放</string>
+    <string name="settings_section_audio">音频</string>
+    <string name="settings_crossfade_title">交叉淡入淡出</string>
+    <string name="settings_crossfade_subtitle">歌曲间平滑过渡</string>
+    <string name="settings_crossfade_off">关闭</string>
+    <string name="settings_crossfade_value">%1$d秒</string>
+    <string name="settings_crossfade_label_off">关闭</string>
+    <string name="settings_crossfade_label_max">12秒</string>
+    <string name="settings_gapless_title">无缝播放</string>
+    <string name="settings_gapless_subtitle">歌曲间无静音间隔</string>
+    <string name="settings_normalize_title">音量标准化</string>
+    <string name="settings_normalize_subtitle">统一所有歌曲的音量</string>
+    <string name="settings_autoplay_title">自动播放</string>
+    <string name="settings_autoplay_subtitle">队列结束后播放相似歌曲</string>
+    <string name="settings_equalizer_title">均衡器</string>
+    <string name="settings_equalizer_subtitle">从播放器界面调整均衡器</string>
+    <string name="settings_section_language">语言</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_chinese">简体中文</string>
+
+    <!-- Radio screen -->
+    <string name="radio_station_title">NEURO 21 电台</string>
+    <string name="radio_label_live">直播</string>
+    <string name="radio_label_offline">离线</string>
+    <string name="radio_label_now_playing">正在播放</string>
+    <string name="radio_label_up_next">即将播放</string>
+    <string name="radio_label_recently_played">最近播放</string>
+    <string name="radio_button_listen_live">收听直播</string>
+    <string name="radio_button_stop_listening">停止收听</string>
+    <string name="radio_error_title">无法连接电台</string>
+    <string name="radio_button_retry">重试</string>
+    <string name="radio_offline_title">电台当前离线</string>
+    <string name="radio_offline_subtitle">请稍后再试！</string>
+    <string name="radio_default_title">24/7 卡拉OK电台</string>
+    <string name="radio_station_badge_live">NEURO 21 电台 · 直播</string>
+    <string name="radio_covered_by">%1$s  ·  翻唱：%2$s</string>
+
+    <!-- Pair car dialog -->
+    <string name="pair_car_title">配对车机</string>
+    <string name="pair_car_instruction">在车机屏幕上输入此 6 位配对码。</string>
+    <string name="pair_car_code_expired">配对码已过期</string>
+    <string name="pair_car_generating">生成中…</string>
+    <string name="pair_car_error">错误：%1$s</string>
+    <string name="pair_car_expires_in">%1$d:%2$02d 后过期</string>
+    <string name="pair_car_button_done">完成</string>
+
+    <!-- Update dialog -->
+    <string name="update_dialog_title">有可用更新</string>
+    <string name="update_dialog_version_format">v%1$s → v%2$s</string>
+    <string name="update_dialog_default_message">有新版本可用。</string>
+    <string name="update_dialog_button_update">更新</string>
+    <string name="update_dialog_button_uninstall_update">卸载并更新</string>
+    <string name="update_dialog_button_dismiss">暂不更新</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_brand_title">Neuro 卡拉OK</string>
+    <string name="drawer_button_random_song">随机歌曲</string>
+    <string name="drawer_section_library">我的曲库</string>
+    <string name="drawer_section_theme">主题</string>
+    <string name="drawer_user_signed_in">已通过 Discord 登录</string>
+    <string name="drawer_content_description_avatar">头像</string>
+    <string name="drawer_content_description_sign_out">退出登录</string>
+    <string name="drawer_sign_in_title">登录</string>
+    <string name="drawer_sign_in_subtitle">通过 Discord 连接</string>
+    <string name="drawer_label_coming_soon">即将推出</string>
+
+    <!-- Pagination -->
+    <string name="pagination_label_showing">显示第 %1$d - %2$d 条，共 %3$d 条</string>
+    <string name="pagination_content_description_previous">上一页</string>
+    <string name="pagination_content_description_next">下一页</string>
+
+    <!-- AAOS Home screen -->
+    <string name="aaos_tab_library">曲库</string>
+    <string name="aaos_tab_playlists">播放列表</string>
+    <string name="aaos_tab_radio">电台</string>
+    <string name="aaos_breadcrumb_songs">歌曲</string>
+    <string name="aaos_breadcrumb_playlists">播放列表</string>
+    <string name="aaos_breadcrumb_radio">电台</string>
+    <string name="aaos_section_songs">歌曲</string>
+    <string name="aaos_section_daily_mix">每日推荐</string>
+    <string name="aaos_section_trending">热门</string>
+    <string name="aaos_section_community">社区</string>
+    <string name="aaos_section_recently_added">最近添加</string>
+    <string name="aaos_section_your_playlists">我的播放列表</string>
+    <string name="aaos_label_loading">加载中…</string>
+    <string name="aaos_label_no_songs_cached">暂无缓存歌曲</string>
+    <string name="aaos_label_untitled">未命名</string>
+    <string name="aaos_label_favorites">收藏</string>
+    <string name="aaos_radio_button_stop">停止</string>
+    <string name="aaos_radio_button_listen_live">收听直播</string>
+
+    <!-- AAOS Now Playing screen -->
+    <string name="aaos_now_playing_nothing">暂无播放</string>
+    <string name="aaos_now_playing_content_description_back">返回</string>
+
+    <!-- AAOS Login screen -->
+    <string name="aaos_login_title">通过 Discord 登录</string>
+    <string name="aaos_login_content_description_back">返回</string>
+
+    <!-- AAOS Pairing screen -->
+    <string name="aaos_pairing_title">与手机配对</string>
+    <string name="aaos_pairing_content_description_back">返回</string>
+    <string name="aaos_pairing_content_description_backspace">退格</string>
+    <string name="aaos_pairing_step_1">1. 在手机上：点按头像 → 配对车机</string>
+    <string name="aaos_pairing_step_2">2. 手机上将显示 6 位配对码</string>
+    <string name="aaos_pairing_step_3">3. 使用键盘输入该配对码</string>
+
+    <!-- AAOS Playlist detail screen -->
+    <string name="aaos_playlist_detail_content_description_back">返回</string>
+    <string name="aaos_playlist_detail_loading">加载中…</string>
+    <string name="aaos_playlist_detail_empty">暂无歌曲</string>
+    <string name="aaos_playlist_detail_button_play">播放</string>
+    <string name="aaos_playlist_detail_button_shuffle">随机播放</string>
+
+    <!-- Android Auto Car library -->
+    <string name="car_tab_library">曲库</string>
+    <string name="car_tab_playlists">播放列表</string>
+    <string name="car_tab_radio">电台</string>
+    <string name="car_title_library">曲库</string>
+    <string name="car_title_playlists">播放列表</string>
+    <string name="car_title_radio">电台</string>
+    <string name="car_empty_no_songs">暂无缓存歌曲，请先在手机上打开应用。</string>
+    <string name="car_empty_no_playlists">暂无播放列表</string>
+    <string name="car_radio_station_title">Neuro 21 电台</string>
+    <string name="car_radio_subtitle">直播 · 24/7 卡拉OK电台</string>
+    <string name="car_radio_button_listen">收听直播</string>
+    <string name="car_playlist_button_play">播放</string>
+    <string name="car_playlist_button_shuffle">随机播放</string>
+    <string name="car_label_untitled">未命名</string>
+    <string name="car_label_unknown_artist">未知</string>
+    <string name="car_label_untitled_playlist">未命名播放列表</string>
+    <string name="car_label_playlist">播放列表</string>
+
+    <!-- About screen -->
+    <string name="about_tab_about">关于</string>
+    <string name="about_tab_credits">致谢</string>
+    <string name="about_tab_privacy">隐私</string>
+    <string name="about_tab_contact">联系</string>
+
+    <!-- Plurals (Chinese has no plural distinction, use quantity="other" only) -->
+    <plurals name="playlist_song_count">
+        <item quantity="other">%1$d 首歌曲</item>
+    </plurals>
+
+    <plurals name="library_playlist_count">
+        <item quantity="other">%1$d 个播放列表</item>
+    </plurals>
+
+    <!-- Common / shared strings -->
+    <string name="common_content_description_back">返回</string>
+    <string name="common_content_description_close">关闭</string>
+    <string name="common_content_description_more_options">更多选项</string>
+    <string name="common_label_songs_format">%1$d 首歌曲</string>
+
+    <!-- Soundbites screen -->
+    <string name="soundbites_header_title">音频片段</string>
+    <string name="soundbites_header_subtitle">来自直播中 Neuro 和 Evil 的音频片段合集。由 Rachinova 和 CJ 创建和编辑</string>
+    <string name="soundbites_search_placeholder">按名称、描述或上传者搜索…</string>
+    <string name="soundbites_sort_most_played">最多播放</string>
+    <string name="soundbites_sort_newest">最新</string>
+    <string name="soundbites_sort_title_az">标题 A-Z</string>
+    <string name="soundbites_sort_shortest">最短</string>
+    <string name="soundbites_sort_longest">最长</string>
+    <string name="soundbites_filter_all">全部</string>
+    <string name="soundbites_filter_neuro">Neuro</string>
+    <string name="soundbites_filter_evil">Evil</string>
+    <string name="soundbites_filter_vedal">Vedal</string>
+    <string name="soundbites_filter_other">其他</string>
+    <string name="soundbites_content_description_sort">排序</string>
+    <string name="soundbites_label_count">%1$d 个片段</string>
+    <string name="soundbites_empty_no_match">未找到片段</string>
+    <string name="soundbites_empty_none">暂无片段</string>
+    <string name="soundbites_content_description_stop">停止</string>
+    <string name="soundbites_content_description_play">播放</string>
+
+    <!-- Setlists screen -->
+    <string name="setlists_header_title">卡拉OK歌单</string>
+    <string name="setlists_label_count">%1$d 个歌单可用</string>
+    <string name="setlists_search_placeholder">搜索歌单</string>
+    <string name="setlists_filter_all">全部</string>
+    <string name="setlists_label_song_count">%1$d 首歌曲</string>
+    <string name="setlists_label_tap_to_load">点按加载</string>
+    <string name="setlists_label_setlist_id">歌单 %1$s…</string>
+
+    <!-- Artists screen -->
+    <string name="artists_header_title">艺术家</string>
+    <string name="artists_header_subtitle">浏览 Neuro 和 Evil 翻唱的原唱艺术家</string>
+    <string name="artists_search_placeholder">搜索艺术家</string>
+    <string name="artists_label_count">%1$d 位艺术家</string>
+    <string name="artists_status_loading">加载艺术家中…</string>
+    <string name="artists_empty_none">未找到艺术家</string>
+
+    <!-- Artist detail screen -->
+    <string name="artist_detail_content_description_back">返回</string>
+    <string name="artist_detail_label_artist">艺术家</string>
+    <string name="artist_detail_label_songs_covered">%1$d 首翻唱歌曲</string>
+    <string name="artist_detail_button_play">播放</string>
+    <string name="artist_detail_content_description_shuffle">随机播放</string>
+    <string name="artist_detail_section_songs">歌曲</string>
+
+    <!-- Upload / Local Music screen -->
+    <string name="upload_header_title">本地音乐</string>
+    <string name="upload_content_description_back">返回</string>
+    <string name="upload_empty_title">暂无本地歌曲</string>
+    <string name="upload_empty_subtitle">点按导入音乐从设备导入 .mp3 文件。</string>
+    <string name="upload_button_import">导入音乐</string>
+    <string name="upload_button_play">播放</string>
+    <string name="upload_button_shuffle">随机播放</string>
+    <string name="upload_label_song_count">%1$d 首歌曲</string>
+    <string name="upload_content_description_remove">移除</string>
+    <string name="upload_content_description_import">导入音乐</string>
+
+    <!-- Song list item menu -->
+    <string name="song_menu_add_to_playlist">添加到播放列表</string>
+    <string name="song_menu_remove_download">移除下载</string>
+</resources>

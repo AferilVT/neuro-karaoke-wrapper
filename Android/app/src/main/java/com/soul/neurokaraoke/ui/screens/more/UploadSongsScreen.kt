@@ -44,7 +44,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import com.soul.neurokaraoke.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -160,12 +162,12 @@ fun UploadSongsScreen(
                 IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.upload_content_description_back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "Local Music",
+                    text = stringResource(R.string.upload_header_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -199,7 +201,7 @@ fun UploadSongsScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "No local songs",
+                            text = stringResource(R.string.upload_empty_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -209,7 +211,7 @@ fun UploadSongsScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "Tap + to import .mp3 files from your device.",
+                            text = stringResource(R.string.upload_empty_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -225,7 +227,7 @@ fun UploadSongsScreen(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Import Music")
+                            Text(stringResource(R.string.upload_button_import))
                         }
                     }
                 }
@@ -252,7 +254,7 @@ fun UploadSongsScreen(
                             ) {
                                 Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Play", fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.upload_button_play), fontWeight = FontWeight.SemiBold)
                             }
 
                             OutlinedButton(
@@ -265,14 +267,14 @@ fun UploadSongsScreen(
                             ) {
                                 Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("Shuffle", fontWeight = FontWeight.SemiBold)
+                                Text(stringResource(R.string.upload_button_shuffle), fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
 
                     item {
                         Text(
-                            text = "${localSongs.size} songs",
+                            text = stringResource(R.string.upload_label_song_count, localSongs.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -327,7 +329,7 @@ fun UploadSongsScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
-                                    contentDescription = "Remove",
+                                    contentDescription = stringResource(R.string.upload_content_description_remove),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -347,7 +349,7 @@ fun UploadSongsScreen(
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Import music")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.upload_content_description_import))
             }
         }
     }

@@ -54,6 +54,8 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
+import androidx.compose.ui.res.stringResource
+import com.soul.neurokaraoke.R
 
 @Composable
 fun PlaylistDetailScreen(
@@ -203,7 +205,7 @@ fun PlaylistDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.playlist_detail_content_description_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -272,7 +274,7 @@ fun PlaylistDetailScreen(
                         ) {
                             // Label
                             Text(
-                                text = "PUBLIC PLAYLIST",
+                                text = stringResource(R.string.playlist_detail_label_public),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
@@ -282,7 +284,7 @@ fun PlaylistDetailScreen(
 
                             // Title
                             Text(
-                                text = currentPlaylist?.title ?: "Loading...",
+                                text = currentPlaylist?.title ?: stringResource(R.string.playlist_detail_loading_title),
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.primary,
@@ -294,7 +296,7 @@ fun PlaylistDetailScreen(
 
                             // Stats
                             Text(
-                                text = if (isLoading) "Loading songs..." else "${songs.size} songs · ${totalDurationMinutes} min",
+                                text = if (isLoading) stringResource(R.string.playlist_detail_loading_songs) else stringResource(R.string.playlist_detail_stats, songs.size, totalDurationMinutes),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                             )
@@ -329,7 +331,7 @@ fun PlaylistDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "PLAY",
+                                text = stringResource(R.string.playlist_detail_button_play),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -346,7 +348,7 @@ fun PlaylistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
+                                contentDescription = stringResource(R.string.playlist_detail_content_description_favorite),
                                 tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -366,7 +368,7 @@ fun PlaylistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Shuffle",
+                                contentDescription = stringResource(R.string.playlist_detail_content_description_shuffle),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -378,7 +380,7 @@ fun PlaylistDetailScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Songs",
+                    text = stringResource(R.string.playlist_detail_section_songs),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,

@@ -82,7 +82,7 @@ class PlaylistDetailCarScreen(
         }
 
         val playAction = Action.Builder()
-            .setTitle("Play")
+            .setTitle(carContext.getString(R.string.car_playlist_button_play))
             .setIcon(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song))
                     .build()
@@ -91,7 +91,7 @@ class PlaylistDetailCarScreen(
             .build()
 
         val shuffleAction = Action.Builder()
-            .setTitle("Shuffle")
+            .setTitle(carContext.getString(R.string.car_playlist_button_shuffle))
             .setIcon(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse))
                     .build()

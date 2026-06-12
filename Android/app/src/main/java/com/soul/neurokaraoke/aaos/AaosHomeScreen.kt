@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.aaos
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +46,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,13 +55,18 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
 import coil.compose.AsyncImage
 import androidx.compose.runtime.LaunchedEffect
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.api.RadioApi
 import com.soul.neurokaraoke.data.api.RadioSong
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import kotlinx.coroutines.delay
 
-private enum class AaosTab(val label: String) { LIBRARY("Library"), PLAYLISTS("Playlists"), RADIO("Radio") }
+private enum class AaosTab(@StringRes val labelRes: Int) {
+    LIBRARY(R.string.aaos_tab_library),
+    PLAYLISTS(R.string.aaos_tab_playlists),
+    RADIO(R.string.aaos_tab_radio)
+}
 
 @Composable
 fun AaosHomeScreen(
@@ -105,7 +112,9 @@ fun AaosHomeScreen(
                 },
                 onPlaylistClick = onPlaylistClick
             )
-            AaosTab.PLAYLISTS -> PlaylistsGrid(
+            AaosTab.PLAYLISTS -> {
+                val favoritesTitle = stringResource(R.string.aaos_label_favorites)
+                PlaylistsGrid(
                 playlists = (userPlaylists + setlists).filter { it.title.isNotBlank() },
                 favorites = favorites,
                 loading = loading,
@@ -115,7 +124,7 @@ fun AaosHomeScreen(
                         onPlaylistClick(
                             Playlist(
                                 id = "favorites",
-                                title = "Favorites",
+                                title = favoritesTitle,
                                 coverUrl = "",
                                 previewCovers = favorites.take(4).map { it.coverUrl },
                                 songCount = favorites.size,
@@ -125,6 +134,7 @@ fun AaosHomeScreen(
                     }
                 }
             )
+            }
             AaosTab.RADIO -> RadioPanel(
                 controllerProvider = controllerProvider
             )
@@ -163,7 +173,7 @@ private fun TopBar(
         ) {
             AaosTab.entries.forEach { t ->
                 PillTab(
-                    label = t.label,
+                    label = stringResource(t.labelRes),
                     selected = t == tab,
                     onClick = { onTabSelected(t) }
                 )
@@ -191,10 +201,11 @@ private fun TopBar(
     }
 }
 
+@Composable
 private fun breadcrumbFor(tab: AaosTab): String = when (tab) {
-    AaosTab.LIBRARY -> "Songs"
-    AaosTab.PLAYLISTS -> "Playlists"
-    AaosTab.RADIO -> "Radio"
+    AaosTab.LIBRARY -> stringResource(R.string.aaos_breadcrumb_songs)
+    AaosTab.PLAYLISTS -> stringResource(R.string.aaos_breadcrumb_playlists)
+    AaosTab.RADIO -> stringResource(R.string.aaos_breadcrumb_radio)
 }
 
 @Composable
@@ -268,10 +279,10 @@ private fun LibraryGrid(
     loading: Boolean,
     onSongClick: (Int) -> Unit
 ) {
-    if (loading && songs.isEmpty()) { CenterText("Loading…"); return }
-    if (songs.isEmpty()) { CenterText("No songs cached"); return }
+    if (loading && songs.isEmpty()) { CenterText(stringResource(R.string.aaos_label_loading)); return }
+    if (songs.isEmpty()) { CenterText(stringResource(R.string.aaos_label_no_songs_cached)); return }
     Column(modifier = Modifier.fillMaxSize()) {
-        SectionHeader("Recently Added")
+        SectionHeader(stringResource(R.string.aaos_section_recently_added))
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 200.dp),
             contentPadding = PaddingValues(vertical = 8.dp),
@@ -283,7 +294,7 @@ private fun LibraryGrid(
                 val song = songs[idx]
                 CoverTile(
                     imageUrl = song.coverUrl,
-                    title = song.title.ifBlank { "Untitled" },
+                    title = song.title.ifBlank { stringResource(R.string.aaos_label_untitled) },
                     subtitle = song.artist,
                     onClick = { onSongClick(idx) }
                 )
@@ -302,16 +313,16 @@ private fun LibraryCarousels(
     onSongClick: (List<Song>, Int) -> Unit,
     onPlaylistClick: (Playlist) -> Unit
 ) {
-    if (loading && recent.isEmpty()) { CenterText("Loading…"); return }
+    if (loading && recent.isEmpty()) { CenterText(stringResource(R.string.aaos_label_loading)); return }
     LazyColumn(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (recent.isNotEmpty()) {
-            item { SectionHeader("Songs") }
+            item { SectionHeader(stringResource(R.string.aaos_section_songs)) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(recent.size) { idx ->
                         val s = recent[idx]
                         Box(modifier = Modifier.width(200.dp)) {
-                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { "Untitled" },
+                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { stringResource(R.string.aaos_label_untitled) },
                                 subtitle = s.artist, onClick = { onSongClick(recent, idx) })
                         }
                     }
@@ -319,13 +330,13 @@ private fun LibraryCarousels(
             }
         }
         if (dailyMix.isNotEmpty()) {
-            item { SectionHeader("Daily Mix") }
+            item { SectionHeader(stringResource(R.string.aaos_section_daily_mix)) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(dailyMix.size) { idx ->
                         val s = dailyMix[idx]
                         Box(modifier = Modifier.width(200.dp)) {
-                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { "Untitled" },
+                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { stringResource(R.string.aaos_label_untitled) },
                                 subtitle = s.artist, onClick = { onSongClick(dailyMix, idx) })
                         }
                     }
@@ -333,13 +344,13 @@ private fun LibraryCarousels(
             }
         }
         if (trending.isNotEmpty()) {
-            item { SectionHeader("Trending") }
+            item { SectionHeader(stringResource(R.string.aaos_section_trending)) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(trending.size) { idx ->
                         val s = trending[idx]
                         Box(modifier = Modifier.width(200.dp)) {
-                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { "Untitled" },
+                            CoverTile(imageUrl = s.coverUrl, title = s.title.ifBlank { stringResource(R.string.aaos_label_untitled) },
                                 subtitle = s.artist, onClick = { onSongClick(trending, idx) })
                         }
                     }
@@ -347,7 +358,7 @@ private fun LibraryCarousels(
             }
         }
         if (community.isNotEmpty()) {
-            item { SectionHeader("Community") }
+            item { SectionHeader(stringResource(R.string.aaos_section_community)) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                     items(community.size) { idx ->
@@ -356,7 +367,7 @@ private fun LibraryCarousels(
                             CoverTile(
                                 imageUrl = pl.coverUrl.ifBlank { pl.previewCovers.firstOrNull() ?: "" },
                                 title = pl.title,
-                                subtitle = if (pl.songCount > 0) "${pl.songCount} songs" else "Playlist",
+                                subtitle = if (pl.songCount > 0) stringResource(R.string.common_label_songs_format, pl.songCount) else stringResource(R.string.playlists_label_playlist),
                                 onClick = { onPlaylistClick(pl) }
                             )
                         }
@@ -365,7 +376,7 @@ private fun LibraryCarousels(
             }
         }
         if (recent.isEmpty() && !loading) {
-            item { CenterText("No songs cached") }
+            item { CenterText(stringResource(R.string.aaos_label_no_songs_cached)) }
         }
     }
 }
@@ -378,9 +389,9 @@ private fun PlaylistsGrid(
     onPlaylistClick: (Playlist) -> Unit,
     onFavoritesClick: () -> Unit
 ) {
-    if (loading && playlists.isEmpty()) { CenterText("Loading…"); return }
+    if (loading && playlists.isEmpty()) { CenterText(stringResource(R.string.aaos_label_loading)); return }
     Column(modifier = Modifier.fillMaxSize()) {
-        SectionHeader("Your Playlists")
+        SectionHeader(stringResource(R.string.aaos_section_your_playlists))
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 200.dp),
             contentPadding = PaddingValues(vertical = 8.dp),
@@ -396,7 +407,7 @@ private fun PlaylistsGrid(
                 CoverTile(
                     imageUrl = pl.coverUrl.ifBlank { pl.previewCovers.firstOrNull() ?: "" },
                     title = pl.title,
-                    subtitle = if (pl.songCount > 0) "${pl.songCount} songs" else "Playlist",
+                    subtitle = if (pl.songCount > 0) stringResource(R.string.common_label_songs_format, pl.songCount) else stringResource(R.string.playlists_label_playlist),
                     onClick = { onPlaylistClick(pl) }
                 )
             }
@@ -429,13 +440,13 @@ private fun FavoritesTile(count: Int, onClick: () -> Unit) {
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            "Favorites",
+            stringResource(R.string.aaos_label_favorites),
             color = MaterialTheme.colorScheme.onBackground,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold
         )
         Text(
-            "$count songs",
+            stringResource(R.string.common_label_songs_format, count),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium
         )
@@ -502,7 +513,7 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
         Column(modifier = Modifier.weight(1f)) {
             // Station badge
             Text(
-                "NEURO 21 STATION • LIVE",
+                stringResource(R.string.radio_station_badge_live),
                 color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold
@@ -511,7 +522,7 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
 
             // Current song title
             Text(
-                text = currentSong?.title ?: "24/7 Karaoke Radio",
+                text = currentSong?.title ?: stringResource(R.string.radio_default_title),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
@@ -525,7 +536,7 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
                 val artists = currentSong!!.originalArtists.joinToString(", ")
                 val covers = currentSong!!.coverArtistDisplay
                 Text(
-                    "$artists  •  covered by $covers",
+                    stringResource(R.string.radio_covered_by, artists, covers),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
@@ -533,7 +544,7 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
                 )
             } else {
                 Text(
-                    "24/7 Karaoke Radio",
+                    stringResource(R.string.radio_default_title),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -569,7 +580,7 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    text = if (isRadioPlaying) "Stop" else "Listen Live",
+                    text = if (isRadioPlaying) stringResource(R.string.aaos_radio_button_stop) else stringResource(R.string.aaos_radio_button_listen_live),
                     color = if (isRadioPlaying) MaterialTheme.colorScheme.onError
                             else MaterialTheme.colorScheme.onPrimary,
                     style = MaterialTheme.typography.titleLarge,
