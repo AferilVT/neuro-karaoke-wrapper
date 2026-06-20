@@ -17,6 +17,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,8 +65,9 @@ class MainActivity : ComponentActivity() {
             // through attachBaseContext() again with the new locale. This avoids
             // the white flash caused by key() destroying the entire Compose tree.
             val currentLanguage by LocaleManager.currentLanguage.collectAsState()
+            val initialLanguage = remember { currentLanguage }
             LaunchedEffect(currentLanguage) {
-                // Skip the initial composition — only recreate on actual changes
+                if (currentLanguage != initialLanguage) recreate()
             }
 
             val playerState by playerViewModel.uiState.collectAsState()
