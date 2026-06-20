@@ -35,7 +35,7 @@ data class RadioSong(
     }
 
     val coverArtistDisplay: String
-        get() = coverArtists.joinToString(", ").ifBlank { "Unknown" }
+        get() = coverArtists.joinToString(", ").ifBlank { "Neuro-sama" }
 }
 
 data class RadioState(

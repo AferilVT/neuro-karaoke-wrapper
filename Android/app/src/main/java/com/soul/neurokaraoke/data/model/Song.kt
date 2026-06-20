@@ -13,12 +13,12 @@ enum class Singer {
          */
         fun fromCoverArtists(coverArtists: String?): Singer {
             val artists = coverArtists?.trim().orEmpty()
-            if (artists.isBlank()) return OTHER
+            if (artists.isBlank()) return NEURO
 
             val normalized = artists.lowercase()
             val hasMultiplePerformers =
                 normalized.contains("duet") ||
-                Regex("""\s(?:&|and|x|with|feat\.?|featuring)\s""").containsMatchIn(normalized) ||
+                MULTI_PERFORMER_REGEX.containsMatchIn(normalized) ||
                 ',' in normalized ||
                 (';' in normalized)
 
@@ -26,9 +26,11 @@ enum class Singer {
                 hasMultiplePerformers -> DUET
                 "evil" in normalized -> EVIL
                 "neuro" in normalized -> NEURO
-                else -> OTHER
+                else -> NEURO
             }
         }
+
+        private val MULTI_PERFORMER_REGEX = Regex("""\s(?:&|and|x|with|feat\.?|featuring)\s""")
     }
 }
 
@@ -59,25 +61,30 @@ data class Song(
 
     /**
      * Extract the social link from a human-readable art credit.
-     * Supports full URLs, bare domains, and credits containing an @handle.
+     * Supports full URLs (any domain), bare known-domain shortcuts, and @handle (X/Twitter convention).
      */
     val artCreditUrl: String?
         get() {
             val credit = artCredit?.trim().orEmpty()
             if (credit.isBlank()) return null
 
-            val link = Regex(
-                """(?i)(?:https?://)?(?:www\.)?(?:x\.com|twitter\.com|bsky\.app|instagram\.com|pixiv\.net|deviantart\.com|artstation\.com|tumblr\.com|space\.bilibili\.com)/[^\s,;)]+"""
-            ).find(credit)?.value
+            // Full URL with scheme — match any domain
+            FULL_URL_REGEX.find(credit)?.value?.let { return it }
 
-            if (link != null) {
-                return if (link.startsWith("http", ignoreCase = true)) link else "https://$link"
-            }
+            // Bare known-domain link without scheme
+            val bare = BARE_DOMAIN_REGEX.find(credit)?.value
+            if (bare != null) return "https://$bare"
 
-            val handle = Regex("""(?<![\w.])@([A-Za-z0-9_]{1,30})""")
-                .find(credit)
-                ?.groupValues
-                ?.getOrNull(1)
+            // @handle convention in this project always maps to X/Twitter
+            val handle = HANDLE_REGEX.find(credit)?.groupValues?.getOrNull(1)
             return handle?.let { "https://x.com/$it" }
         }
+
+    companion object {
+        private val FULL_URL_REGEX = Regex("""(?i)https?://\S+""")
+        private val BARE_DOMAIN_REGEX = Regex(
+            """(?i)(?:www\.)?(?:x\.com|twitter\.com|bsky\.app|instagram\.com|pixiv\.net|deviantart\.com|artstation\.com|tumblr\.com|space\.bilibili\.com)/[^\s,;)]+"""
+        )
+        private val HANDLE_REGEX = Regex("""(?<![\w.])@([A-Za-z0-9_]{1,30})""")
+    }
 }

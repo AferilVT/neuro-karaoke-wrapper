@@ -410,7 +410,7 @@ class SyncApi {
                     for (j in 0 until ca.length()) add(ca.optString(j, ""))
                 }.filter { it.isNotBlank() }.joinToString(", ")
                 is String -> ca
-                else -> obj.optString("coverArtist", "")
+                else -> ""
             }
             val singer = if (coverArtists.isNotBlank()) {
                 Singer.fromCoverArtists(coverArtists)
