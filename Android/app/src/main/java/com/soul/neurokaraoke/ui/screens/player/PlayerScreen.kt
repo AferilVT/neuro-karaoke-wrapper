@@ -283,20 +283,22 @@ fun PlayerScreen(
 
         // Art credit
         if (!song.artCredit.isNullOrBlank()) {
+            val artCreditUrl = song.artCreditUrl
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable {
-                        val url = if (song.artCredit.startsWith("http")) {
-                            song.artCredit
+                    .then(
+                        if (artCreditUrl != null) {
+                            Modifier.clickable {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(artCreditUrl))
+                                context.startActivity(intent)
+                            }
                         } else {
-                            "https://${song.artCredit}"
+                            Modifier
                         }
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                        context.startActivity(intent)
-                    }
+                    )
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -311,7 +313,7 @@ fun PlayerScreen(
                     text = song.artCredit,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline
+                    textDecoration = if (artCreditUrl != null) TextDecoration.Underline else null
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))

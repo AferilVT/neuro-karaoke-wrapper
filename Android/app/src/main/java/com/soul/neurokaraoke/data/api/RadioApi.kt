@@ -19,14 +19,7 @@ data class RadioSong(
     val artCredit: String?
 ) {
     fun toSong(): Song {
-        val singer = when {
-            coverArtists.any { it.contains("Evil", ignoreCase = true) } &&
-            coverArtists.any { it.contains("Neuro", ignoreCase = true) } -> Singer.DUET
-            coverArtists.any { it.contains("Evil", ignoreCase = true) } -> Singer.EVIL
-            coverArtists.any { it.contains("Neuro", ignoreCase = true) &&
-                it.contains("Evil", ignoreCase = true) } -> Singer.DUET
-            else -> Singer.NEURO
-        }
+        val coverArtistText = coverArtists.joinToString(", ")
 
         return Song(
             id = "radio_$id",
@@ -35,20 +28,14 @@ data class RadioSong(
             coverUrl = coverUrl,
             audioUrl = RadioApi.STREAM_URL,
             duration = duration.toLong() * 1000,
-            singer = singer,
+            singer = Singer.fromCoverArtists(coverArtistText),
+            coverArtists = coverArtistText,
             artCredit = artCredit
         )
     }
 
     val coverArtistDisplay: String
-        get() = when {
-            coverArtists.any { it.contains("Evil", ignoreCase = true) } &&
-            coverArtists.any { it.contains("Neuro", ignoreCase = true) } -> "Neuro & Evil"
-            coverArtists.any { it.contains("Neuro", ignoreCase = true) &&
-                it.contains("Evil", ignoreCase = true) } -> "Neuro & Evil"
-            coverArtists.any { it.contains("Evil", ignoreCase = true) } -> "Evil Neuro"
-            else -> "Neuro-sama"
-        }
+        get() = coverArtists.joinToString(", ").ifBlank { "Unknown" }
 }
 
 data class RadioState(
@@ -112,9 +99,7 @@ class RadioApi {
             "$IMAGE_BASE/$IMAGE_ACCOUNT/$cloudflareId/public"
         } else ""
 
-        val artCredit = coverArtObj?.takeIf { !it.isNull("credit") }
-            ?.optString("credit", "")
-            ?.takeIf { it.isNotBlank() && it != "null" }
+        val artCredit = coverArtObj?.let(::parseArtCredit)
 
         val originalArtists = buildList {
             val arr = obj.optJSONArray("originalArtists")
@@ -140,4 +125,18 @@ class RadioApi {
             artCredit = artCredit
         )
     }
+
+    private fun parseArtCredit(coverArt: JSONObject): String? {
+        coverArt.optString("credit", "")
+            .cleanApiText()
+            ?.let { return it }
+
+        val artist = coverArt.optJSONObject("artist") ?: return null
+        val name = artist.optString("name", "").cleanApiText() ?: return null
+        val socialLink = artist.optString("socialLink", "").cleanApiText()
+        return if (socialLink != null) "Art by $name - $socialLink" else "Art by $name"
+    }
+
+    private fun String.cleanApiText(): String? =
+        trim().takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
 }

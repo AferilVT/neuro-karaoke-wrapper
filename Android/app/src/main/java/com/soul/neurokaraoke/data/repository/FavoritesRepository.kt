@@ -164,7 +164,9 @@ class FavoritesRepository(context: Context) {
                 Singer.valueOf(json.optString("singer", "NEURO"))
             } catch (e: Exception) {
                 Singer.NEURO
-            }
+            },
+            coverArtists = json.optString("coverArtists", ""),
+            artCredit = json.optString("artCredit", "").takeIf { it.isNotBlank() }
         )
     }
 
@@ -177,6 +179,8 @@ class FavoritesRepository(context: Context) {
         json.put("audioUrl", song.audioUrl)
         json.put("duration", song.duration)
         json.put("singer", song.singer.name)
+        json.put("coverArtists", song.coverArtists)
+        json.put("artCredit", song.artCredit ?: "")
         return json
     }
 

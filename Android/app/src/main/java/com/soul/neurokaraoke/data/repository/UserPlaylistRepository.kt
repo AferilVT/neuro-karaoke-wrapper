@@ -104,7 +104,14 @@ class UserPlaylistRepository(context: Context) {
             artist = json.getString("artist"),
             coverUrl = json.optString("coverUrl", ""),
             audioUrl = json.optString("audioUrl", ""),
-            duration = json.optLong("duration", 0L)
+            duration = json.optLong("duration", 0L),
+            singer = try {
+                Singer.valueOf(json.optString("singer", "NEURO"))
+            } catch (_: Exception) {
+                Singer.NEURO
+            },
+            coverArtists = json.optString("coverArtists", ""),
+            artCredit = json.optString("artCredit", "").takeIf { it.isNotBlank() }
         )
     }
 
@@ -139,6 +146,9 @@ class UserPlaylistRepository(context: Context) {
         json.put("coverUrl", song.coverUrl)
         json.put("audioUrl", song.audioUrl)
         json.put("duration", song.duration)
+        json.put("singer", song.singer.name)
+        json.put("coverArtists", song.coverArtists)
+        json.put("artCredit", song.artCredit ?: "")
         return json
     }
 
@@ -297,20 +307,16 @@ class UserPlaylistRepository(context: Context) {
 
             songsResult.onSuccess { apiSongs ->
                 val songs = apiSongs.map { apiSong ->
-                    val coverArtists = apiSong.coverArtists?.lowercase() ?: ""
-                    val singer = when {
-                        "evil" in coverArtists -> Singer.EVIL
-                        "duet" in coverArtists || ("neuro" in coverArtists && "evil" in coverArtists) -> Singer.DUET
-                        else -> Singer.NEURO
-                    }
+                    val coverArtists = apiSong.coverArtists.orEmpty()
                     Song(
                         id = apiSong.audioUrl?.hashCode()?.toString() ?: "",
                         title = apiSong.title,
                         artist = apiSong.originalArtists ?: "Unknown Artist",
                         coverUrl = apiSong.getCoverArtUrl() ?: "",
                         audioUrl = apiSong.audioUrl ?: "",
-                        singer = singer,
-                        artCredit = apiSong.artCredit
+                        singer = Singer.fromCoverArtists(coverArtists),
+                        coverArtists = coverArtists,
+                        artCredit = apiSong.artCredit?.takeIf { it.isNotBlank() }
                     )
                 }
 

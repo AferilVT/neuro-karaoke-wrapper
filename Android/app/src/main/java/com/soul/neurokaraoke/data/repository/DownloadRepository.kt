@@ -38,6 +38,7 @@ data class DownloadedSong(
     val coverUrl: String,
     val audioUrl: String,
     val singer: Singer,
+    val artCredit: String?,
     val localAudioPath: String,
     val localCoverPath: String?,
     val fileSize: Long,
@@ -49,7 +50,9 @@ data class DownloadedSong(
         artist = artist,
         coverUrl = coverUrl,
         audioUrl = audioUrl,
-        singer = singer
+        singer = singer,
+        coverArtists = coverArtist,
+        artCredit = artCredit
     )
 }
 
@@ -192,6 +195,7 @@ object DownloadRepository {
                         coverUrl = song.coverUrl,
                         audioUrl = song.audioUrl,
                         singer = song.singer,
+                        artCredit = song.artCredit,
                         localAudioPath = audioFile.absolutePath,
                         localCoverPath = localCoverPath,
                         fileSize = audioFile.length(),
@@ -448,6 +452,7 @@ object DownloadRepository {
                         } catch (_: Exception) {
                             Singer.NEURO
                         },
+                        artCredit = obj.optString("artCredit", "").takeIf { it.isNotBlank() },
                         localAudioPath = localAudioPath,
                         localCoverPath = obj.optString("localCoverPath").takeIf { it.isNotBlank() }?.let { coverPath ->
                             if (File(coverPath).exists()) coverPath
@@ -483,6 +488,7 @@ object DownloadRepository {
                     put("coverUrl", song.coverUrl)
                     put("audioUrl", song.audioUrl)
                     put("singer", song.singer.name)
+                    put("artCredit", song.artCredit ?: "")
                     put("localAudioPath", song.localAudioPath)
                     put("localCoverPath", song.localCoverPath ?: "")
                     put("fileSize", song.fileSize)

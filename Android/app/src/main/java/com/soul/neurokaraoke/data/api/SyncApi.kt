@@ -404,35 +404,32 @@ class SyncApi {
                 else -> ""
             }
 
-            // Singer/cover artist
-            val singer = when {
-                obj.has("coverArtists") -> {
-                    val ca = obj.opt("coverArtists")
-                    val caStr = when (ca) {
-                        is JSONArray -> buildList {
-                            for (j in 0 until ca.length()) add(ca.optString(j, ""))
-                        }.joinToString(", ")
-                        is String -> ca
-                        else -> ""
-                    }.lowercase()
-                    when {
-                        "evil" in caStr -> Singer.EVIL
-                        "duet" in caStr || ("neuro" in caStr && "evil" in caStr) -> Singer.DUET
-                        else -> Singer.NEURO
-                    }
-                }
-                obj.has("singer") -> {
-                    try { Singer.valueOf(obj.optString("singer", "NEURO")) }
-                    catch (_: Exception) { Singer.NEURO }
-                }
-                else -> Singer.NEURO
+            // Keep the API performer text; Singer is only the theme/filter category.
+            val coverArtists = when (val ca = obj.opt("coverArtists")) {
+                is JSONArray -> buildList {
+                    for (j in 0 until ca.length()) add(ca.optString(j, ""))
+                }.filter { it.isNotBlank() }.joinToString(", ")
+                is String -> ca
+                else -> obj.optString("coverArtist", "")
+            }
+            val singer = if (coverArtists.isNotBlank()) {
+                Singer.fromCoverArtists(coverArtists)
+            } else {
+                try { Singer.valueOf(obj.optString("singer", "NEURO")) }
+                catch (_: Exception) { Singer.NEURO }
             }
 
             val duration = obj.optLong("duration", 0L)
-            val artCredit = obj.optString("artCredit", "").ifBlank {
-                val coverArtObj = obj.optJSONObject("coverArt")
-                coverArtObj?.optString("credit", "") ?: ""
-            }.ifBlank { null }
+            val coverArtObj = obj.optJSONObject("coverArt")
+            val artCredit = obj.optString("artCredit", "").cleanApiText()
+                ?: coverArtObj?.optString("credit", "")?.cleanApiText()
+                ?: coverArtObj?.optJSONObject("artist")?.let { artistObj ->
+                    val name = artistObj.optString("name", "").cleanApiText()
+                    val socialLink = artistObj.optString("socialLink", "").cleanApiText()
+                    name?.let {
+                        if (socialLink != null) "Art by $it - $socialLink" else "Art by $it"
+                    }
+                }
 
             return Song(
                 id = id,
@@ -442,6 +439,7 @@ class SyncApi {
                 audioUrl = audioUrl,
                 duration = duration,
                 singer = singer,
+                coverArtists = coverArtists,
                 artCredit = artCredit
             )
         } catch (e: Exception) {
@@ -449,4 +447,7 @@ class SyncApi {
             return null
         }
     }
+
+    private fun String.cleanApiText(): String? =
+        trim().takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
 }
