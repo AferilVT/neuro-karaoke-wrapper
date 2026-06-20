@@ -20,7 +20,7 @@ Copy `strings_template.xml` to the correct resource folder:
 | Italian | `app/src/main/res/values-it/strings.xml` |
 | Dutch | `app/src/main/res/values-nl/strings.xml` |
 | Polish | `app/src/main/res/values-pl/strings.xml` |
-| Traditional Chinese | `app/src/main/res/values-zh-rTW/strings.xml` |
+| Traditional Chinese | `app/src/main/res/values-zh-TW/strings.xml` |
 
 For other languages, use the standard [BCP-47](https://www.iana.org/assignments/language-subtag-registry) tag with `values-<tag>/`.
 
