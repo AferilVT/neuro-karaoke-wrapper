@@ -272,16 +272,13 @@ private fun LanguageSelector(
     onLanguageSelected: (String) -> Unit
 ) {
     Column {
-        LanguageOptionRow(
-            label = stringResource(R.string.settings_language_english),
-            isSelected = currentLanguage == "en",
-            onClick = { if (currentLanguage != "en") onLanguageSelected("en") }
-        )
-        LanguageOptionRow(
-            label = stringResource(R.string.settings_language_chinese),
-            isSelected = currentLanguage == "zh-CN",
-            onClick = { if (currentLanguage != "zh-CN") onLanguageSelected("zh-CN") }
-        )
+        LocaleManager.SUPPORTED_LOCALES.forEach { locale ->
+            LanguageOptionRow(
+                label = locale.nativeName,
+                isSelected = currentLanguage == locale.code,
+                onClick = { if (currentLanguage != locale.code) onLanguageSelected(locale.code) }
+            )
+        }
     }
 }
 
