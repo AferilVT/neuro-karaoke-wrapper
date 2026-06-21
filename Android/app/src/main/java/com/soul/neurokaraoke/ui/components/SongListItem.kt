@@ -112,7 +112,7 @@ fun SongListItem(
             if (isDownloaded) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
-                    contentDescription = "Downloaded",
+                    contentDescription = stringResource(R.string.song_content_description_downloaded),
                     tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .size(16.dp)
@@ -162,7 +162,7 @@ fun SongListItem(
         ) {
             Icon(
                 imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                contentDescription = stringResource(if (isFavorite) R.string.player_content_description_remove_favorite else R.string.player_content_description_add_favorite),
                 tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -180,7 +180,7 @@ fun SongListItem(
                 } else {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More options",
+                        contentDescription = stringResource(R.string.common_content_description_more_options),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -221,7 +221,7 @@ fun SongListItem(
                     )
                 } else if (onDownloadClick != null) {
                     DropdownMenuItem(
-                        text = { Text("Download") },
+                        text = { Text(stringResource(R.string.song_menu_download)) },
                         onClick = {
                             showMenu = false
                             onDownloadClick()

@@ -437,4 +437,65 @@
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">添加到播放列表</string>
     <string name="song_menu_remove_download">移除下载</string>
+    <string name="song_menu_download">下载</string>
+    <string name="song_content_description_downloaded">已下载</string>
+
+    <!-- Setup screen -->
+    <string name="setup_status_preparing">准备中…</string>
+    <string name="setup_status_loading_playlists">加载播放列表…</string>
+    <string name="setup_status_no_playlists">未找到播放列表</string>
+    <string name="setup_status_fetching_info">获取播放列表信息…</string>
+    <string name="setup_status_loading_songs">加载歌曲…</string>
+    <string name="setup_status_caching">缓存 %1$d 首歌曲…</string>
+    <string name="setup_status_complete">设置完成！</string>
+    <string name="setup_status_failed">设置失败：%1$s</string>
+    <string name="setup_label_first_time">首次设置</string>
+    <string name="setup_label_songs_loaded">已加载 %1$d 首歌曲</string>
+    <string name="setup_label_only_once">仅需一次。\n以后启动将瞬间完成！</string>
+    <string name="setup_content_description_logo">Neuro Karaoke</string>
+
+    <!-- Setlist detail screen -->
+    <string name="setlist_detail_label">卡拉OK歌单</string>
+    <string name="setlist_detail_tap_to_play">点按播放开始</string>
+    <string name="setlist_detail_section_songs">歌曲</string>
+    <string name="setlist_detail_button_play">播放</string>
+    <string name="setlist_detail_menu_share">分享</string>
+    <string name="setlist_detail_menu_add_all_queue">全部加入队列</string>
+    <string name="setlist_detail_menu_download_all">全部下载</string>
+    <string name="setlist_detail_toast_sign_in_favorites">使用 Discord 登录以保存收藏</string>
+    <string name="setlist_detail_toast_downloading">正在下载 %1$d 首歌曲…</string>
+    <string name="setlist_detail_share_text">查看此歌单：%1$s\n%2$d 首歌曲\n\nhttps://neurokaraoke.com/setlist/%3$s</string>
+    <string name="setlist_detail_share_chooser">分享歌单</string>
+    <string name="setlist_detail_content_description_download_all">全部下载</string>
+
+    <!-- Player screen - Bass Boost -->
+    <string name="player_bass_boost_unavailable">此设备不支持低音增强</string>
+    <string name="player_bass_boost_enable">启用低音增强</string>
+    <string name="player_bass_boost_strength">强度</string>
+    <string name="player_bass_boost_level">低音等级</string>
+    <string name="player_bass_boost_light">轻</string>
+    <string name="player_bass_boost_heavy">重</string>
+    <string name="player_eq_reset_to_flat">重置为平坦</string>
+    <string name="player_lyrics_load_failed">加载歌词失败</string>
+
+    <!-- User playlist detail screen -->
+    <string name="user_playlist_detail_not_found">未找到播放列表</string>
+    <string name="user_playlist_detail_label">我的播放列表</string>
+    <string name="user_playlist_detail_section_songs">歌曲</string>
+    <string name="user_playlist_detail_button_play">播放</string>
+    <string name="user_playlist_detail_empty_title">暂无歌曲</string>
+    <string name="user_playlist_detail_empty_subtitle">从搜索或任意歌曲列表添加歌曲</string>
+    <string name="user_playlist_detail_content_description_download_all">全部下载</string>
+    <string name="user_playlist_detail_stats">%1$d 首歌曲 · %2$d 分钟</string>
+    <string name="user_playlist_detail_stats_no_duration">%1$d 首歌曲</string>
+
+    <!-- Artist detail screen -->
+    <string name="artist_detail_content_description_back">返回</string>
+
+    <!-- Add to playlist sheet -->
+    <string name="add_to_playlist_toast_added">已添加到\"%1$s\"</string>
+
+    <!-- Upload / Local Music -->
+    <string name="upload_unknown">未知</string>
+    <string name="upload_unknown_artist">未知艺术家</string>
 </resources>

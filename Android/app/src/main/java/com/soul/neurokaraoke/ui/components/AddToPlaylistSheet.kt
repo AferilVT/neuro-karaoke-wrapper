@@ -105,7 +105,7 @@ fun AddToPlaylistSheet(
                     onCreate = { name, description, coverUri, isPublic ->
                         val newPlaylist = repository.createPlaylist(name, description, coverUri, isPublic)
                         repository.addSongToPlaylist(newPlaylist.id, song)
-                        Toast.makeText(context, "Added to \"$name\"", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, name), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     }
                 )
@@ -163,7 +163,7 @@ fun AddToPlaylistSheet(
                                 .fillMaxWidth()
                                 .clickable(enabled = !alreadyAdded) {
                                     repository.addSongToPlaylist(playlist.id, song)
-                                    Toast.makeText(context, "Added to \"${playlist.title}\"", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, playlist.title), Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 }
                                 .padding(vertical = 12.dp),
@@ -326,7 +326,7 @@ private fun InlineCreatePlaylist(
                 if (coverUri != null) {
                     AsyncImage(
                         model = coverUri,
-                        contentDescription = "Playlist cover",
+                        contentDescription = stringResource(R.string.playlists_create_content_description_cover),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
@@ -344,7 +344,7 @@ private fun InlineCreatePlaylist(
                 OutlinedTextField(
                     value = playlistName,
                     onValueChange = { if (it.length <= 200) playlistName = it },
-                    label = { Text("Playlist Name") },
+                    label = { Text(stringResource(R.string.add_to_playlist_label_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -357,7 +357,7 @@ private fun InlineCreatePlaylist(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { if (it.length <= 200) description = it },
-                    label = { Text("Description") },
+                    label = { Text(stringResource(R.string.add_to_playlist_label_description)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(

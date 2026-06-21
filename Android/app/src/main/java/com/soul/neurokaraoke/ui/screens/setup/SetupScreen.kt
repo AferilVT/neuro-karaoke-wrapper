@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -61,7 +62,7 @@ fun SetupScreen(
     val api = remember { NeuroKaraokeApi() }
 
     var progress by remember { mutableFloatStateOf(0f) }
-    var statusText by remember { mutableStateOf("Preparing...") }
+    var statusText by remember { mutableStateOf("") }
     var songsLoaded by remember { mutableStateOf(0) }
     var totalSongs by remember { mutableStateOf(0) }
     var currentPlaylist by remember { mutableStateOf("") }
@@ -72,16 +73,23 @@ fun SetupScreen(
     )
 
     val neonColors = NeonTheme.colors
+    val statusPreparing = stringResource(R.string.setup_status_preparing)
+    val statusLoadingPlaylists = stringResource(R.string.setup_status_loading_playlists)
+    val statusNoPlaylists = stringResource(R.string.setup_status_no_playlists)
+    val statusFetchingInfo = stringResource(R.string.setup_status_fetching_info)
+    val statusLoadingSongs = stringResource(R.string.setup_status_loading_songs)
+    val statusComplete = stringResource(R.string.setup_status_complete)
 
     LaunchedEffect(Unit) {
+        statusText = statusPreparing
         try {
             // Step 1: Load playlists
-            statusText = "Loading playlists..."
+            statusText = statusLoadingPlaylists
             progress = 0.1f
             val playlists = playlistCatalog.getPlaylists()
 
             if (playlists.isEmpty()) {
-                statusText = "No playlists found"
+                statusText = statusNoPlaylists
                 progress = 1f
                 songCache.markSetupComplete()
                 onSetupComplete()
@@ -89,7 +97,7 @@ fun SetupScreen(
             }
 
             // Step 2: Fetch playlist info (names, covers) in parallel
-            statusText = "Fetching playlist info..."
+            statusText = statusFetchingInfo
             progress = 0.2f
 
             coroutineScope {
@@ -120,7 +128,7 @@ fun SetupScreen(
             }
 
             // Step 3: Fetch every song server-side in one call
-            statusText = "Loading songs..."
+            statusText = statusLoadingSongs
             progress = 0.5f
             currentPlaylist = ""
 
@@ -128,14 +136,14 @@ fun SetupScreen(
             songsLoaded = fetched.size
 
             // Step 4: Cache
-            statusText = "Caching ${fetched.size} songs..."
+            statusText = context.getString(R.string.setup_status_caching, fetched.size)
             progress = 0.9f
             totalSongs = fetched.size
 
             songCache.cacheSongs(fetched, playlists.size)
 
             // Step 5: Complete
-            statusText = "Setup complete!"
+            statusText = statusComplete
             progress = 1f
             songCache.markSetupComplete()
 
@@ -144,7 +152,7 @@ fun SetupScreen(
 
         } catch (e: Exception) {
             if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
-            statusText = "Setup failed: ${e.message}"
+            statusText = context.getString(R.string.setup_status_failed, e.message ?: "")
             songCache.markSetupComplete()
             kotlinx.coroutines.delay(2000)
             onSetupComplete()
@@ -175,7 +183,7 @@ fun SetupScreen(
             // App logo with neon glow frame
             Image(
                 painter = painterResource(id = R.mipmap.neuro_foreground),
-                contentDescription = "Neuro Karaoke",
+                contentDescription = stringResource(R.string.setup_content_description_logo),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(120.dp)
@@ -191,7 +199,7 @@ fun SetupScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             GradientText(
-                text = "Neuro Karaoke",
+                text = stringResource(R.string.brand_neuro_karaoke),
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 gradientColors = neonColors.gradientColors
@@ -200,7 +208,7 @@ fun SetupScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "FIRST TIME SETUP",
+                text = stringResource(R.string.setup_label_first_time),
                 style = CyberLabelStyle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -229,7 +237,7 @@ fun SetupScreen(
             if (songsLoaded > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "$songsLoaded songs loaded",
+                    text = stringResource(R.string.setup_label_songs_loaded, songsLoaded),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -247,7 +255,7 @@ fun SetupScreen(
             Spacer(modifier = Modifier.height(48.dp))
 
             Text(
-                text = "This only happens once.\nFuture launches will be instant!",
+                text = stringResource(R.string.setup_label_only_once),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center

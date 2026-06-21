@@ -920,7 +920,7 @@ private fun LyricsContent(
                 isLoading = false
             },
             onFailure = { _ ->
-                errorMessage = "Failed to load lyrics"
+                errorMessage = context.getString(R.string.player_lyrics_load_failed)
                 isLoading = false
             }
         )
@@ -1554,7 +1554,7 @@ private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Reset to Flat")
+            Text(stringResource(R.string.player_eq_reset_to_flat))
         }
     }
 }
@@ -1564,7 +1564,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
     Column(modifier = Modifier.fillMaxWidth()) {
         if (!eqState.bassBoostAvailable) {
             Text(
-                text = "Bass Boost not available on this device",
+                text = stringResource(R.string.player_bass_boost_unavailable),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1580,7 +1580,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
 
         // Enable/Disable toggle
         EffectToggleRow(
-            title = "Enable Bass Boost",
+            title = stringResource(R.string.player_bass_boost_enable),
             checked = eqState.bassBoostEnabled,
             onCheckedChange = { EqualizerManager.setBassBoostEnabled(it) }
         )
@@ -1589,7 +1589,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
 
         // Bass strength slider
         Text(
-            text = "Strength",
+            text = stringResource(R.string.player_bass_boost_strength),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -1608,7 +1608,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Bass Level",
+                    text = stringResource(R.string.player_bass_boost_level),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (eqState.bassBoostEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1639,8 +1639,8 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Light", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Heavy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.player_bass_boost_light), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.player_bass_boost_heavy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
