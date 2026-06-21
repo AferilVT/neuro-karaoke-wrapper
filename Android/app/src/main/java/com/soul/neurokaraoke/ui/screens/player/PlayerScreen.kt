@@ -1450,6 +1450,7 @@ private fun EqualizerContent(
 
 @Composable
 private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1504,7 +1505,7 @@ private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                     FilterChip(
                         selected = eqState.currentPresetIndex == preset.index,
                         onClick = { EqualizerManager.usePreset(preset.index) },
-                        label = { Text(preset.name) },
+                        label = { Text(getLocalizedPresetName(preset.name, context)) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -1730,5 +1731,36 @@ private fun EqualizerBandSlider(
             )
         )
     }
+}
+
+private fun getLocalizedPresetName(systemName: String, context: android.content.Context): String {
+    val key = systemName.lowercase().replace(" ", "_")
+    val resId = when (key) {
+        "normal" -> R.string.eq_preset_normal
+        "classical" -> R.string.eq_preset_classical
+        "dance" -> R.string.eq_preset_dance
+        "flat" -> R.string.eq_preset_flat
+        "folk" -> R.string.eq_preset_folk
+        "heavy_metal", "heavymetal" -> R.string.eq_preset_heavy_metal
+        "hip_hop", "hiphop" -> R.string.eq_preset_hip_hop
+        "jazz" -> R.string.eq_preset_jazz
+        "pop" -> R.string.eq_preset_pop
+        "rock" -> R.string.eq_preset_rock
+        "bass" -> R.string.eq_preset_bass
+        "bass_boost", "bassboost" -> R.string.eq_preset_bass_boost
+        "treble" -> R.string.eq_preset_treble
+        "vocal" -> R.string.eq_preset_vocal
+        "live" -> R.string.eq_preset_live
+        "r&b", "rnb", "r_and_b" -> R.string.eq_preset_rnb
+        "latin" -> R.string.eq_preset_latin
+        "electronic" -> R.string.eq_preset_electronic
+        "acoustic" -> R.string.eq_preset_acoustic
+        "speaker" -> R.string.eq_preset_speaker
+        "small_speaker", "smallspeaker" -> R.string.eq_preset_small_speaker
+        "user" -> R.string.eq_preset_user
+        "default" -> R.string.eq_preset_default
+        else -> 0
+    }
+    return if (resId != 0) context.getString(resId) else systemName
 }
 

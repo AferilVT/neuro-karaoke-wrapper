@@ -102,6 +102,31 @@
     <string name="equalizer_preset_flat">Flat</string>
     <string name="equalizer_label_frequency_bands">Frequency Bands</string>
 
+    <!-- Equalizer preset names (localized from Android system preset names) -->
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_dance">Dance</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_folk">Folk</string>
+    <string name="eq_preset_heavy_metal">Heavy Metal</string>
+    <string name="eq_preset_hip_hop">Hip Hop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_bass">Bass</string>
+    <string name="eq_preset_bass_boost">Bass Boost</string>
+    <string name="eq_preset_treble">Treble</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_live">Live</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_latin">Latin</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_acoustic">Acoustic</string>
+    <string name="eq_preset_speaker">Speaker</string>
+    <string name="eq_preset_small_speaker">Small Speaker</string>
+    <string name="eq_preset_user">User</string>
+    <string name="eq_preset_default">Default</string>
+
     <!-- Search screen -->
     <string name="search_input_placeholder">Search by name or artist</string>
     <string name="search_content_description_search">Search</string>
@@ -490,9 +515,6 @@
     <string name="user_playlist_detail_content_description_download_all">Download All</string>
     <string name="user_playlist_detail_stats">%1$d songs · %2$d min</string>
     <string name="user_playlist_detail_stats_no_duration">%1$d songs</string>
-
-    <!-- Artist detail screen -->
-    <string name="artist_detail_content_description_back">Back</string>
 
     <!-- Add to playlist sheet -->
     <string name="add_to_playlist_toast_added">Added to \"%1$s\"</string>

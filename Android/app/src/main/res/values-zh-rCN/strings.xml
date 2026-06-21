@@ -102,6 +102,31 @@
     <string name="equalizer_preset_flat">平坦</string>
     <string name="equalizer_label_frequency_bands">频段</string>
 
+    <!-- Equalizer preset names (localized from Android system preset names) -->
+    <string name="eq_preset_normal">普通</string>
+    <string name="eq_preset_classical">古典</string>
+    <string name="eq_preset_dance">舞曲</string>
+    <string name="eq_preset_flat">平坦</string>
+    <string name="eq_preset_folk">民谣</string>
+    <string name="eq_preset_heavy_metal">重金属</string>
+    <string name="eq_preset_hip_hop">嘻哈</string>
+    <string name="eq_preset_jazz">爵士</string>
+    <string name="eq_preset_pop">流行</string>
+    <string name="eq_preset_rock">摇滚</string>
+    <string name="eq_preset_bass">低音</string>
+    <string name="eq_preset_bass_boost">低音增强</string>
+    <string name="eq_preset_treble">高音</string>
+    <string name="eq_preset_vocal">人声</string>
+    <string name="eq_preset_live">现场</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_latin">拉丁</string>
+    <string name="eq_preset_electronic">电子</string>
+    <string name="eq_preset_acoustic">原声</string>
+    <string name="eq_preset_speaker">扬声器</string>
+    <string name="eq_preset_small_speaker">小型扬声器</string>
+    <string name="eq_preset_user">自定义</string>
+    <string name="eq_preset_default">默认</string>
+
     <!-- Search screen -->
     <string name="search_input_placeholder">按名称或艺术家搜索</string>
     <string name="search_content_description_search">搜索</string>
@@ -488,9 +513,6 @@
     <string name="user_playlist_detail_content_description_download_all">全部下载</string>
     <string name="user_playlist_detail_stats">%1$d 首歌曲 · %2$d 分钟</string>
     <string name="user_playlist_detail_stats_no_duration">%1$d 首歌曲</string>
-
-    <!-- Artist detail screen -->
-    <string name="artist_detail_content_description_back">返回</string>
 
     <!-- Add to playlist sheet -->
     <string name="add_to_playlist_toast_added">已添加到\"%1$s\"</string>
