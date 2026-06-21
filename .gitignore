@@ -17,6 +17,7 @@ Thumbs.db
 *.swp
 *.swo
 docs/
+.kiro/
 
 # Logs
 *.log

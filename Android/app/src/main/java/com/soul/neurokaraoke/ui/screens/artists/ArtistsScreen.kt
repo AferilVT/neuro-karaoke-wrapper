@@ -137,7 +137,7 @@ fun ArtistsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No artists found",
+                    text = stringResource(R.string.artists_empty_none),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

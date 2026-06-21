@@ -101,12 +101,12 @@ fun UserPlaylistDetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = stringResource(R.string.common_content_description_back),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "Playlist not found",
+                    text = stringResource(R.string.user_playlist_detail_not_found),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -177,7 +177,7 @@ fun UserPlaylistDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.common_content_description_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -232,7 +232,7 @@ fun UserPlaylistDetailScreen(
                         // Info
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "YOUR PLAYLIST",
+                                text = stringResource(R.string.user_playlist_detail_label),
                                 style = CyberLabelStyle,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -246,7 +246,7 @@ fun UserPlaylistDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "${songs.size} song${if (songs.size != 1) "s" else ""}${if (totalDurationMinutes > 0) " · $totalDurationMinutes min" else ""}",
+                                text = if (totalDurationMinutes > 0) stringResource(R.string.user_playlist_detail_stats, songs.size, totalDurationMinutes) else stringResource(R.string.user_playlist_detail_stats_no_duration, songs.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -285,7 +285,7 @@ fun UserPlaylistDetailScreen(
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("PLAY", fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.user_playlist_detail_button_play), fontWeight = FontWeight.Bold)
                         }
 
                         // Shuffle button
@@ -321,7 +321,7 @@ fun UserPlaylistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Download,
-                                contentDescription = "Download All",
+                                contentDescription = stringResource(R.string.user_playlist_detail_content_description_download_all),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -335,7 +335,7 @@ fun UserPlaylistDetailScreen(
                 AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "SONGS",
+                    text = stringResource(R.string.user_playlist_detail_section_songs),
                     style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -371,13 +371,13 @@ fun UserPlaylistDetailScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = "No songs yet",
+                                text = stringResource(R.string.user_playlist_detail_empty_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Add songs from search or any song list",
+                                text = stringResource(R.string.user_playlist_detail_empty_subtitle),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                                 textAlign = TextAlign.Center

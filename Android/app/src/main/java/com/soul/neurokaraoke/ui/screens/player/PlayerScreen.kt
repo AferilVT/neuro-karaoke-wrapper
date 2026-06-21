@@ -922,7 +922,7 @@ private fun LyricsContent(
                 isLoading = false
             },
             onFailure = { _ ->
-                errorMessage = "Failed to load lyrics"
+                errorMessage = context.getString(R.string.player_lyrics_load_failed)
                 isLoading = false
             }
         )
@@ -1452,6 +1452,7 @@ private fun EqualizerContent(
 
 @Composable
 private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState) {
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1506,7 +1507,7 @@ private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                     FilterChip(
                         selected = eqState.currentPresetIndex == preset.index,
                         onClick = { EqualizerManager.usePreset(preset.index) },
-                        label = { Text(preset.name) },
+                        label = { Text(getLocalizedPresetName(preset.name, context)) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -1556,7 +1557,7 @@ private fun EqualizerTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Reset to Flat")
+            Text(stringResource(R.string.player_eq_reset_to_flat))
         }
     }
 }
@@ -1566,7 +1567,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
     Column(modifier = Modifier.fillMaxWidth()) {
         if (!eqState.bassBoostAvailable) {
             Text(
-                text = "Bass Boost not available on this device",
+                text = stringResource(R.string.player_bass_boost_unavailable),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1582,7 +1583,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
 
         // Enable/Disable toggle
         EffectToggleRow(
-            title = "Enable Bass Boost",
+            title = stringResource(R.string.player_bass_boost_enable),
             checked = eqState.bassBoostEnabled,
             onCheckedChange = { EqualizerManager.setBassBoostEnabled(it) }
         )
@@ -1591,7 +1592,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
 
         // Bass strength slider
         Text(
-            text = "Strength",
+            text = stringResource(R.string.player_bass_boost_strength),
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onSurface
@@ -1610,7 +1611,7 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = "Bass Level",
+                    text = stringResource(R.string.player_bass_boost_level),
                     style = MaterialTheme.typography.bodyMedium,
                     color = if (eqState.bassBoostEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1641,8 +1642,8 @@ private fun BassBoostTab(eqState: com.soul.neurokaraoke.audio.AudioEffectsState)
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Light", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Heavy", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.player_bass_boost_light), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.player_bass_boost_heavy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -1732,5 +1733,36 @@ private fun EqualizerBandSlider(
             )
         )
     }
+}
+
+private fun getLocalizedPresetName(systemName: String, context: android.content.Context): String {
+    val key = systemName.lowercase().replace(" ", "_")
+    val resId = when (key) {
+        "normal" -> R.string.eq_preset_normal
+        "classical" -> R.string.eq_preset_classical
+        "dance" -> R.string.eq_preset_dance
+        "flat" -> R.string.eq_preset_flat
+        "folk" -> R.string.eq_preset_folk
+        "heavy_metal", "heavymetal" -> R.string.eq_preset_heavy_metal
+        "hip_hop", "hiphop" -> R.string.eq_preset_hip_hop
+        "jazz" -> R.string.eq_preset_jazz
+        "pop" -> R.string.eq_preset_pop
+        "rock" -> R.string.eq_preset_rock
+        "bass" -> R.string.eq_preset_bass
+        "bass_boost", "bassboost" -> R.string.eq_preset_bass_boost
+        "treble" -> R.string.eq_preset_treble
+        "vocal" -> R.string.eq_preset_vocal
+        "live" -> R.string.eq_preset_live
+        "r&b", "rnb", "r_and_b" -> R.string.eq_preset_rnb
+        "latin" -> R.string.eq_preset_latin
+        "electronic" -> R.string.eq_preset_electronic
+        "acoustic" -> R.string.eq_preset_acoustic
+        "speaker" -> R.string.eq_preset_speaker
+        "small_speaker", "smallspeaker" -> R.string.eq_preset_small_speaker
+        "user" -> R.string.eq_preset_user
+        "default" -> R.string.eq_preset_default
+        else -> 0
+    }
+    return if (resId != 0) context.getString(resId) else systemName
 }
 

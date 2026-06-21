@@ -35,10 +35,12 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.ArtistImageRepository
 import com.soul.neurokaraoke.ui.components.SongListItem
@@ -119,7 +121,7 @@ fun ArtistDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.artist_detail_content_description_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -163,7 +165,7 @@ fun ArtistDetailScreen(
 
                         // Label
                         Text(
-                            text = "ARTIST",
+                            text = stringResource(R.string.artist_detail_label_artist),
                             style = CyberLabelStyle,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -181,7 +183,7 @@ fun ArtistDetailScreen(
                         Spacer(modifier = Modifier.height(4.dp))
 
                         Text(
-                            text = "${artistSongs.size} songs covered",
+                            text = stringResource(R.string.artist_detail_label_songs_covered, artistSongs.size),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -215,7 +217,7 @@ fun ArtistDetailScreen(
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("PLAY", fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.artist_detail_button_play), fontWeight = FontWeight.Bold)
                             }
 
                             // Shuffle button
@@ -233,7 +235,7 @@ fun ArtistDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Shuffle,
-                                    contentDescription = "Shuffle",
+                                    contentDescription = stringResource(R.string.artist_detail_content_description_shuffle),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -248,7 +250,7 @@ fun ArtistDetailScreen(
                 AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "SONGS",
+                    text = stringResource(R.string.artist_detail_section_songs),
                     style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp)

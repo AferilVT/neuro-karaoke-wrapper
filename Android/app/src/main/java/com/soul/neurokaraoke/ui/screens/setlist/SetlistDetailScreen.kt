@@ -52,12 +52,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import android.content.Intent
 import android.widget.Toast
 import coil.compose.AsyncImage
+import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.components.SimpleSongListItem
@@ -149,7 +151,7 @@ fun SetlistDetailScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = stringResource(R.string.common_content_description_back),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -234,7 +236,7 @@ fun SetlistDetailScreen(
 
                             // Label
                             Text(
-                                text = "KARAOKE SETLIST",
+                                text = stringResource(R.string.setlist_detail_label),
                                 style = CyberLabelStyle,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -254,7 +256,7 @@ fun SetlistDetailScreen(
 
                             // Stats
                             Text(
-                                text = if (hasDurationData) "${songs.size} songs · ${totalDurationMinutes} min" else "${songs.size} songs",
+                                text = if (hasDurationData) stringResource(R.string.playlist_detail_stats, songs.size, totalDurationMinutes) else stringResource(R.string.common_label_songs_format, songs.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -263,7 +265,7 @@ fun SetlistDetailScreen(
 
                             // Last updated (placeholder - would need API data)
                             Text(
-                                text = "Tap Play to start",
+                                text = stringResource(R.string.setlist_detail_tap_to_play),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -301,7 +303,7 @@ fun SetlistDetailScreen(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "PLAY",
+                                text = stringResource(R.string.setlist_detail_button_play),
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -309,7 +311,7 @@ fun SetlistDetailScreen(
                         // Favorite button (requires sign-in)
                         IconButton(
                             onClick = {
-                                Toast.makeText(context, "Sign in with Discord to save favorites", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.setlist_detail_toast_sign_in_favorites), Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier
                                 .size(44.dp)
@@ -321,7 +323,7 @@ fun SetlistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorite",
+                                contentDescription = stringResource(R.string.playlist_detail_content_description_favorite),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -339,7 +341,7 @@ fun SetlistDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Shuffle,
-                                contentDescription = "Shuffle",
+                                contentDescription = stringResource(R.string.playlist_detail_content_description_shuffle),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -358,7 +360,7 @@ fun SetlistDetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreVert,
-                                    contentDescription = "More options",
+                                    contentDescription = stringResource(R.string.common_content_description_more_options),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -368,7 +370,7 @@ fun SetlistDetailScreen(
                                 onDismissRequest = { showMoreMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Share") },
+                                    text = { Text(stringResource(R.string.setlist_detail_menu_share)) },
                                     onClick = {
                                         showMoreMenu = false
                                         val shareIntent = Intent(Intent.ACTION_SEND).apply {
@@ -376,12 +378,10 @@ fun SetlistDetailScreen(
                                             putExtra(Intent.EXTRA_SUBJECT, playlist.title)
                                             putExtra(
                                                 Intent.EXTRA_TEXT,
-                                                "Check out this setlist: ${playlist.title}\n" +
-                                                "${songs.size} songs\n\n" +
-                                                "https://neurokaraoke.com/setlist/${playlist.id}"
+                                                context.getString(R.string.setlist_detail_share_text, playlist.title, songs.size, playlist.id)
                                             )
                                         }
-                                        context.startActivity(Intent.createChooser(shareIntent, "Share setlist"))
+                                        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.setlist_detail_share_chooser)))
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -391,7 +391,7 @@ fun SetlistDetailScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Add all to queue") },
+                                    text = { Text(stringResource(R.string.setlist_detail_menu_add_all_queue)) },
                                     onClick = {
                                         showMoreMenu = false
                                         // Play first song which adds all to queue
@@ -405,11 +405,11 @@ fun SetlistDetailScreen(
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Download All") },
+                                    text = { Text(stringResource(R.string.setlist_detail_menu_download_all)) },
                                     onClick = {
                                         showMoreMenu = false
                                         onDownloadAll(songs)
-                                        Toast.makeText(context, "Downloading ${songs.size} songs...", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, context.getString(R.string.setlist_detail_toast_downloading, songs.size), Toast.LENGTH_SHORT).show()
                                     },
                                     leadingIcon = {
                                         Icon(
@@ -430,7 +430,7 @@ fun SetlistDetailScreen(
                 AccentDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "SONGS",
+                    text = stringResource(R.string.setlist_detail_section_songs),
                     style = CyberLabelStyle,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 16.dp)

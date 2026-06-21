@@ -80,7 +80,7 @@ fun UploadSongsScreen(
                     val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
                         ?: file.nameWithoutExtension
                     val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                        ?: "Unknown Artist"
+                        ?: context.getString(R.string.upload_unknown_artist)
                     localSongs.add(
                         LocalSong(
                             uri = Uri.fromFile(file),
@@ -94,7 +94,7 @@ fun UploadSongsScreen(
                         LocalSong(
                             uri = Uri.fromFile(file),
                             title = file.nameWithoutExtension,
-                            artist = "Unknown Artist",
+                            artist = context.getString(R.string.upload_unknown_artist),
                             fileName = file.name
                         )
                     )
@@ -113,17 +113,17 @@ fun UploadSongsScreen(
             musicDir.mkdirs()
 
             val retriever = MediaMetadataRetriever()
-            var title = "Unknown"
-            var artist = "Unknown Artist"
+            var title = context.getString(R.string.upload_unknown)
+            var artist = context.getString(R.string.upload_unknown_artist)
 
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                     retriever.setDataSource(pfd.fileDescriptor)
                     title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
                         ?: uri.lastPathSegment?.substringAfterLast("/")?.removeSuffix(".mp3")
-                        ?: "Unknown"
+                        ?: context.getString(R.string.upload_unknown)
                     artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                        ?: "Unknown Artist"
+                        ?: context.getString(R.string.upload_unknown_artist)
                 }
             } catch (_: Exception) { }
             finally { retriever.release() }

@@ -102,6 +102,31 @@
     <string name="equalizer_preset_flat">Flat</string>
     <string name="equalizer_label_frequency_bands">Frequency Bands</string>
 
+    <!-- Equalizer preset names (localized from Android system preset names) -->
+    <string name="eq_preset_normal">Normal</string>
+    <string name="eq_preset_classical">Classical</string>
+    <string name="eq_preset_dance">Dance</string>
+    <string name="eq_preset_flat">Flat</string>
+    <string name="eq_preset_folk">Folk</string>
+    <string name="eq_preset_heavy_metal">Heavy Metal</string>
+    <string name="eq_preset_hip_hop">Hip Hop</string>
+    <string name="eq_preset_jazz">Jazz</string>
+    <string name="eq_preset_pop">Pop</string>
+    <string name="eq_preset_rock">Rock</string>
+    <string name="eq_preset_bass">Bass</string>
+    <string name="eq_preset_bass_boost">Bass Boost</string>
+    <string name="eq_preset_treble">Treble</string>
+    <string name="eq_preset_vocal">Vocal</string>
+    <string name="eq_preset_live">Live</string>
+    <string name="eq_preset_rnb">R&amp;B</string>
+    <string name="eq_preset_latin">Latin</string>
+    <string name="eq_preset_electronic">Electronic</string>
+    <string name="eq_preset_acoustic">Acoustic</string>
+    <string name="eq_preset_speaker">Speaker</string>
+    <string name="eq_preset_small_speaker">Small Speaker</string>
+    <string name="eq_preset_user">User</string>
+    <string name="eq_preset_default">Default</string>
+
     <!-- Search screen -->
     <string name="search_input_placeholder">Search by name or artist</string>
     <string name="search_content_description_search">Search</string>
@@ -439,4 +464,62 @@
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">Add to Playlist</string>
     <string name="song_menu_remove_download">Remove Download</string>
+    <string name="song_menu_download">Download</string>
+    <string name="song_content_description_downloaded">Downloaded</string>
+
+    <!-- Setup screen -->
+    <string name="setup_status_preparing">Preparing…</string>
+    <string name="setup_status_loading_playlists">Loading playlists…</string>
+    <string name="setup_status_no_playlists">No playlists found</string>
+    <string name="setup_status_fetching_info">Fetching playlist info…</string>
+    <string name="setup_status_loading_songs">Loading songs…</string>
+    <string name="setup_status_caching">Caching %1$d songs…</string>
+    <string name="setup_status_complete">Setup complete!</string>
+    <string name="setup_status_failed">Setup failed: %1$s</string>
+    <string name="setup_label_first_time">FIRST TIME SETUP</string>
+    <string name="setup_label_songs_loaded">%1$d songs loaded</string>
+    <string name="setup_label_only_once">This only happens once.\nFuture launches will be instant!</string>
+    <string name="setup_content_description_logo">Neuro Karaoke</string>
+
+    <!-- Setlist detail screen -->
+    <string name="setlist_detail_label">KARAOKE SETLIST</string>
+    <string name="setlist_detail_tap_to_play">Tap Play to start</string>
+    <string name="setlist_detail_section_songs">SONGS</string>
+    <string name="setlist_detail_button_play">PLAY</string>
+    <string name="setlist_detail_menu_share">Share</string>
+    <string name="setlist_detail_menu_add_all_queue">Add all to queue</string>
+    <string name="setlist_detail_menu_download_all">Download All</string>
+    <string name="setlist_detail_toast_sign_in_favorites">Sign in with Discord to save favorites</string>
+    <string name="setlist_detail_toast_downloading">Downloading %1$d songs…</string>
+    <string name="setlist_detail_share_text">Check out this setlist: %1$s\n%2$d songs\n\nhttps://neurokaraoke.com/setlist/%3$s</string>
+    <string name="setlist_detail_share_chooser">Share setlist</string>
+    <string name="setlist_detail_content_description_download_all">Download All</string>
+
+    <!-- Player screen - Bass Boost -->
+    <string name="player_bass_boost_unavailable">Bass Boost not available on this device</string>
+    <string name="player_bass_boost_enable">Enable Bass Boost</string>
+    <string name="player_bass_boost_strength">Strength</string>
+    <string name="player_bass_boost_level">Bass Level</string>
+    <string name="player_bass_boost_light">Light</string>
+    <string name="player_bass_boost_heavy">Heavy</string>
+    <string name="player_eq_reset_to_flat">Reset to Flat</string>
+    <string name="player_lyrics_load_failed">Failed to load lyrics</string>
+
+    <!-- User playlist detail screen -->
+    <string name="user_playlist_detail_not_found">Playlist not found</string>
+    <string name="user_playlist_detail_label">YOUR PLAYLIST</string>
+    <string name="user_playlist_detail_section_songs">SONGS</string>
+    <string name="user_playlist_detail_button_play">PLAY</string>
+    <string name="user_playlist_detail_empty_title">No songs yet</string>
+    <string name="user_playlist_detail_empty_subtitle">Add songs from search or any song list</string>
+    <string name="user_playlist_detail_content_description_download_all">Download All</string>
+    <string name="user_playlist_detail_stats">%1$d songs · %2$d min</string>
+    <string name="user_playlist_detail_stats_no_duration">%1$d songs</string>
+
+    <!-- Add to playlist sheet -->
+    <string name="add_to_playlist_toast_added">Added to \"%1$s\"</string>
+
+    <!-- Upload / Local Music -->
+    <string name="upload_unknown">Unknown</string>
+    <string name="upload_unknown_artist">Unknown Artist</string>
 </resources>

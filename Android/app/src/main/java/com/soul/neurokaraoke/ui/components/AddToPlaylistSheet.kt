@@ -1,4 +1,4 @@
-﻿package com.soul.neurokaraoke.ui.components
+package com.soul.neurokaraoke.ui.components
 
 import android.net.Uri
 import android.widget.Toast
@@ -107,7 +107,7 @@ fun AddToPlaylistSheet(
                     onCreate = { name, description, coverUri, isPublic ->
                         val newPlaylist = repository.createPlaylist(name, description, coverUri, isPublic, accessToken)
                         repository.addSongToPlaylist(newPlaylist.id, song, accessToken)
-                        Toast.makeText(context, "Added to \"$name\"", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, name), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     }
                 )
@@ -165,7 +165,7 @@ fun AddToPlaylistSheet(
                                 .fillMaxWidth()
                                 .clickable(enabled = !alreadyAdded) {
                                     repository.addSongToPlaylist(playlist.id, song, accessToken)
-                                    Toast.makeText(context, "Added to \"${playlist.title}\"", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, playlist.title), Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 }
                                 .padding(vertical = 12.dp),
@@ -328,7 +328,7 @@ private fun InlineCreatePlaylist(
                 if (coverUri != null) {
                     AsyncImage(
                         model = coverUri,
-                        contentDescription = "Playlist cover",
+                        contentDescription = stringResource(R.string.playlists_create_content_description_cover),
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
