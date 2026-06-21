@@ -1,0 +1,13 @@
+HSPLcom/soul/neurokaraoke/MainActivity;->onCreate(Landroid/os/Bundle;)V
+HSPLcom/soul/neurokaraoke/MainActivity;->onStart()V
+HSPLcom/soul/neurokaraoke/MainActivity;->onStop()V
+HSPLcom/soul/neurokaraoke/ui/MainScreenKt;->MainScreen(Lcom/soul/neurokaraoke/viewmodel/PlayerViewModel;Lcom/soul/neurokaraoke/viewmodel/AuthViewModel;Lcom/soul/neurokaraoke/viewmodel/DownloadViewModel;Landroidx/compose/runtime/Composer;II)V
+HSPLcom/soul/neurokaraoke/viewmodel/PlayerViewModel;-><init>(Landroid/app/Application;)V
+HSPLcom/soul/neurokaraoke/viewmodel/PlayerViewModel;->init(Landroid/content/Context;)V
+HSPLcom/soul/neurokaraoke/viewmodel/AuthViewModel;-><init>()V
+HSPLcom/soul/neurokaraoke/viewmodel/AuthViewModel;->loadSavedUser(Landroid/content/Context;)V
+HSPLcom/soul/neurokaraoke/data/repository/UserPlaylistRepository;-><init>(Landroid/content/Context;)V
+HSPLcom/soul/neurokaraoke/data/repository/FavoritesRepository;-><init>(Landroid/content/Context;)V
+HSPLcom/soul/neurokaraoke/data/PlaylistCatalog;-><init>()V
+HSPLcom/soul/neurokaraoke/service/MediaPlaybackService;->onCreate()V
+HSPLcom/soul/neurokaraoke/navigation/NavGraphKt;->NavGraph(Landroidx/navigation/NavHostController;Ljava/util/List;Ljava/util/List;ZLjava/util/List;Ljava/lang/String;ZLjava/util/List;Lcom/soul/neurokaraoke/data/model/Song;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/util/List;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Ljava/util/List;Ljava/util/Map;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/Boolean;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lcom/soul/neurokaraoke/data/repository/UserPlaylistRepository;Lkotlin/jvm/functions/Function1;Lcom/soul/neurokaraoke/data/repository/FavoritesRepository;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;ZZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/soul/neurokaraoke/data/model/User;ZLkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;IIII)V
