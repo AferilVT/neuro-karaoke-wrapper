@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.ui
+﻿package com.soul.neurokaraoke.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -246,7 +246,10 @@ fun MainScreen(
                 onSetSleepTimer = { minutes -> playerViewModel.setSleepTimer(minutes) },
                 onCancelSleepTimer = { playerViewModel.cancelSleepTimer() },
                 onSetSleepTimerEndOfSong = { playerViewModel.setSleepTimerEndOfSong() },
-                isFavorite = favoritesRepository.isFavorite(currentSong.id, currentSong.audioUrl),
+                isFavorite = favoriteSongs.any {
+                    it.id == currentSong.id ||
+                    (currentSong.audioUrl.isNotBlank() && it.audioUrl.isNotBlank() && it.audioUrl == currentSong.audioUrl)
+                },
                 onToggleFavorite = { favoritesRepository.toggleFavorite(currentSong, authViewModel.getAccessToken()) },
                 onAddToPlaylist = { songToAddToPlaylist = currentSong },
                 isRadioMode = playerState.isRadioMode,
@@ -260,6 +263,7 @@ fun MainScreen(
         AddToPlaylistSheet(
             song = song,
             repository = userPlaylistRepository,
+            accessToken = authViewModel.getAccessToken(),
             onDismiss = { songToAddToPlaylist = null }
         )
     }

@@ -115,6 +115,10 @@ dependencies {
     // Coroutine ↔ Guava ListenableFuture bridge (for MediaLibraryService callbacks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-guava:1.7.3")
 
+    // Baseline profile installer — installs the bundled ART profile on app launch
+    // so ART can AOT-compile hot paths without a slow cold-start verification pass
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
+
     // Android for Cars App Library — custom AA browse UI (tabs, grids, lists)
     implementation("androidx.car.app:app:1.4.0")
     implementation("androidx.car.app:app-projected:1.4.0")

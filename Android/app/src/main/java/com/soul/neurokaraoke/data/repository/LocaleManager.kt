@@ -8,13 +8,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.util.Locale
 
+/**
+ * To add a new language:
+ *   1. Add a SupportedLocale entry to SUPPORTED_LOCALES below.
+ *   2. Create app/src/main/res/values-<tag>/strings.xml with all translated strings.
+ *      Use TRANSLATING.md at the repo root for the full template and instructions.
+ *
+ * That's it — the Settings screen and language switching pick it up automatically.
+ */
+data class SupportedLocale(
+    val code: String,       // BCP-47 tag used for res folder (e.g. "zh-CN" → values-zh-rCN)
+    val locale: Locale,     // Java Locale for context wrapping
+    val nativeName: String  // Shown in Settings — always in the language itself, never translated
+)
+
 object LocaleManager {
+
+    // ── Add new languages here ────────────────────────────────────────────────
+    val SUPPORTED_LOCALES: List<SupportedLocale> = listOf(
+        SupportedLocale("en",    Locale.ENGLISH,      "English"),
+        SupportedLocale("zh-CN", Locale("zh", "CN"),  "简体中文"),
+    )
+    // ─────────────────────────────────────────────────────────────────────────
+
+    val DEFAULT_LANGUAGE: String = SUPPORTED_LOCALES.first().code
+    private val supportedCodes: Set<String> = SUPPORTED_LOCALES.map { it.code }.toSet()
 
     private var prefs: SharedPreferences? = null
     private var appContext: Context? = null
-
-    val SUPPORTED_LANGUAGES: Set<String> = setOf("en", "zh-CN")
-    val DEFAULT_LANGUAGE: String = "en"
 
     private val _currentLanguage = MutableStateFlow(DEFAULT_LANGUAGE)
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
@@ -22,15 +43,13 @@ object LocaleManager {
     @Synchronized
     fun initialize(context: Context) {
         if (prefs != null) return
-        // Use context directly — applicationContext is null during attachBaseContext()
         val ctx = context.applicationContext ?: context
         appContext = ctx
         prefs = ctx.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
         val stored = prefs?.getString(KEY_LANGUAGE, null)
-        val language = if (stored != null && stored in SUPPORTED_LANGUAGES) {
+        val language = if (stored != null && stored in supportedCodes) {
             stored
         } else {
-            // Normalize invalid/missing preference to default and persist correction
             prefs?.edit()?.putString(KEY_LANGUAGE, DEFAULT_LANGUAGE)?.apply()
             DEFAULT_LANGUAGE
         }
@@ -38,46 +57,21 @@ object LocaleManager {
     }
 
     fun setLanguage(languageCode: String) {
-        // Same-value no-op check
         if (languageCode == _currentLanguage.value) return
-
-        // Only accept supported language codes
-        val validCode = if (languageCode in SUPPORTED_LANGUAGES) languageCode else DEFAULT_LANGUAGE
-
-        // Async persist via apply()
+        val validCode = if (languageCode in supportedCodes) languageCode else DEFAULT_LANGUAGE
         prefs?.edit()?.putString(KEY_LANGUAGE, validCode)?.apply()
-
-        // Update the app-level resources Configuration so stringResource() picks up
-        // the new locale without needing Activity.recreate()
-        appContext?.let { ctx ->
-            val locale = getLocaleForCode(validCode)
-            val config = Configuration(ctx.resources.configuration)
-            config.setLocale(locale)
-            @Suppress("DEPRECATION")
-            ctx.resources.updateConfiguration(config, ctx.resources.displayMetrics)
-        }
-
-        // Update StateFlow (triggers Compose recomposition)
         _currentLanguage.value = validCode
     }
 
     fun wrapContext(baseContext: Context): Context {
         return try {
-            val locale = getLocaleForCode(_currentLanguage.value)
+            val locale = SUPPORTED_LOCALES.firstOrNull { it.code == _currentLanguage.value }?.locale
+                ?: Locale.ENGLISH
             val config = Configuration(baseContext.resources.configuration)
             config.setLocale(locale)
             baseContext.createConfigurationContext(config)
         } catch (_: Exception) {
-            // If wrapping fails, return original context (English display)
             baseContext
-        }
-    }
-
-    private fun getLocaleForCode(code: String): Locale {
-        return when (code) {
-            "en" -> Locale.ENGLISH
-            "zh-CN" -> Locale("zh", "CN")
-            else -> Locale.ENGLISH
         }
     }
 

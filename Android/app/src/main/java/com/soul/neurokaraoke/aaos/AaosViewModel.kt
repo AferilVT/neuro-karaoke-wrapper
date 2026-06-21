@@ -88,7 +88,10 @@ class AaosViewModel(app: Application) : AndroidViewModel(app) {
                             title = s.title,
                             artist = s.originalArtists.orEmpty(),
                             coverUrl = s.getCoverArtUrl().orEmpty(),
-                            audioUrl = s.audioUrl.orEmpty()
+                            audioUrl = s.audioUrl.orEmpty(),
+                            singer = com.soul.neurokaraoke.data.model.Singer.fromCoverArtists(s.coverArtists),
+                            coverArtists = s.coverArtists.orEmpty(),
+                            artCredit = s.artCredit
                         )
                     }.take(15)
                 }

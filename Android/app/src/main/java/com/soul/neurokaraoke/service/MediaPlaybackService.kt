@@ -18,8 +18,10 @@ import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import android.content.Context
 import com.soul.neurokaraoke.MainActivity
 import com.soul.neurokaraoke.audio.AudioCacheManager
+import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.audio.EqualizerManager
 import com.soul.neurokaraoke.data.repository.DownloadRepository
 import com.google.common.collect.ImmutableList
@@ -30,6 +32,10 @@ import kotlinx.coroutines.guava.future
 
 @UnstableApi
 class MediaPlaybackService : MediaLibraryService() {
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocaleManager.wrapContext(newBase))
+    }
 
     private var librarySession: MediaLibrarySession? = null
     private var player: ExoPlayer? = null

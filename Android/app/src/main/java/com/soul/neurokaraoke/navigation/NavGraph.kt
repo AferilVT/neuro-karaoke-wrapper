@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.navigation
+﻿package com.soul.neurokaraoke.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -23,6 +23,7 @@ import com.soul.neurokaraoke.ui.screens.library.UserPlaylistDetailScreen
 import com.soul.neurokaraoke.ui.screens.more.MoreScreen
 import com.soul.neurokaraoke.ui.screens.more.SettingsScreen
 import com.soul.neurokaraoke.ui.screens.more.UploadSongsScreen
+import com.soul.neurokaraoke.ui.screens.profile.ProfileScreen
 import com.soul.neurokaraoke.ui.screens.radio.RadioScreen
 import com.soul.neurokaraoke.ui.screens.search.SearchScreen
 import com.soul.neurokaraoke.ui.screens.soundbites.SoundbiteScreen
@@ -279,11 +280,27 @@ fun NavGraph(
             )
         }
 
+        composable(Screen.Profile.route) {
+            if (authUser != null && isLoggedIn) {
+                val token = authUser.apiToken ?: authUser.accessToken ?: ""
+                ProfileScreen(
+                    user = authUser,
+                    accessToken = token,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+        }
+
         composable(Screen.Library.route) {
             LibraryScreen(
                 user = authUser,
                 isLoggedIn = isLoggedIn,
                 onSignInClick = onSignInClick,
+                onProfileClick = {
+                    navController.navigate(Screen.Profile.route) {
+                        launchSingleTop = true
+                    }
+                },
                 favoritesContent = {
                     FavoritesScreen(
                         favoriteSongs = favoriteSongs,

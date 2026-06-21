@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.ui.screens.library
+﻿package com.soul.neurokaraoke.ui.screens.library
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,15 +33,16 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.soul.neurokaraoke.data.model.User
 import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.R
+import com.soul.neurokaraoke.data.model.User
 
 @Composable
 fun LibraryScreen(
     user: User?,
     isLoggedIn: Boolean,
     onSignInClick: () -> Unit,
+    onProfileClick: () -> Unit = {},
     favoritesContent: @Composable () -> Unit,
     playlistsContent: @Composable () -> Unit,
     downloadsContent: @Composable () -> Unit,
@@ -70,6 +71,7 @@ fun LibraryScreen(
                     .padding(horizontal = 16.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .clickable { onProfileClick() }
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -98,10 +100,10 @@ fun LibraryScreen(
                     )
                 }
 
-                IconButton(onClick = { }) {
+                IconButton(onClick = { onProfileClick() }) {
                     Icon(
                         imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "More options",
+                        contentDescription = "View profile",
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }

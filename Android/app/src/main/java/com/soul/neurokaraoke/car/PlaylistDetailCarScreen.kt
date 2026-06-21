@@ -15,6 +15,7 @@ import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.repository.SongRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +35,8 @@ class PlaylistDetailCarScreen(
     private val coverCache: CarCoverCache,
     private val allSongs: List<Song>
 ) : Screen(carContext) {
+
+    private val res get() = LocaleManager.wrapContext(carContext)
 
     private val songRepository = SongRepository(NeuroKaraokeApi())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -82,7 +85,7 @@ class PlaylistDetailCarScreen(
         }
 
         val playAction = Action.Builder()
-            .setTitle(carContext.getString(R.string.car_playlist_button_play))
+            .setTitle(res.getString(R.string.car_playlist_button_play))
             .setIcon(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song))
                     .build()
@@ -91,7 +94,7 @@ class PlaylistDetailCarScreen(
             .build()
 
         val shuffleAction = Action.Builder()
-            .setTitle(carContext.getString(R.string.car_playlist_button_shuffle))
+            .setTitle(res.getString(R.string.car_playlist_button_shuffle))
             .setIcon(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse))
                     .build()

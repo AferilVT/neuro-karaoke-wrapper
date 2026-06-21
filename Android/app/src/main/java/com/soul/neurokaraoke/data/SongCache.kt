@@ -20,7 +20,7 @@ class SongCache(private val context: Context) {
     private val setupCompleteKey = "setup_complete"
     private val cacheVersionKey = "cache_version"
     private val playlistCountKey = "cached_playlist_count"
-    private val currentCacheVersion = 6
+    private val currentCacheVersion = 7
 
     private val file: File
         get() = File(context.filesDir, fileName)
@@ -64,6 +64,7 @@ class SongCache(private val context: Context) {
                     put("audioUrl", song.audioUrl)
                     put("duration", song.duration)
                     put("singer", song.singer.name)
+                    put("coverArtists", song.coverArtists)
                     put("artCredit", song.artCredit ?: "")
                     put("titleRomaji", song.titleRomaji)
                     put("titleEnglish", song.titleEnglish ?: "")
@@ -150,6 +151,7 @@ class SongCache(private val context: Context) {
                         audioUrl = obj.optString("audioUrl", ""),
                         duration = obj.optLong("duration", 0L),
                         singer = singer,
+                        coverArtists = obj.optString("coverArtists", ""),
                         artCredit = obj.optString("artCredit", "").takeIf { it.isNotBlank() },
                         titleRomaji = obj.optString("titleRomaji", ""),
                         titleEnglish = obj.optString("titleEnglish", "").takeIf { it.isNotBlank() },

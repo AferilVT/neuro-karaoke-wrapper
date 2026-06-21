@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.navigation
+﻿package com.soul.neurokaraoke.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
@@ -56,6 +56,9 @@ sealed class Screen(
     data object UserPlaylistDetail : Screen("user_playlist/{playlistId}", "Playlist") {
         fun createRoute(playlistId: String) = "user_playlist/$playlistId"
     }
+
+    // Profile screen
+    data object Profile : Screen("profile", "Profile", Icons.Default.Person)
 
     // Player screen
     data object Player : Screen("player", "Now Playing")

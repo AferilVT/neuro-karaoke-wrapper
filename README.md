@@ -2,6 +2,8 @@
 
 ![Page Views](https://count.getloli.com/get/@aferilvt:neuro-karaoke-wrapper?theme=booru-jaypee)
 
+<p align="center">⚠️ <strong>Translators needed for Android app! Check <a href="https://github.com/AferilVT/neuro-karaoke-wrapper/blob/main/Android/TRANSLATING.md">TRANSLATING.md</a> for more details</strong> ⚠️</p>
+
 A cross-platform karaoke player for [neurokaraoke.com](https://neurokaraoke.com) — available as a desktop app (Electron) and an Android app (Jetpack Compose).
 All credits go to the website creator "Soul". These are companion apps for the website with extra features.
 

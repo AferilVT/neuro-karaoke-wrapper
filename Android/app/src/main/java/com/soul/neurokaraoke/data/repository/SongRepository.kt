@@ -57,13 +57,8 @@ class SongRepository(
     }
 
     private fun ApiSong.toSong(playlistId: String, index: Int): Song {
-        // Determine singer based on cover artists
-        val singer = when {
-            coverArtists?.contains("Evil", ignoreCase = true) == true &&
-            coverArtists.contains("Neuro", ignoreCase = true) -> Singer.DUET
-            coverArtists?.contains("Evil", ignoreCase = true) == true -> Singer.EVIL
-            else -> Singer.NEURO
-        }
+        // Singer is only a theme/filter category. Display text comes from the API.
+        val singer = Singer.fromCoverArtists(coverArtists)
 
         // Fallback ID if server UUID can't be resolved
         val fallbackId = audioUrl?.hashCode()?.toString() ?: "${playlistId}_$index"
@@ -79,6 +74,7 @@ class SongRepository(
             audioUrl = audioUrl ?: "",
             duration = 0L,
             singer = singer,
+            coverArtists = coverArtists.orEmpty(),
             artCredit = artCredit?.takeIf { it.isNotBlank() },
             titleRomaji = RomajiUtil.toRomaji(songTitle),
             titleEnglish = EnglishTitleMap.getEnglishTitle(songTitle),

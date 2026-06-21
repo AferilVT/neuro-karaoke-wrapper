@@ -179,6 +179,8 @@ class PlayerViewModel(
             .putString("last_song_cover_url", song.coverUrl)
             .putString("last_song_audio_url", song.audioUrl)
             .putString("last_song_singer", song.singer.name)
+            .putString("last_song_cover_artists", song.coverArtists)
+            .putString("last_song_art_credit", song.artCredit)
             .putString("last_playlist_id", _uiState.value.currentPlaylistId)
             .putLong("last_position", position)
             .putLong("last_duration", duration)
@@ -206,6 +208,8 @@ class PlayerViewModel(
         val coverUrl = prefs.getString("last_song_cover_url", "") ?: ""
         val audioUrl = prefs.getString("last_song_audio_url", "") ?: ""
         val singerName = prefs.getString("last_song_singer", "NEURO") ?: "NEURO"
+        val coverArtists = prefs.getString("last_song_cover_artists", "") ?: ""
+        val artCredit = prefs.getString("last_song_art_credit", null)
         val playlistId = prefs.getString("last_playlist_id", null)
 
         // Restore song immediately from saved data
@@ -221,7 +225,9 @@ class PlayerViewModel(
             artist = artist,
             coverUrl = coverUrl,
             audioUrl = audioUrl,
-            singer = singer
+            singer = singer,
+            coverArtists = coverArtists,
+            artCredit = artCredit
         )
 
         val savedPosition = prefs.getLong("last_position", 0L)

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.R
 
@@ -64,6 +65,7 @@ import com.soul.neurokaraoke.R
 fun AddToPlaylistSheet(
     song: Song,
     repository: UserPlaylistRepository,
+    accessToken: String? = null,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -103,8 +105,8 @@ fun AddToPlaylistSheet(
                 InlineCreatePlaylist(
                     onCancel = { showCreateInline = false },
                     onCreate = { name, description, coverUri, isPublic ->
-                        val newPlaylist = repository.createPlaylist(name, description, coverUri, isPublic)
-                        repository.addSongToPlaylist(newPlaylist.id, song)
+                        val newPlaylist = repository.createPlaylist(name, description, coverUri, isPublic, accessToken)
+                        repository.addSongToPlaylist(newPlaylist.id, song, accessToken)
                         Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, name), Toast.LENGTH_SHORT).show()
                         onDismiss()
                     }
@@ -162,7 +164,7 @@ fun AddToPlaylistSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable(enabled = !alreadyAdded) {
-                                    repository.addSongToPlaylist(playlist.id, song)
+                                    repository.addSongToPlaylist(playlist.id, song, accessToken)
                                     Toast.makeText(context, context.getString(R.string.add_to_playlist_toast_added, playlist.title), Toast.LENGTH_SHORT).show()
                                     onDismiss()
                                 }
@@ -219,7 +221,7 @@ fun AddToPlaylistSheet(
                                     text = if (alreadyAdded) {
                                         stringResource(R.string.add_to_playlist_already_added)
                                     } else {
-                                        "${playlist.songs.size} song${if (playlist.songs.size != 1) "s" else ""}"
+                                        pluralStringResource(R.plurals.playlist_song_count, playlist.songs.size, playlist.songs.size)
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(

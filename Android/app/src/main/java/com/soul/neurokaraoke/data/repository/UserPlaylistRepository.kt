@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.data.repository
+﻿package com.soul.neurokaraoke.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -104,7 +104,14 @@ class UserPlaylistRepository(context: Context) {
             artist = json.getString("artist"),
             coverUrl = json.optString("coverUrl", ""),
             audioUrl = json.optString("audioUrl", ""),
-            duration = json.optLong("duration", 0L)
+            duration = json.optLong("duration", 0L),
+            singer = try {
+                Singer.valueOf(json.optString("singer", "NEURO"))
+            } catch (_: Exception) {
+                Singer.NEURO
+            },
+            coverArtists = json.optString("coverArtists", ""),
+            artCredit = json.optString("artCredit", "").takeIf { it.isNotBlank() }
         )
     }
 
@@ -139,20 +146,26 @@ class UserPlaylistRepository(context: Context) {
         json.put("coverUrl", song.coverUrl)
         json.put("audioUrl", song.audioUrl)
         json.put("duration", song.duration)
+        json.put("singer", song.singer.name)
+        json.put("coverArtists", song.coverArtists)
+        json.put("artCredit", song.artCredit ?: "")
         return json
     }
 
     /**
-     * Create a new playlist
+     * Create a new playlist. If accessToken is provided and user is logged in, also creates on server
+     * and updates the local playlist ID with the server-assigned UUID once it responds.
      */
     fun createPlaylist(
         name: String,
         description: String = "",
         coverUri: String? = null,
-        isPublic: Boolean = false
+        isPublic: Boolean = false,
+        accessToken: String? = null
     ): Playlist {
+        val tempId = "user_${UUID.randomUUID()}"
         val playlist = Playlist(
-            id = "user_${UUID.randomUUID()}",
+            id = tempId,
             title = name,
             description = description,
             coverUrl = coverUri ?: "",
@@ -164,6 +177,27 @@ class UserPlaylistRepository(context: Context) {
 
         _playlists.value = _playlists.value + playlist
         savePlaylists()
+
+        if (accessToken != null) {
+            syncScope.launch {
+                syncApi.createPlaylist(accessToken, name, isPublic).onSuccess { serverId ->
+                    // Promote temp ID to server UUID
+                    _playlists.value = _playlists.value.map { pl ->
+                        if (pl.id == tempId) pl.copy(id = serverId) else pl
+                    }
+                    savePlaylists()
+                    // Sync any songs that were added while waiting for server response
+                    val songs = _playlists.value.find { it.id == serverId }?.songs ?: emptyList()
+                    songs.forEach { song ->
+                        syncApi.addSongToPlaylist(accessToken, serverId, song.id)
+                    }
+                    Log.d(TAG, "Created playlist on server: $serverId (was $tempId)")
+                }.onFailure { e ->
+                    Log.e(TAG, "Server create playlist failed for $tempId: ${e.message}")
+                }
+            }
+        }
+
         return playlist
     }
 
@@ -195,23 +229,18 @@ class UserPlaylistRepository(context: Context) {
     }
 
     /**
-     * Add a song to a playlist
+     * Add a song to a playlist. If accessToken is provided and it's a server playlist, also syncs to server.
      */
-    fun addSongToPlaylist(playlistId: String, song: Song) {
+    fun addSongToPlaylist(playlistId: String, song: Song, accessToken: String? = null) {
         _playlists.value = _playlists.value.map { playlist ->
             if (playlist.id == playlistId) {
-                // Avoid duplicates
                 if (playlist.songs.none { it.id == song.id }) {
                     val updatedSongs = playlist.songs + song
-                    // Update preview covers (max 4)
                     val newPreviewCovers = updatedSongs
                         .filter { it.coverUrl.isNotBlank() }
                         .take(4)
                         .map { it.coverUrl }
-                    playlist.copy(
-                        songs = updatedSongs,
-                        previewCovers = newPreviewCovers
-                    )
+                    playlist.copy(songs = updatedSongs, previewCovers = newPreviewCovers)
                 } else {
                     playlist
                 }
@@ -220,12 +249,20 @@ class UserPlaylistRepository(context: Context) {
             }
         }
         savePlaylists()
+
+        if (accessToken != null && !playlistId.startsWith("user_")) {
+            syncScope.launch {
+                syncApi.addSongToPlaylist(accessToken, playlistId, song.id).onFailure { e ->
+                    Log.e(TAG, "Server add song failed for $playlistId/${song.id}: ${e.message}")
+                }
+            }
+        }
     }
 
     /**
-     * Remove a song from a playlist
+     * Remove a song from a playlist. If accessToken is provided and it's a server playlist, also syncs to server.
      */
-    fun removeSongFromPlaylist(playlistId: String, songId: String) {
+    fun removeSongFromPlaylist(playlistId: String, songId: String, accessToken: String? = null) {
         _playlists.value = _playlists.value.map { playlist ->
             if (playlist.id == playlistId) {
                 val updatedSongs = playlist.songs.filter { it.id != songId }
@@ -233,15 +270,20 @@ class UserPlaylistRepository(context: Context) {
                     .filter { it.coverUrl.isNotBlank() }
                     .take(4)
                     .map { it.coverUrl }
-                playlist.copy(
-                    songs = updatedSongs,
-                    previewCovers = newPreviewCovers
-                )
+                playlist.copy(songs = updatedSongs, previewCovers = newPreviewCovers)
             } else {
                 playlist
             }
         }
         savePlaylists()
+
+        if (accessToken != null && !playlistId.startsWith("user_")) {
+            syncScope.launch {
+                syncApi.removeSongFromPlaylist(accessToken, playlistId, songId).onFailure { e ->
+                    Log.e(TAG, "Server remove song failed for $playlistId/$songId: ${e.message}")
+                }
+            }
+        }
     }
 
     /**
@@ -253,18 +295,33 @@ class UserPlaylistRepository(context: Context) {
 
     /**
      * Sync playlists from the server. Merges server playlists with local-only playlists.
-     * Server playlists use server UUIDs, local ones use "user_" prefix.
+     * Local "user_" playlists are uploaded to the server and their IDs promoted to server UUIDs.
      */
     suspend fun syncFromServer(accessToken: String) {
         _isSyncing.value = true
         try {
             syncApi.fetchUserPlaylists(accessToken).onSuccess { serverPlaylists ->
-                // Keep local-only playlists (those with "user_" prefix)
                 val localOnly = _playlists.value.filter { it.id.startsWith("user_") }
-                // Server playlists replace any previously synced server playlists
                 _playlists.value = serverPlaylists + localOnly
                 savePlaylists()
                 Log.d(TAG, "Synced ${serverPlaylists.size} playlists from server, ${localOnly.size} local")
+
+                // Upload local-only playlists to server
+                for (localPlaylist in localOnly) {
+                    syncApi.createPlaylist(accessToken, localPlaylist.title, localPlaylist.isPublic)
+                        .onSuccess { serverId ->
+                            _playlists.value = _playlists.value.map { pl ->
+                                if (pl.id == localPlaylist.id) pl.copy(id = serverId) else pl
+                            }
+                            savePlaylists()
+                            localPlaylist.songs.forEach { song ->
+                                syncApi.addSongToPlaylist(accessToken, serverId, song.id)
+                            }
+                            Log.d(TAG, "Uploaded local playlist '${localPlaylist.title}' → $serverId")
+                        }.onFailure { e ->
+                            Log.e(TAG, "Failed to upload local playlist '${localPlaylist.title}': ${e.message}")
+                        }
+                }
             }.onFailure { e ->
                 Log.e(TAG, "Sync playlists failed: ${e.message}")
             }
@@ -297,20 +354,16 @@ class UserPlaylistRepository(context: Context) {
 
             songsResult.onSuccess { apiSongs ->
                 val songs = apiSongs.map { apiSong ->
-                    val coverArtists = apiSong.coverArtists?.lowercase() ?: ""
-                    val singer = when {
-                        "evil" in coverArtists -> Singer.EVIL
-                        "duet" in coverArtists || ("neuro" in coverArtists && "evil" in coverArtists) -> Singer.DUET
-                        else -> Singer.NEURO
-                    }
+                    val coverArtists = apiSong.coverArtists.orEmpty()
                     Song(
                         id = apiSong.audioUrl?.hashCode()?.toString() ?: "",
                         title = apiSong.title,
                         artist = apiSong.originalArtists ?: "Unknown Artist",
                         coverUrl = apiSong.getCoverArtUrl() ?: "",
                         audioUrl = apiSong.audioUrl ?: "",
-                        singer = singer,
-                        artCredit = apiSong.artCredit
+                        singer = Singer.fromCoverArtists(coverArtists),
+                        coverArtists = coverArtists,
+                        artCredit = apiSong.artCredit?.takeIf { it.isNotBlank() }
                     )
                 }
 

@@ -1,4 +1,4 @@
-package com.soul.neurokaraoke.ui.screens.library
+﻿package com.soul.neurokaraoke.ui.screens.library
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -204,7 +204,7 @@ fun PlaylistsScreen(
         CreatePlaylistSheet(
             onDismiss = { showCreateDialog = false },
             onCreate = { name, description, coverUri, isPublic ->
-                repository.createPlaylist(name, description, coverUri, isPublic)
+                repository.createPlaylist(name, description, coverUri, isPublic, accessToken)
                 showCreateDialog = false
             }
         )

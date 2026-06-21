@@ -146,6 +146,7 @@ class NeuroKaraokeApi {
             // API returns an object with "songs" array and metadata
             val rootObject = JSONObject(json)
             val playlistName = rootObject.optString("name").takeIf { it.isNotEmpty() }
+            val playlistArtCredit = rootObject.optString("artCredit", "").cleanApiText()
             val jsonArray = rootObject.optJSONArray("songs") ?: JSONArray()
 
             for (i in 0 until jsonArray.length()) {
@@ -158,7 +159,7 @@ class NeuroKaraokeApi {
                         coverArtists = obj.optString("coverArtists"),
                         coverArt = obj.optString("coverArt"),
                         audioUrl = obj.optString("audioUrl"),
-                        artCredit = obj.optString("artCredit")
+                        artCredit = parseArtCredit(obj) ?: playlistArtCredit
                     )
                 )
             }
@@ -557,9 +558,7 @@ class NeuroKaraokeApi {
                         else -> null
                     }
                 }
-                val artCredit = coverArtObj?.takeIf { !it.isNull("credit") }
-                    ?.optString("credit", "")
-                    ?.takeIf { it.isNotBlank() && it != "null" }
+                val artCredit = parseArtCredit(obj)
 
                 val audioPath = obj.optString("absolutePath", "")
                 val audioUrl = if (audioPath.isNotBlank()) "https://storage.neurokaraoke.com/$audioPath" else ""
@@ -637,9 +636,7 @@ class NeuroKaraokeApi {
                         }
                     }
 
-                    val artCredit = coverArtObj?.takeIf { !it.isNull("credit") }
-                        ?.optString("credit", "")
-                        ?.takeIf { it.isNotBlank() && it != "null" }
+                    val artCredit = parseArtCredit(obj)
 
                     // Audio URL from absolutePath
                     val audioPath = obj.optString("absolutePath", "")
@@ -717,6 +714,26 @@ class NeuroKaraokeApi {
 
         return if (bestScore > 0) bestSong else null
     }
+
+    /**
+     * Prefer an explicit song credit, then the cover-art credit. Some API records
+     * have a null credit while still carrying the credited artist object.
+     */
+    private fun parseArtCredit(song: JSONObject): String? {
+        song.optString("artCredit", "").cleanApiText()?.let { return it }
+        song.optString("artCreditText", "").cleanApiText()?.let { return it }
+
+        val coverArt = song.optJSONObject("coverArt") ?: return null
+        coverArt.optString("credit", "").cleanApiText()?.let { return it }
+
+        val artist = coverArt.optJSONObject("artist") ?: return null
+        val name = artist.optString("name", "").cleanApiText() ?: return null
+        val socialLink = artist.optString("socialLink", "").cleanApiText()
+        return if (socialLink != null) "Art by $name - $socialLink" else "Art by $name"
+    }
+
+    private fun String.cleanApiText(): String? =
+        trim().takeIf { it.isNotEmpty() && !it.equals("null", ignoreCase = true) }
 
     /**
      * Ensure the song ID map is built. Safe to call multiple times.
