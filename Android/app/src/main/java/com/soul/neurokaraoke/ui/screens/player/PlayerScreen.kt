@@ -478,7 +478,10 @@ fun PlayerScreen(
                 Icon(
                     imageVector = Icons.Default.Shuffle,
                     contentDescription = stringResource(R.string.player_content_description_shuffle),
-                    tint = if (isShuffleEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = if (isShuffleEnabled)
+                        MaterialTheme.colorScheme.primary
+                    else
+                        MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

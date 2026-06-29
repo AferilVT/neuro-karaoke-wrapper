@@ -62,6 +62,7 @@ class AutoBrowseTree(private val context: Context) {
             playbackUri = RadioApi.STREAM_URL
         )
 
+        items += browsable(QUEUE_ID, "Current Queue")
         items += browsable(FAVORITES_ID, "Favorites")
         items += browsable(ALL_SONGS_ID, "All Songs")
         items += browsable(NEURO_ID, "Neuro Sings")
@@ -205,6 +206,7 @@ class AutoBrowseTree(private val context: Context) {
     companion object {
         const val ROOT_ID = "nk_root"
         const val RADIO_ID = "nk_radio"
+        const val QUEUE_ID = "nk_queue"
         const val FAVORITES_ID = "nk_favorites"
         const val ALL_SONGS_ID = "nk_all_songs"
         const val NEURO_ID = "nk_neuro"

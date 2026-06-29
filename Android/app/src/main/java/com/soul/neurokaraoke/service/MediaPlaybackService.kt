@@ -1,30 +1,31 @@
 package com.soul.neurokaraoke.service
 
+import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
+import androidx.media3.common.ForwardingPlayer
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CacheBitmapLoader
+import androidx.media3.session.CommandButton
 import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
+import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
-import android.content.Context
-import com.soul.neurokaraoke.MainActivity
 import com.soul.neurokaraoke.audio.AudioCacheManager
-import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.audio.EqualizerManager
 import com.soul.neurokaraoke.data.repository.DownloadRepository
-import com.google.common.collect.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -32,11 +33,6 @@ import kotlinx.coroutines.guava.future
 
 @UnstableApi
 class MediaPlaybackService : MediaLibraryService() {
-
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleManager.wrapContext(newBase))
-    }
-
     private var librarySession: MediaLibrarySession? = null
     private var player: ExoPlayer? = null
     private var playerListener: Player.Listener? = null
@@ -74,27 +70,58 @@ class MediaPlaybackService : MediaLibraryService() {
             .setHandleAudioBecomingNoisy(true)
             .build()
 
+        // Load and apply saved playback settings (shuffle/repeat)
+        val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)
+        player?.shuffleModeEnabled = prefs.getBoolean("shuffle_enabled", false)
+        val repeatModeName = prefs.getString("repeat_mode", "OFF")
+        player?.repeatMode = when (repeatModeName) {
+            "ONE" -> Player.REPEAT_MODE_ONE
+            "ALL" -> Player.REPEAT_MODE_ALL
+            else -> Player.REPEAT_MODE_OFF
+        }
+
+        val sessionActivityPendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, com.soul.neurokaraoke.MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
         player?.let { exoPlayer ->
+            // Wrap player to ensure all commands are always reported as available.
+            // This is a "power user" approach to force system UIs to enable all controls.
+            val forwardingPlayer = object : ForwardingPlayer(exoPlayer) {
+                override fun getAvailableCommands(): Player.Commands {
+                    return Player.Commands.Builder()
+                        .addAllCommands()
+                        .build()
+                }
+
+                override fun isCommandAvailable(command: Int): Boolean {
+                    return true
+                }
+            }
+
             val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_READY) {
                         EqualizerManager.initialize(exoPlayer.audioSessionId)
                     }
                 }
+
+                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                    librarySession?.let { s ->
+                        val count = s.player.mediaItemCount
+                        s.notifyChildrenChanged("@android:queue@", count, null)
+                        s.notifyChildrenChanged("@android:queue_all@", count, null)
+                        s.notifyChildrenChanged("nk_queue", count, null)
+                    }
+                }
             }
             playerListener = listener
             exoPlayer.addListener(listener)
-        }
 
-        val sessionActivityPendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        player?.let { exoPlayer ->
-            librarySession = MediaLibrarySession.Builder(this, exoPlayer, LibraryCallback())
+            librarySession = MediaLibrarySession.Builder(this, forwardingPlayer, LibraryCallback())
                 .setSessionActivity(sessionActivityPendingIntent)
                 .setBitmapLoader(CacheBitmapLoader(androidx.media3.datasource.DataSourceBitmapLoader(this)))
                 .build()
@@ -105,25 +132,62 @@ class MediaPlaybackService : MediaLibraryService() {
         return librarySession
     }
 
+
+    private fun getCustomLayout(p: Player?): ImmutableList<CommandButton> {
+        val isShuffle = p?.shuffleModeEnabled == true
+        val repeatMode = p?.repeatMode ?: Player.REPEAT_MODE_OFF
+
+        val shuffleIcon = if (isShuffle)
+            androidx.media3.ui.R.drawable.exo_icon_shuffle_on
+        else
+            androidx.media3.ui.R.drawable.exo_icon_shuffle_off
+
+        val repeatIcon = when (repeatMode) {
+            Player.REPEAT_MODE_ONE -> androidx.media3.ui.R.drawable.exo_icon_repeat_one
+            Player.REPEAT_MODE_ALL -> androidx.media3.ui.R.drawable.exo_icon_repeat_all
+            else -> androidx.media3.ui.R.drawable.exo_icon_repeat_off
+        }
+
+        val shuffleButton = CommandButton.Builder()
+            .setSessionCommand(SessionCommand("ACTION_SHUFFLE", android.os.Bundle.EMPTY))
+            .setIconResId(shuffleIcon)
+            .setDisplayName("Shuffle")
+            .build()
+        val repeatButton = CommandButton.Builder()
+            .setSessionCommand(SessionCommand("ACTION_REPEAT", android.os.Bundle.EMPTY))
+            .setIconResId(repeatIcon)
+            .setDisplayName("Repeat")
+            .build()
+
+        return ImmutableList.of(shuffleButton, repeatButton)
+    }
+
     private inner class LibraryCallback : MediaLibrarySession.Callback {
 
         override fun onConnect(
             session: MediaSession,
             controller: MediaSession.ControllerInfo
         ): MediaSession.ConnectionResult {
-            val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon().build()
-            val playerCommands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
-                .add(Player.COMMAND_SEEK_TO_NEXT)
-                .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-                .add(Player.COMMAND_SEEK_TO_PREVIOUS)
-                .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-                .add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
-                .add(Player.COMMAND_PLAY_PAUSE)
-                .add(Player.COMMAND_STOP)
+            val shuffleCommand = SessionCommand("ACTION_SHUFFLE", android.os.Bundle.EMPTY)
+            val repeatCommand = SessionCommand("ACTION_REPEAT", android.os.Bundle.EMPTY)
+            val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
+                .add(shuffleCommand)
+                .add(repeatCommand)
+                .add(SessionCommand(SessionCommand.COMMAND_CODE_LIBRARY_GET_LIBRARY_ROOT))
+                .add(SessionCommand(SessionCommand.COMMAND_CODE_LIBRARY_GET_CHILDREN))
+                .add(SessionCommand(SessionCommand.COMMAND_CODE_LIBRARY_GET_ITEM))
+                .add(SessionCommand(SessionCommand.COMMAND_CODE_LIBRARY_SEARCH))
+                .add(SessionCommand(SessionCommand.COMMAND_CODE_LIBRARY_GET_SEARCH_RESULT))
                 .build()
+
+            val playerCommands = Player.Commands.Builder()
+                .addAllCommands()
+                .build()
+
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(sessionCommands)
                 .setAvailablePlayerCommands(playerCommands)
+                .setCustomLayout(getCustomLayout(session.player))
                 .build()
         }
 
@@ -133,6 +197,49 @@ class MediaPlaybackService : MediaLibraryService() {
             customCommand: SessionCommand,
             args: android.os.Bundle
         ): ListenableFuture<SessionResult> {
+            val action = customCommand.customAction
+            if (action == "ACTION_SHUFFLE") {
+                session.player.shuffleModeEnabled = !session.player.shuffleModeEnabled
+                
+                // Persist change so it survives service/app restarts and stays in sync with ViewModel
+                val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)
+                prefs.edit().putBoolean("shuffle_enabled", session.player.shuffleModeEnabled).apply()
+
+                // Force a full session refresh by simulating the onTimelineChanged event
+                librarySession?.let { s ->
+                    s.notifyChildrenChanged("@android:queue@", s.player.mediaItemCount, null)
+                    s.notifyChildrenChanged("@android:queue_all@", s.player.mediaItemCount, null)
+                    s.notifyChildrenChanged("nk_queue", s.player.mediaItemCount, null)
+                    s.notifyChildrenChanged("nk_root", 0, null)
+                }
+                librarySession?.setCustomLayout(getCustomLayout(session.player))
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            } else if (action == "ACTION_REPEAT") {
+                session.player.repeatMode = when (session.player.repeatMode) {
+                    Player.REPEAT_MODE_OFF -> Player.REPEAT_MODE_ALL
+                    Player.REPEAT_MODE_ALL -> Player.REPEAT_MODE_ONE
+                    else -> Player.REPEAT_MODE_OFF
+                }
+
+                // Persist change so it survives service/app restarts and stays in sync with ViewModel
+                val repeatModeName = when (session.player.repeatMode) {
+                    Player.REPEAT_MODE_ONE -> "ONE"
+                    Player.REPEAT_MODE_ALL -> "ALL"
+                    else -> "OFF"
+                }
+                val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)
+                prefs.edit().putString("repeat_mode", repeatModeName).apply()
+
+                // Notify that the queue "changed" (status icons/order might need refresh in some UIs)
+                librarySession?.let { s ->
+                    s.notifyChildrenChanged("@android:queue@", s.player.mediaItemCount, null)
+                    s.notifyChildrenChanged("@android:queue_all@", s.player.mediaItemCount, null)
+                    s.notifyChildrenChanged("nk_queue", s.player.mediaItemCount, null)
+                }
+
+                librarySession?.setCustomLayout(getCustomLayout(session.player))
+                return Futures.immediateFuture(SessionResult(SessionResult.RESULT_SUCCESS))
+            }
             return Futures.immediateFuture(SessionResult(SessionResult.RESULT_ERROR_NOT_SUPPORTED))
         }
 
@@ -149,6 +256,16 @@ class MediaPlaybackService : MediaLibraryService() {
             browser: MediaSession.ControllerInfo,
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
+            // First, try to find the item in the current player's timeline
+            val player = session.player
+            for (i in 0 until player.mediaItemCount) {
+                val item = player.getMediaItemAt(i)
+                if (item.mediaId == mediaId) {
+                    return@future LibraryResult.ofItem(item, null)
+                }
+            }
+
+            // Fallback to the browse tree
             val item = browseTree.item(mediaId)
             if (item != null) LibraryResult.ofItem(item, null)
             else LibraryResult.ofError(LibraryResult.RESULT_ERROR_BAD_VALUE)
@@ -162,6 +279,42 @@ class MediaPlaybackService : MediaLibraryService() {
             pageSize: Int,
             params: LibraryParams?
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = serviceScope.future {
+            // Handle special system IDs for the playback queue
+            if (parentId == "@android:queue@" || parentId == "@android:queue_all@" || parentId == "nk_queue") {
+                val player = session.player
+                val items = mutableListOf<MediaItem>()
+                
+                if (player.shuffleModeEnabled && parentId != "@android:queue_all@") {
+                    // Return items in shuffled order as they will be played
+                    val timeline = player.currentTimeline
+                    var nextIdx = player.currentMediaItemIndex
+                    val seen = mutableSetOf<Int>()
+                    
+                    while (nextIdx != C.INDEX_UNSET && !seen.contains(nextIdx) && items.size < player.mediaItemCount) {
+                        items.add(player.getMediaItemAt(nextIdx))
+                        seen.add(nextIdx)
+                        nextIdx = timeline.getNextWindowIndex(nextIdx, Player.REPEAT_MODE_OFF, true)
+                    }
+                    
+                    // If we missed some items (e.g. they were before current in shuffle order),
+                    // fill them in to ensure a full list.
+                    if (items.size < player.mediaItemCount) {
+                        for (i in 0 until player.mediaItemCount) {
+                            if (!seen.contains(i)) {
+                                items.add(player.getMediaItemAt(i))
+                                seen.add(i)
+                            }
+                        }
+                    }
+                } else {
+                    // Standard order
+                    for (i in 0 until player.mediaItemCount) {
+                        items.add(player.getMediaItemAt(i))
+                    }
+                }
+                return@future LibraryResult.ofItemList(ImmutableList.copyOf(items), params)
+            }
+
             val all = browseTree.children(parentId)
             val from = (page * pageSize).coerceAtMost(all.size)
             val to = (from + pageSize).coerceAtMost(all.size)
