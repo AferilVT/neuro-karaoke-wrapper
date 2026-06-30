@@ -92,12 +92,34 @@ class MediaPlaybackService : MediaLibraryService() {
             // This is a "power user" approach to force system UIs to enable all controls.
             val forwardingPlayer = object : ForwardingPlayer(exoPlayer) {
                 override fun getAvailableCommands(): Player.Commands {
-                    return Player.Commands.Builder()
-                        .addAllCommands()
-                        .build()
+                    val mediaId = wrappedPlayer.currentMediaItem?.mediaId
+                    val isRadio = mediaId == "radio_live" || mediaId == "nk_radio"
+
+                    val commands = Player.Commands.Builder().addAllCommands()
+                    if (isRadio) {
+                        commands.remove(Player.COMMAND_SEEK_TO_NEXT)
+                        commands.remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                        commands.remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+                        commands.remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                        commands.remove(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+                    }
+                    return commands.build()
                 }
 
                 override fun isCommandAvailable(command: Int): Boolean {
+                    val mediaId = wrappedPlayer.currentMediaItem?.mediaId
+                    val isRadio = mediaId == "radio_live" || mediaId == "nk_radio"
+
+                    if (isRadio) {
+                        return when (command) {
+                            Player.COMMAND_SEEK_TO_NEXT,
+                            Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
+                            Player.COMMAND_SEEK_TO_PREVIOUS,
+                            Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM,
+                            Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> false
+                            else -> true
+                        }
+                    }
                     return true
                 }
             }
@@ -117,6 +139,12 @@ class MediaPlaybackService : MediaLibraryService() {
                         s.notifyChildrenChanged("nk_queue", count, null)
                     }
                 }
+
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    librarySession?.let { s ->
+                        s.setCustomLayout(getCustomLayout(s.player))
+                    }
+                }
             }
             playerListener = listener
             exoPlayer.addListener(listener)
@@ -134,6 +162,11 @@ class MediaPlaybackService : MediaLibraryService() {
 
 
     private fun getCustomLayout(p: Player?): ImmutableList<CommandButton> {
+        val mediaId = p?.currentMediaItem?.mediaId
+        if (mediaId == "radio_live" || mediaId == "nk_radio") {
+            return ImmutableList.of()
+        }
+
         val isShuffle = p?.shuffleModeEnabled == true
         val repeatMode = p?.repeatMode ?: Player.REPEAT_MODE_OFF
 
