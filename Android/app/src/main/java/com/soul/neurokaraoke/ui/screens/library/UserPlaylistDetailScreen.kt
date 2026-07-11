@@ -69,6 +69,7 @@ fun UserPlaylistDetailScreen(
     isDownloaded: (String) -> Boolean = { false },
     downloadProgress: Map<String, Float> = emptyMap(),
     onAddToPlaylist: (Song) -> Unit = {},
+    onRemoveFromPlaylist: (Song) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val allPlaylists by repository.playlists.collectAsState()
@@ -395,7 +396,8 @@ fun UserPlaylistDetailScreen(
                         downloadProgress = downloadProgress[song.id],
                         onDownloadClick = { onDownloadSong(song) },
                         onRemoveDownloadClick = { onRemoveDownload(song.id) },
-                        onAddToPlaylistClick = { onAddToPlaylist(song) }
+                        onAddToPlaylistClick = { onAddToPlaylist(song) },
+                        onRemoveFromPlaylistClick = { onRemoveFromPlaylist(song) }
                     )
                 }
             }

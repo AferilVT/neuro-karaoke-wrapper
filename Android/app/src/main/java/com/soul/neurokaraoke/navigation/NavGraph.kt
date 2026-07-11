@@ -261,7 +261,11 @@ fun NavGraph(
                     onDownloadAll = { songList -> songList.forEach { onDownloadSong(it) } },
                     isDownloaded = isDownloaded,
                     downloadProgress = downloadProgress,
-                    onAddToPlaylist = onAddToPlaylist
+                    onAddToPlaylist = onAddToPlaylist,
+                    onRemoveFromPlaylist = { song ->
+                        val token = if (isLoggedIn) authUser?.apiToken ?: authUser?.accessToken else null
+                        userPlaylistRepository.removeSongFromPlaylist(playlistId, song.id, token)
+                    }
                 )
             }
         }

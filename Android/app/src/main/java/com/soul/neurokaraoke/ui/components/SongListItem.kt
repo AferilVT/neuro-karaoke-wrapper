@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistRemove
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -63,6 +64,7 @@ fun SongListItem(
     onDownloadClick: (() -> Unit)? = null,
     onRemoveDownloadClick: (() -> Unit)? = null,
     onAddToPlaylistClick: (() -> Unit)? = null,
+    onRemoveFromPlaylistClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var showMenu by remember { mutableStateOf(false) }
@@ -229,6 +231,21 @@ fun SongListItem(
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Download,
+                                contentDescription = null
+                            )
+                        }
+                    )
+                }
+                if (onRemoveFromPlaylistClick != null) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.song_menu_remove_from_playlist)) },
+                        onClick = {
+                            showMenu = false
+                            onRemoveFromPlaylistClick()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.PlaylistRemove,
                                 contentDescription = null
                             )
                         }
