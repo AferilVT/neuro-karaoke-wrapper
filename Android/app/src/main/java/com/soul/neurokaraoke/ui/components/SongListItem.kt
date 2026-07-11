@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
-import androidx.compose.material.icons.automirrored.filled.PlaylistRemove
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -245,7 +244,7 @@ fun SongListItem(
                         },
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.PlaylistRemove,
+                                imageVector = Icons.Default.DeleteOutline,
                                 contentDescription = null
                             )
                         }
