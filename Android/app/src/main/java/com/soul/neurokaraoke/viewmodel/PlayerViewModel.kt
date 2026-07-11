@@ -5,9 +5,11 @@ import android.content.ComponentName
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.soul.neurokaraoke.data.PlaylistCatalog
@@ -333,19 +335,19 @@ class PlayerViewModel(
                             progress = 0f,
                             currentPosition = 0L
                         )
+                        // Refresh queue order whenever we transition to a new song, 
+                        // especially important for keeping the "Up Next" accurate.
+                        refreshQueueFromPlayer()
                         savePlaybackState()
                     }
                 }
             }
 
             override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
-                val savedShuffle = _uiState.value.isShuffleEnabled
-                if (shuffleModeEnabled != savedShuffle) {
-                    // Player's shuffle was reset (e.g. service restart) — re-apply saved mode
-                    mediaController?.shuffleModeEnabled = savedShuffle
-                    return
-                }
                 _uiState.value = _uiState.value.copy(isShuffleEnabled = shuffleModeEnabled)
+                refreshQueueFromPlayer()
+                // Persist change so it survives service/app restarts
+                prefs.edit().putBoolean("shuffle_enabled", shuffleModeEnabled).apply()
             }
 
             override fun onRepeatModeChanged(repeatMode: Int) {
@@ -354,17 +356,9 @@ class PlayerViewModel(
                     Player.REPEAT_MODE_ALL -> RepeatMode.ALL
                     else -> RepeatMode.OFF
                 }
-                val savedMode = _uiState.value.repeatMode
-                if (mode != savedMode) {
-                    // Player's repeat mode was reset (e.g. service restart) — re-apply saved mode
-                    mediaController?.repeatMode = when (savedMode) {
-                        RepeatMode.OFF -> Player.REPEAT_MODE_OFF
-                        RepeatMode.ONE -> Player.REPEAT_MODE_ONE
-                        RepeatMode.ALL -> Player.REPEAT_MODE_ALL
-                    }
-                    return
-                }
                 _uiState.value = _uiState.value.copy(repeatMode = mode)
+                // Persist change so it survives service/app restarts
+                prefs.edit().putString("repeat_mode", mode.name).apply()
             }
         }
         playerListener = listener
@@ -378,6 +372,67 @@ class PlayerViewModel(
             RepeatMode.ALL -> Player.REPEAT_MODE_ALL
         }
         mediaController?.shuffleModeEnabled = _uiState.value.isShuffleEnabled
+
+        // Sync current song and queue if player is empty (e.g. after restoration or service restart)
+        val currentSong = _uiState.value.currentSong
+        if (currentSong != null && mediaController?.mediaItemCount == 0) {
+            playSong(currentSong, _uiState.value.currentPosition)
+        } else {
+            // Player is not empty, refresh our local queue state to match the player's true order
+            refreshQueueFromPlayer()
+        }
+    }
+
+    /**
+     * Reconstructs the queue from the player's current timeline and shuffle order.
+     * This ensures the "Up Next" list in the UI accurately reflects what will play next.
+     */
+    private fun refreshQueueFromPlayer() {
+        val controller = mediaController ?: return
+        val count = controller.mediaItemCount
+        if (count == 0) return
+
+        val currentState = _uiState.value
+        val newQueue = mutableListOf<Song>()
+        val currentIdx = controller.currentMediaItemIndex
+        if (currentIdx == C.INDEX_UNSET) return
+
+        var nextIdx = currentIdx
+        val seen = mutableSetOf<Int>()
+
+        // Follow the "next" links in the player's timeline (respects shuffle mode)
+        while (nextIdx != C.INDEX_UNSET && !seen.contains(nextIdx) && newQueue.size < count) {
+            val mediaItem = controller.getMediaItemAt(nextIdx)
+            val mediaId = mediaItem.mediaId
+            
+            // Find the song metadata in our catalogs
+            val song = currentState.allSongs.find { it.id == mediaId }
+                ?: currentState.songs.find { it.id == mediaId }
+                ?: currentState.queue.find { it.id == mediaId } // Fallback to current queue metadata
+                ?: Song(
+                    id = mediaId,
+                    title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                    artist = mediaItem.mediaMetadata.artist?.toString() ?: "",
+                    coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
+                    audioUrl = mediaItem.localConfiguration?.uri?.toString() ?: "",
+                    singer = Singer.NEURO
+                )
+            
+            newQueue.add(song)
+            seen.add(nextIdx)
+            
+            // Ask the timeline for the next index, respecting the current shuffle state
+            nextIdx = controller.currentTimeline.getNextWindowIndex(
+                nextIdx, 
+                Player.REPEAT_MODE_OFF, 
+                controller.shuffleModeEnabled
+            )
+        }
+        
+        // If we didn't find the current song in the loop for some reason, don't wipe the queue
+        if (newQueue.isNotEmpty()) {
+            _uiState.value = _uiState.value.copy(queue = newQueue)
+        }
     }
 
     private var lastPeriodicSaveTime = 0L
@@ -532,14 +587,42 @@ class PlayerViewModel(
 
             repository.getPlaylistSongs(playlistId).fold(
                 onSuccess = { songs ->
-                    _uiState.value = _uiState.value.copy(
+                    val currentState = _uiState.value
+                    
+                    // Decide whether to update the actual playback queue.
+                    // We update if the queue is empty, or if it's a single-item queue (likely from restoration)
+                    // and this playlist contains that song, so we can "expand" the queue.
+                    val isRestoredQueue = currentState.queue.size <= 1 && !currentState.isCustomQueue
+                    val isCurrentSongInThisPlaylist = songs.any { it.id == currentState.currentSong?.id }
+                    val shouldUpdateQueue = currentState.queue.isEmpty() || (isRestoredQueue && isCurrentSongInThisPlaylist)
+
+                    var newQueue = if (shouldUpdateQueue) songs else currentState.queue
+                    
+                    // Apply shuffle if we are expanding/updating the queue and shuffle is on
+                    if (shouldUpdateQueue && currentState.isShuffleEnabled && newQueue.size > 1) {
+                        val currentSong = currentState.currentSong ?: newQueue.first()
+                        val others = newQueue.filter { it.id != currentSong.id }.shuffled()
+                        newQueue = listOf(currentSong) + others
+                    }
+
+                    _uiState.value = currentState.copy(
                         songs = songs,
-                        queue = songs,
+                        queue = newQueue,
                         isLoading = false,
                         currentPlaylistId = playlistId,
                         currentPlaylist = playlist,
-                        currentSong = _uiState.value.currentSong ?: songs.firstOrNull()
+                        currentSong = currentState.currentSong ?: songs.firstOrNull()
                     )
+
+                    // If we expanded the queue and the player is already active, sync the new items to it
+                    if (shouldUpdateQueue) {
+                        mediaController?.let { controller ->
+                            val currentSong = _uiState.value.currentSong
+                            if (currentSong != null && controller.mediaItemCount <= 1) {
+                                playSong(currentSong, controller.currentPosition)
+                            }
+                        }
+                    }
 
                     // Update playlist metadata if missing (fallback from song data)
                     if (playlist != null && (playlist.previewCovers.isEmpty() || playlist.songCount == 0)) {
@@ -603,16 +686,22 @@ class PlayerViewModel(
         isRestoringState = false
         savePlaybackState()
 
-        val controller = mediaController ?: return
-        var queueSongs = _uiState.value.queue.ifEmpty { _uiState.value.songs }
+        // Source the queue from the current playlist, or fall back to the existing queue
+        var queueSongs = if (!_uiState.value.isCustomQueue && _uiState.value.songs.isNotEmpty()) {
+            _uiState.value.songs
+        } else {
+            _uiState.value.queue
+        }
+        if (queueSongs.isEmpty()) queueSongs = listOf(song)
+        
         var songIndex = queueSongs.indexOfFirst { it.id == song.id }
 
-        // Song not in current queue — try allSongs
+        // Song not in current list — try allSongs
         if (songIndex < 0 && _uiState.value.allSongs.isNotEmpty()) {
             queueSongs = _uiState.value.allSongs
             songIndex = queueSongs.indexOfFirst { it.id == song.id }
             if (songIndex >= 0) {
-                _uiState.value = _uiState.value.copy(queue = queueSongs, currentPlaylistId = null)
+                _uiState.value = _uiState.value.copy(currentPlaylistId = null, isCustomQueue = false)
             }
         }
 
@@ -620,11 +709,39 @@ class PlayerViewModel(
         if (songIndex < 0) {
             queueSongs = listOf(song)
             songIndex = 0
-            _uiState.value = _uiState.value.copy(queue = queueSongs)
+        }
+
+        // Update the UI state with the base queue. 
+        // If shuffle is ON, refreshQueueFromPlayer() will soon override this with the shuffled order.
+        _uiState.value = _uiState.value.copy(queue = queueSongs)
+
+        val controller = mediaController ?: return
+
+        // Sync shuffle mode to the controller before setting items
+        controller.shuffleModeEnabled = _uiState.value.isShuffleEnabled
+
+        // Optimization: If the controller already has the correct items, just seek.
+        // In shuffle mode, we check if the ID matches at the expected index.
+        if (controller.mediaItemCount == queueSongs.size && songIndex >= 0 && songIndex < controller.mediaItemCount) {
+            val currentItem = controller.getMediaItemAt(songIndex)
+            if (currentItem.mediaId == song.id) {
+                controller.seekTo(songIndex, resumePos)
+                controller.play()
+                refreshQueueFromPlayer()
+                return
+            }
         }
 
         // Build media items for the queue
         val mediaItems = queueSongs.map { s ->
+            val extras = android.os.Bundle()
+            extras.putBoolean("androidx.media3.session.MediaSession.EXTRA_KEY_QUEUE_SUPPORTED", true)
+            extras.putInt("androidx.media3.session.MediaSession.EXTRA_KEY_QUEUE_SUPPORTED", 1)
+            extras.putBoolean("androidx.media.utils.Extras.SLOT_RESERVATION_QUEUE", true)
+            extras.putBoolean("androidx.media.PlaybackStateCompat.Extras.COMMAND_GET_TIMELINE", true)
+            extras.putBoolean("android.media.session.extra.QUEUE_SUPPORTED", true)
+            extras.putInt("android.media.session.extra.QUEUE_SUPPORTED", 1)
+
             MediaItem.Builder()
                 .setUri(s.audioUrl)
                 .setMediaId(s.id)
@@ -637,6 +754,7 @@ class PlayerViewModel(
                         .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                         .setIsBrowsable(false)
                         .setIsPlayable(true)
+                        .setExtras(extras)
                         .build()
                 )
                 .build()
@@ -649,12 +767,18 @@ class PlayerViewModel(
     }
 
     /**
-     * Play song by ID from current playlist
+     * Play song by ID, searching in queue, current playlist, and all songs
      */
     fun playSongById(songId: String) {
-        val song = _uiState.value.songs.find { it.id == songId }
+        val song = _uiState.value.queue.find { it.id == songId }
+            ?: _uiState.value.songs.find { it.id == songId }
+            ?: _uiState.value.allSongs.find { it.id == songId }
+
         song?.let {
-            _uiState.value = _uiState.value.copy(isCustomQueue = false)
+            // If it's not in the current playlist but in songs, it might be a playlist play
+            if (_uiState.value.queue.none { s -> s.id == songId } && _uiState.value.songs.any { s -> s.id == songId }) {
+                _uiState.value = _uiState.value.copy(isCustomQueue = false)
+            }
             playSong(it)
         }
     }
