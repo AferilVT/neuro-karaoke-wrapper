@@ -319,7 +319,7 @@ class SyncApi {
             absolutePath.isNotBlank() && absolutePath.startsWith("http") ->
                 absolutePath
             absolutePath.isNotBlank() ->
-                "https://storage.neurokaraoke.com$absolutePath"
+                "https://storage.neurokaraoke.com/" + absolutePath.removePrefix("/")
             else -> ""
         }
     }
@@ -452,7 +452,7 @@ class SyncApi {
                 obj.has("absolutePath") && obj.optString("absolutePath", "").isNotBlank() -> {
                     val path = obj.optString("absolutePath", "")
                     if (path.startsWith("http")) path
-                    else "https://storage.neurokaraoke.com/$path"
+                    else "https://storage.neurokaraoke.com/" + path.removePrefix("/")
                 }
                 else -> ""
             }
