@@ -151,6 +151,15 @@ class NeuroKaraokeApi {
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
+
+                // Handle relative audio URL
+                val rawAudioUrl = obj.optString("audioUrl")
+                val audioUrl = when {
+                    rawAudioUrl.isNullOrBlank() -> null
+                    rawAudioUrl.startsWith("http") -> rawAudioUrl
+                    else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+                }
+
                 songs.add(
                     ApiSong(
                         playlistName = playlistName,
@@ -158,7 +167,7 @@ class NeuroKaraokeApi {
                         originalArtists = obj.optString("originalArtists"),
                         coverArtists = obj.optString("coverArtists"),
                         coverArt = obj.optString("coverArt"),
-                        audioUrl = obj.optString("audioUrl"),
+                        audioUrl = audioUrl,
                         artCredit = parseArtCredit(obj) ?: playlistArtCredit
                     )
                 )
@@ -206,8 +215,13 @@ class NeuroKaraokeApi {
                         // Try coverArt first, then derive from audioUrl
                         var coverArtUrl = songObj.optString("coverArt", "")
                         if (coverArtUrl.isBlank()) {
-                            val audioUrl = songObj.optString("audioUrl", "")
-                            if (audioUrl.isNotBlank()) {
+                            val rawAudioUrl = songObj.optString("audioUrl", "")
+                            if (rawAudioUrl.isNotBlank()) {
+                                // Fix relative audio URL
+                                val audioUrl = when {
+                                    rawAudioUrl.startsWith("http") -> rawAudioUrl
+                                    else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+                                }
                                 coverArtUrl = audioUrl
                                     .replace("/audio/", "/images/")
                                     .replace(Regex("\\.v\\d+\\)?\\.mp3$"), ".jpg")
@@ -561,7 +575,11 @@ class NeuroKaraokeApi {
                 val artCredit = parseArtCredit(obj)
 
                 val audioPath = obj.optString("absolutePath", "")
-                val audioUrl = if (audioPath.isNotBlank()) "https://storage.neurokaraoke.com/$audioPath" else ""
+                val audioUrl = when {
+                    audioPath.isBlank() -> ""
+                    audioPath.startsWith("http") -> audioPath
+                    else -> "https://storage.neurokaraoke.com/" + audioPath.removePrefix("/")
+                }
 
                 out.add(
                     AllSongEntry(
@@ -640,9 +658,11 @@ class NeuroKaraokeApi {
 
                     // Audio URL from absolutePath
                     val audioPath = obj.optString("absolutePath", "")
-                    val audioUrl = if (audioPath.isNotBlank()) {
-                        "https://storage.neurokaraoke.com/$audioPath"
-                    } else ""
+                    val audioUrl = when {
+                        audioPath.isBlank() -> ""
+                        audioPath.startsWith("http") -> audioPath
+                        else -> "https://storage.neurokaraoke.com/" + audioPath.removePrefix("/")
+                    }
 
                     songs.add(
                         ApiSong(
