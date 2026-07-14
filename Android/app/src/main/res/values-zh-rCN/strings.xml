@@ -7,6 +7,8 @@
     <string name="brand_neuro_21_station">Neuro 21 电台</string>
     <string name="brand_name_discord">Discord</string>
 
+    <string name="media3_audio_label">NeuroKaraoke 播放引擎</string>
+
     <!-- Bottom navigation bar -->
     <string name="nav_tab_home">首页</string>
     <string name="nav_tab_radio">电台</string>

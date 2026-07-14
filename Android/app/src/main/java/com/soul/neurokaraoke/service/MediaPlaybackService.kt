@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.service
 import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
+import android.os.Build
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
@@ -39,6 +40,10 @@ class MediaPlaybackService : MediaLibraryService() {
     private lateinit var browseTree: AutoBrowseTree
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    override fun getAttributionTag(): String? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) "neuroAudio" else super.getAttributionTag()
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -55,6 +60,7 @@ class MediaPlaybackService : MediaLibraryService() {
         val cacheDataSourceFactory = AudioCacheManager.createCacheDataSourceFactory(this)
         val mediaSourceFactory = DefaultMediaSourceFactory(this)
             .setDataSourceFactory(cacheDataSourceFactory)
+
 
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
