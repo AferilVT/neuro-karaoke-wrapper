@@ -336,62 +336,81 @@ class UserPlaylistRepository(context: Context) {
     fun isServerPlaylist(playlistId: String): Boolean = !playlistId.startsWith("user_")
 
     /**
-     * Load songs for a server playlist via the public playlist endpoint.
+     * Load songs for a server playlist.
+     * Uses the authenticated endpoint if accessToken is provided to include user uploads.
      * Also updates the cover URL and preview covers from the API response.
      */
-    suspend fun loadPlaylistSongs(playlistId: String) {
+    suspend fun loadPlaylistSongs(playlistId: String, accessToken: String? = null) {
         if (!isServerPlaylist(playlistId)) return
 
-        // Already have songs? Skip.
+        // Already have songs? Skip (unless forced or using token for first time).
         val existing = _playlists.value.find { it.id == playlistId }
-        if (existing != null && existing.songs.isNotEmpty()) return
+        if (existing != null && existing.songs.isNotEmpty()) {
+            // If we have songs but maybe not all (uploads missing), we might want to reload if we now have a token
+            // For now, let's just proceed if songs list is empty or if we have a token and the count is less than expected
+        }
+        if (existing != null && existing.songs.isNotEmpty() && accessToken == null) return
 
         _isSyncing.value = true
         try {
-            // Fetch playlist info (cover URL, preview covers) and songs
-            val infoResult = karaokeApi.fetchPlaylistInfo(playlistId)
-            val songsResult = karaokeApi.fetchPlaylist(playlistId)
-
-            songsResult.onSuccess { apiSongs ->
-                val songs = apiSongs.map { apiSong ->
-                    val coverArtists = apiSong.coverArtists.orEmpty()
-                    Song(
-                        id = apiSong.audioUrl?.hashCode()?.toString() ?: "",
-                        title = apiSong.title,
-                        artist = apiSong.originalArtists ?: "Unknown Artist",
-                        coverUrl = apiSong.getCoverArtUrl() ?: "",
-                        audioUrl = apiSong.audioUrl ?: "",
-                        singer = Singer.fromCoverArtists(coverArtists),
-                        coverArtists = coverArtists,
-                        artCredit = apiSong.artCredit?.takeIf { it.isNotBlank() }
-                    )
+            if (accessToken != null) {
+                // Use authenticated endpoint to get full details including uploads
+                syncApi.fetchPlaylistDetails(accessToken, playlistId).onSuccess { fullPlaylist ->
+                    _playlists.value = _playlists.value.map { playlist ->
+                        if (playlist.id == playlistId) fullPlaylist else playlist
+                    }
+                    savePlaylists()
+                }.onFailure { e ->
+                    // Fallback to public
+                    loadPlaylistSongsPublic(playlistId)
                 }
-
-                val info = infoResult.getOrNull()
-
-                // Update the playlist with loaded songs and proper cover URL from API
-                _playlists.value = _playlists.value.map { playlist ->
-                    if (playlist.id == playlistId) {
-                        val songPreviewCovers = songs
-                            .filter { it.coverUrl.isNotBlank() }
-                            .take(4)
-                            .map { it.coverUrl }
-                        playlist.copy(
-                            songs = songs,
-                            coverUrl = info?.coverUrl?.takeIf { it.isNotBlank() } ?: playlist.coverUrl,
-                            previewCovers = info?.previewCovers?.takeIf { it.isNotEmpty() }
-                                ?: songPreviewCovers.takeIf { it.isNotEmpty() }
-                                ?: playlist.previewCovers
-                        )
-                    } else playlist
-                }
-                savePlaylists()
-                Log.d(TAG, "Loaded ${songs.size} songs for playlist $playlistId (cover=${info?.coverUrl?.take(50)})")
-            }.onFailure { e ->
-                Log.e(TAG, "Failed to load songs for playlist $playlistId: ${e.message}")
+            } else {
+                loadPlaylistSongsPublic(playlistId)
             }
         } finally {
             _isSyncing.value = false
+        }
+    }
+
+    private suspend fun loadPlaylistSongsPublic(playlistId: String) {
+        // Fetch playlist info (cover URL, preview covers) and songs
+        val infoResult = karaokeApi.fetchPlaylistInfo(playlistId)
+        val songsResult = karaokeApi.fetchPlaylist(playlistId)
+
+        songsResult.onSuccess { apiSongs ->
+            val songs = apiSongs.map { apiSong ->
+                val coverArtists = apiSong.coverArtists.orEmpty()
+                Song(
+                    id = apiSong.audioUrl?.hashCode()?.toString() ?: "",
+                    title = apiSong.title,
+                    artist = apiSong.originalArtists ?: "Unknown Artist",
+                    coverUrl = apiSong.getCoverArtUrl() ?: "",
+                    audioUrl = apiSong.audioUrl ?: "",
+                    singer = Singer.fromCoverArtists(coverArtists),
+                    coverArtists = coverArtists,
+                    artCredit = apiSong.artCredit?.takeIf { it.isNotBlank() }
+                )
+            }
+
+            val info = infoResult.getOrNull()
+
+            // Update the playlist with loaded songs and proper cover URL from API
+            _playlists.value = _playlists.value.map { playlist ->
+                if (playlist.id == playlistId) {
+                    val songPreviewCovers = songs
+                        .filter { it.coverUrl.isNotBlank() }
+                        .take(4)
+                        .map { it.coverUrl }
+                    playlist.copy(
+                        songs = songs,
+                        coverUrl = info?.coverUrl?.takeIf { it.isNotBlank() } ?: playlist.coverUrl,
+                        previewCovers = info?.previewCovers?.takeIf { it.isNotEmpty() }
+                            ?: songPreviewCovers.takeIf { it.isNotEmpty() }
+                            ?: playlist.previewCovers
+                    )
+                } else playlist
+            }
+            savePlaylists()
         }
     }
 

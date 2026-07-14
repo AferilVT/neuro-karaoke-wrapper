@@ -265,7 +265,8 @@ fun NavGraph(
                     onRemoveFromPlaylist = { song ->
                         val token = if (isLoggedIn) authUser?.apiToken ?: authUser?.accessToken else null
                         userPlaylistRepository.removeSongFromPlaylist(playlistId, song.id, token)
-                    }
+                    },
+                    accessToken = accessToken
                 )
             }
         }
