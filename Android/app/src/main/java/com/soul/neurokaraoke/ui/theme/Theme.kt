@@ -8,13 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.soul.neurokaraoke.data.repository.SettingsRepository
 
 // Theme mode enum
 enum class ThemeMode {
@@ -136,7 +135,7 @@ fun NeuroKaraokeTheme(
     currentSinger: String? = null,
     content: @Composable () -> Unit
 ) {
-    var themeMode by remember { mutableStateOf(ThemeMode.AUTO) }
+    val themeMode by SettingsRepository.themeMode.collectAsStateWithLifecycle()
 
     // Determine the effective theme
     val effectiveMode = when (themeMode) {
@@ -166,7 +165,7 @@ fun NeuroKaraokeTheme(
 
     CompositionLocalProvider(
         LocalThemeMode provides themeMode,
-        LocalThemeToggle provides { newMode -> themeMode = newMode },
+        LocalThemeToggle provides { newMode -> SettingsRepository.setThemeMode(newMode) },
         LocalAutoThemeSinger provides currentSinger,
         LocalNeonColors provides neonColors
     ) {
