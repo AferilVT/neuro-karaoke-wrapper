@@ -63,9 +63,9 @@ import com.soul.neurokaraoke.data.model.Song
 import kotlinx.coroutines.delay
 
 private enum class AaosTab(@StringRes val labelRes: Int) {
+    RADIO(R.string.aaos_tab_radio),
     LIBRARY(R.string.aaos_tab_library),
-    PLAYLISTS(R.string.aaos_tab_playlists),
-    RADIO(R.string.aaos_tab_radio)
+    PLAYLISTS(R.string.aaos_tab_playlists)
 }
 
 @Composable
@@ -76,7 +76,7 @@ fun AaosHomeScreen(
     onNowPlayingClick: () -> Unit,
     onPairClick: () -> Unit
 ) {
-    var tab by remember { mutableStateOf(AaosTab.LIBRARY) }
+    var tab by remember { mutableStateOf(AaosTab.RADIO) }
     val songs by viewModel.songs.collectAsState()
     val setlists by viewModel.setlists.collectAsState()
     val userPlaylists by viewModel.userPlaylists.collectAsState()
@@ -563,7 +563,6 @@ private fun RadioPanel(controllerProvider: () -> MediaController?) {
                     )
                     .clickable {
                         if (isRadioPlaying) {
-                            AaosRadioPoller.stop()
                             controllerProvider()?.stop()
                         } else {
                             playRadio(controllerProvider())
@@ -680,7 +679,6 @@ internal fun playRadio(controller: MediaController?) {
     c.setMediaItem(item)
     c.prepare()
     c.play()
-    AaosRadioPoller.start(c)
 }
 
 private fun Song.toMediaItem(): MediaItem = MediaItem.Builder()

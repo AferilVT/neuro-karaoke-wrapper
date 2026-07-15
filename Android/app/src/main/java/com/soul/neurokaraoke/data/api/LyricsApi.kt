@@ -44,16 +44,19 @@ class LyricsApi {
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
 
-            val responseCode = connection.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                val json = JSONObject(response)
-                Result.success(parseLyricsResult(json))
-            } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
-                // No lyrics found, try search endpoint
-                searchLyricsFallback(trackName, artistName)
-            } else {
-                Result.failure(Exception("HTTP $responseCode"))
+            when (val responseCode = connection.responseCode) {
+                HttpURLConnection.HTTP_OK -> {
+                    val response = connection.inputStream.bufferedReader().use { it.readText() }
+                    val json = JSONObject(response)
+                    Result.success(parseLyricsResult(json))
+                }
+                HttpURLConnection.HTTP_NOT_FOUND -> {
+                    // No lyrics found, try search endpoint
+                    searchLyricsFallback(trackName, artistName)
+                }
+                else -> {
+                    Result.failure(Exception("HTTP $responseCode"))
+                }
             }
         } catch (e: Exception) {
             if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()

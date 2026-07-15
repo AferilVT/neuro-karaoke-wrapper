@@ -81,6 +81,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -384,6 +385,41 @@ fun PlayerScreen(
                 isPlaying = isPlaying,
                 listenerCount = radioListenerCount
             )
+
+            if (duration > 0) {
+                Spacer(modifier = Modifier.height(24.dp))
+                // Progress bar (read-only for radio)
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Slider(
+                        value = progress.coerceIn(0f, 1f),
+                        onValueChange = {},
+                        enabled = false,
+                        colors = SliderDefaults.colors(
+                            disabledThumbColor = Color.Transparent,
+                            disabledActiveTrackColor = MaterialTheme.colorScheme.primary,
+                            disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = formatTime(currentPosition),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = formatTime(duration),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

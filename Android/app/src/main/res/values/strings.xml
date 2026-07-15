@@ -134,6 +134,10 @@
     <string name="explore_status_loading">Loading playlists…</string>
     <string name="explore_empty_no_match">No playlists match your search</string>
     <string name="explore_empty_no_playlists">No playlists available</string>
+    <string name="explore_sort_newest">Updated - New to Old</string>
+    <string name="explore_sort_oldest">Updated - Old to New</string>
+    <string name="explore_sort_plays_high">Play Count - High to Low</string>
+    <string name="explore_sort_plays_low">Play Count - Low to High</string>
 
     <!-- Playlist detail screen -->
     <string name="playlist_detail_label_public">PUBLIC PLAYLIST</string>
@@ -208,6 +212,7 @@
     <!-- More screen -->
     <string name="more_header_title">More</string>
     <string name="more_item_soundbites">Soundbites</string>
+    <string name="more_item_public_playlists">Public Playlists</string>
     <string name="more_item_setlists">Setlists</string>
     <string name="more_item_artists">Artists</string>
     <string name="more_item_local_music">Local Music</string>
@@ -342,9 +347,12 @@
     <string name="car_tab_library">Library</string>
     <string name="car_tab_playlists">Playlists</string>
     <string name="car_tab_radio">Radio</string>
+    <string name="car_tab_explore">Explore</string>
+    <string name="car_tab_more">More</string>
     <string name="car_title_library">Library</string>
     <string name="car_title_playlists">Playlists</string>
     <string name="car_title_radio">Radio</string>
+    <string name="car_title_more">More</string>
     <string name="car_empty_no_songs">No songs cached. Open the app on phone first.</string>
     <string name="car_empty_no_playlists">No playlists yet</string>
     <string name="car_radio_station_title">Neuro 21 Station</string>
@@ -356,6 +364,7 @@
     <string name="car_label_unknown_artist">Unknown</string>
     <string name="car_label_untitled_playlist">Untitled Playlist</string>
     <string name="car_label_playlist">Playlist</string>
+    <string name="car_item_public_playlists">Public Playlists</string>
 
     <!-- About screen -->
     <string name="about_tab_about">About</string>

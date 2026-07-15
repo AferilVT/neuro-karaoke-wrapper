@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.ForwardingPlayer
@@ -24,6 +25,7 @@ import androidx.media3.session.SessionResult
 import com.google.common.collect.ImmutableList
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
+import com.soul.neurokaraoke.aaos.AaosRadioPoller
 import com.soul.neurokaraoke.audio.AudioCacheManager
 import com.soul.neurokaraoke.audio.EqualizerManager
 import com.soul.neurokaraoke.data.repository.DownloadRepository
@@ -31,6 +33,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.guava.future
+import kotlinx.coroutines.withContext
 
 @UnstableApi
 class MediaPlaybackService : MediaLibraryService() {
@@ -128,12 +131,45 @@ class MediaPlaybackService : MediaLibraryService() {
                     }
                     return true
                 }
+
+                override fun getCurrentPosition(): Long {
+                    val mediaId = wrappedPlayer.currentMediaItem?.mediaId
+                    if (mediaId == "radio_live" || mediaId == "nk_radio") {
+                        return AaosRadioPoller.getRadioProgressMs()
+                    }
+                    return super.getCurrentPosition()
+                }
+
+                override fun getDuration(): Long {
+                    val mediaId = wrappedPlayer.currentMediaItem?.mediaId
+                    if (mediaId == "radio_live" || mediaId == "nk_radio") {
+                        return AaosRadioPoller.getRadioDurationMs()
+                    }
+                    return super.getDuration()
+                }
+
+                override fun getBufferedPosition(): Long {
+                    val mediaId = wrappedPlayer.currentMediaItem?.mediaId
+                    if (mediaId == "radio_live" || mediaId == "nk_radio") {
+                        return AaosRadioPoller.getRadioProgressMs()
+                    }
+                    return super.getBufferedPosition()
+                }
             }
 
             val listener = object : Player.Listener {
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     if (playbackState == Player.STATE_READY) {
                         EqualizerManager.initialize(exoPlayer.audioSessionId)
+                    }
+                }
+
+                override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                    val mediaId = exoPlayer.currentMediaItem?.mediaId
+                    val isRadio = mediaId == "radio_live" || mediaId == AutoBrowseTree.RADIO_ID
+                    if (isRadio) {
+                        if (playWhenReady) AaosRadioPoller.start(exoPlayer)
+                        else AaosRadioPoller.stop()
                     }
                 }
 
@@ -147,6 +183,16 @@ class MediaPlaybackService : MediaLibraryService() {
                 }
 
                 override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    val mediaId = mediaItem?.mediaId
+                    val isRadio = mediaId == "radio_live" || mediaId == AutoBrowseTree.RADIO_ID
+                    if (isRadio) {
+                        if (exoPlayer.playWhenReady) {
+                            AaosRadioPoller.start(exoPlayer)
+                        }
+                    } else {
+                        AaosRadioPoller.stop()
+                    }
+
                     librarySession?.let { s ->
                         s.setCustomLayout(getCustomLayout(s.player))
                     }
@@ -202,6 +248,22 @@ class MediaPlaybackService : MediaLibraryService() {
     }
 
     private inner class LibraryCallback : MediaLibrarySession.Callback {
+
+        override fun onPlaybackResumption(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = serviceScope.future {
+            val song = browseTree.resumeSong()
+            if (song != null) {
+                MediaSession.MediaItemsWithStartPosition(
+                    ImmutableList.of(browseTree.resolve("${AutoBrowseTree.RESUME_PREFIX}${song.id}")!!),
+                    0,
+                    0L
+                )
+            } else {
+                throw UnsupportedOperationException()
+            }
+        }
 
         override fun onConnect(
             session: MediaSession,
@@ -296,12 +358,19 @@ class MediaPlaybackService : MediaLibraryService() {
             mediaId: String
         ): ListenableFuture<LibraryResult<MediaItem>> = serviceScope.future {
             // First, try to find the item in the current player's timeline
-            val player = session.player
-            for (i in 0 until player.mediaItemCount) {
-                val item = player.getMediaItemAt(i)
-                if (item.mediaId == mediaId) {
-                    return@future LibraryResult.ofItem(item, null)
+            val itemFromPlayer = withContext(Dispatchers.Main) {
+                val player = session.player
+                for (i in 0 until player.mediaItemCount) {
+                    val item = player.getMediaItemAt(i)
+                    if (item.mediaId == mediaId) {
+                        return@withContext item
+                    }
                 }
+                null
+            }
+
+            if (itemFromPlayer != null) {
+                return@future LibraryResult.ofItem(itemFromPlayer, null)
             }
 
             // Fallback to the browse tree
@@ -320,38 +389,41 @@ class MediaPlaybackService : MediaLibraryService() {
         ): ListenableFuture<LibraryResult<ImmutableList<MediaItem>>> = serviceScope.future {
             // Handle special system IDs for the playback queue
             if (parentId == "@android:queue@" || parentId == "@android:queue_all@" || parentId == "nk_queue") {
-                val player = session.player
-                val items = mutableListOf<MediaItem>()
-                
-                if (player.shuffleModeEnabled && parentId != "@android:queue_all@") {
-                    // Return items in shuffled order as they will be played
-                    val timeline = player.currentTimeline
-                    var nextIdx = player.currentMediaItemIndex
-                    val seen = mutableSetOf<Int>()
+                val items = withContext(Dispatchers.Main) {
+                    val player = session.player
+                    val queueItems = mutableListOf<MediaItem>()
                     
-                    while (nextIdx != C.INDEX_UNSET && !seen.contains(nextIdx) && items.size < player.mediaItemCount) {
-                        items.add(player.getMediaItemAt(nextIdx))
-                        seen.add(nextIdx)
-                        nextIdx = timeline.getNextWindowIndex(nextIdx, Player.REPEAT_MODE_OFF, true)
-                    }
-                    
-                    // If we missed some items (e.g. they were before current in shuffle order),
-                    // fill them in to ensure a full list.
-                    if (items.size < player.mediaItemCount) {
-                        for (i in 0 until player.mediaItemCount) {
-                            if (!seen.contains(i)) {
-                                items.add(player.getMediaItemAt(i))
-                                seen.add(i)
+                    if (player.shuffleModeEnabled && parentId != "@android:queue_all@") {
+                        // Return items in shuffled order as they will be played
+                        val timeline = player.currentTimeline
+                        var nextIdx = player.currentMediaItemIndex
+                        val seen = mutableSetOf<Int>()
+                        
+                        while (nextIdx != C.INDEX_UNSET && !seen.contains(nextIdx) && queueItems.size < player.mediaItemCount) {
+                            queueItems.add(player.getMediaItemAt(nextIdx))
+                            seen.add(nextIdx)
+                            nextIdx = timeline.getNextWindowIndex(nextIdx, Player.REPEAT_MODE_OFF, true)
+                        }
+                        
+                        // If we missed some items (e.g. they were before current in shuffle order),
+                        // fill them in to ensure a full list.
+                        if (queueItems.size < player.mediaItemCount) {
+                            for (i in 0 until player.mediaItemCount) {
+                                if (!seen.contains(i)) {
+                                    queueItems.add(player.getMediaItemAt(i))
+                                    seen.add(i)
+                                }
                             }
                         }
+                    } else {
+                        // Standard order
+                        for (i in 0 until player.mediaItemCount) {
+                            queueItems.add(player.getMediaItemAt(i))
+                        }
                     }
-                } else {
-                    // Standard order
-                    for (i in 0 until player.mediaItemCount) {
-                        items.add(player.getMediaItemAt(i))
-                    }
+                    ImmutableList.copyOf(queueItems)
                 }
-                return@future LibraryResult.ofItemList(ImmutableList.copyOf(items), params)
+                return@future LibraryResult.ofItemList(items, params)
             }
 
             val all = browseTree.children(parentId)
@@ -388,21 +460,173 @@ class MediaPlaybackService : MediaLibraryService() {
         }
 
         /**
-         * Auto sends play requests with mediaId only — we must add the URI
-         * by resolving against our song list.
+         * System sends play requests with mediaId only — we must add the URI
+         * by resolving against our song list. Also expands folders into playlists.
          */
+
         override fun onAddMediaItems(
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo,
             mediaItems: MutableList<MediaItem>
         ): ListenableFuture<MutableList<MediaItem>> = serviceScope.future {
-            mediaItems.map { item ->
-                if (item.localConfiguration?.uri != null) {
-                    item
+            Log.d("NK_SERVICE", "onAddMediaItems: count=${mediaItems.size}, ids=${mediaItems.map { it.mediaId }}")
+            val result = resolveAndExpand(mediaItems)
+            Log.d("NK_SERVICE", "onAddMediaItems: returning ${result.size} items")
+            result
+        }
+
+        override fun onSetMediaItems(
+            mediaSession: MediaSession,
+            controller: MediaSession.ControllerInfo,
+            mediaItems: MutableList<MediaItem>,
+            startIndex: Int,
+            startPositionMs: Long
+        ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = serviceScope.future {
+            Log.d("NK_SERVICE", "onSetMediaItems: count=${mediaItems.size}, startIndex=$startIndex, ids=${mediaItems.map { it.mediaId }}")
+            
+            var itemsToProcess = mediaItems.toMutableList()
+            var finalStartIndex = startIndex
+
+            // If a single song from a public playlist is played, try to expand the whole playlist
+            if (mediaItems.size == 1) {
+                val item = mediaItems[0]
+                if (item.mediaId.startsWith(AutoBrowseTree.SONG_URL_PREFIX)) {
+                    val fullId = item.mediaId.removePrefix(AutoBrowseTree.SONG_URL_PREFIX)
+                    val parts = fullId.split("|", limit = 2)
+                    if (parts.size == 2) {
+                        val parentId = parts[0]
+                        val originalUrl = parts[1]
+                        Log.d("NK_SERVICE", "Detected single public song, expanding parent: $parentId")
+                        val children = browseTree.children(parentId)
+                        if (children.isNotEmpty()) {
+                            itemsToProcess = children.toMutableList()
+                            val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalUrl) }
+                            if (foundIdx != -1) finalStartIndex = foundIdx
+                        }
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.FAVORITE_SONG_PREFIX)) {
+                    val originalId = item.mediaId.removePrefix(AutoBrowseTree.FAVORITE_SONG_PREFIX)
+                    Log.d("NK_SERVICE", "Detected single favorite song, expanding full favorites list")
+                    val children = browseTree.children(AutoBrowseTree.FAVORITES_ID)
+                    if (children.isNotEmpty()) {
+                        itemsToProcess = children.toMutableList()
+                        val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                        if (foundIdx != -1) finalStartIndex = foundIdx
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.ALL_SONGS_PREFIX)) {
+                    val originalId = item.mediaId.removePrefix(AutoBrowseTree.ALL_SONGS_PREFIX)
+                    Log.d("NK_SERVICE", "Detected single 'all songs' item, expanding list")
+                    val children = browseTree.children(AutoBrowseTree.ALL_SONGS_ID)
+                    if (children.isNotEmpty()) {
+                        itemsToProcess = children.toMutableList()
+                        val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                        if (foundIdx != -1) finalStartIndex = foundIdx
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.NEURO_SONG_PREFIX)) {
+                    val originalId = item.mediaId.removePrefix(AutoBrowseTree.NEURO_SONG_PREFIX)
+                    Log.d("NK_SERVICE", "Detected single Neuro song, expanding list")
+                    val children = browseTree.children(AutoBrowseTree.NEURO_ID)
+                    if (children.isNotEmpty()) {
+                        itemsToProcess = children.toMutableList()
+                        val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                        if (foundIdx != -1) finalStartIndex = foundIdx
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.EVIL_SONG_PREFIX)) {
+                    val originalId = item.mediaId.removePrefix(AutoBrowseTree.EVIL_SONG_PREFIX)
+                    Log.d("NK_SERVICE", "Detected single Evil song, expanding list")
+                    val children = browseTree.children(AutoBrowseTree.EVIL_ID)
+                    if (children.isNotEmpty()) {
+                        itemsToProcess = children.toMutableList()
+                        val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                        if (foundIdx != -1) finalStartIndex = foundIdx
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.DUET_SONG_PREFIX)) {
+                    val originalId = item.mediaId.removePrefix(AutoBrowseTree.DUET_SONG_PREFIX)
+                    Log.d("NK_SERVICE", "Detected single Duet song, expanding list")
+                    val children = browseTree.children(AutoBrowseTree.DUET_ID)
+                    if (children.isNotEmpty()) {
+                        itemsToProcess = children.toMutableList()
+                        val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                        if (foundIdx != -1) finalStartIndex = foundIdx
+                    }
+                } else if (item.mediaId.startsWith(AutoBrowseTree.PERSONAL_SONG_PREFIX) ||
+                    item.mediaId.startsWith(AutoBrowseTree.OFFICIAL_SONG_PREFIX)) {
+                    val isPersonal = item.mediaId.startsWith(AutoBrowseTree.PERSONAL_SONG_PREFIX)
+                    val fullId = if (isPersonal) 
+                        item.mediaId.removePrefix(AutoBrowseTree.PERSONAL_SONG_PREFIX)
+                    else 
+                        item.mediaId.removePrefix(AutoBrowseTree.OFFICIAL_SONG_PREFIX)
+                    
+                    val parts = fullId.split("|", limit = 2)
+                    if (parts.size == 2) {
+                        val parentId = parts[0]
+                        val originalId = parts[1]
+                        Log.d("NK_SERVICE", "Detected single playlist song, expanding parent: $parentId")
+                        val children = browseTree.children(parentId)
+                        if (children.isNotEmpty()) {
+                            itemsToProcess = children.toMutableList()
+                            val foundIdx = children.indexOfFirst { it.mediaId.endsWith(originalId) }
+                            if (foundIdx != -1) finalStartIndex = foundIdx
+                        }
+                    }
+                }
+            }
+
+            val resolved = resolveAndExpand(itemsToProcess)
+            Log.d("NK_SERVICE", "onSetMediaItems: resolved count=${resolved.size}, startIdx=$finalStartIndex")
+            MediaSession.MediaItemsWithStartPosition(resolved, finalStartIndex, startPositionMs)
+        }
+
+        private suspend fun resolveAndExpand(mediaItems: List<MediaItem>): MutableList<MediaItem> {
+            val expandedItems = mutableListOf<MediaItem>()
+
+            for (item in mediaItems) {
+                // 1. Expansion: If it's a folder, get its children
+                if (item.mediaMetadata.isBrowsable == true ||
+                    isFolderId(item.mediaId)) {
+                    Log.d("NK_SERVICE", "Expanding folder: ${item.mediaId}")
+                    val children = browseTree.children(item.mediaId)
+                    Log.d("NK_SERVICE", "Folder ${item.mediaId} expanded to ${children.size} items")
+                    if (children.isNotEmpty()) {
+                        expandedItems.addAll(children)
+                    } else {
+                        expandedItems.add(item)
+                    }
                 } else {
-                    browseTree.resolve(item.mediaId) ?: item
+                    expandedItems.add(item)
+                }
+            }
+
+            // 2. Resolution: Ensure every item in the final list has a valid playback URI
+            val finalItems = expandedItems.map { item ->
+                val existingUri = item.localConfiguration?.uri ?: item.requestMetadata.mediaUri
+                if (existingUri != null) {
+                    item.buildUpon().setUri(existingUri).build()
+                } else {
+                    val resolved = browseTree.resolve(item.mediaId)
+                    if (resolved != null) {
+                        resolved
+                    } else {
+                        Log.w("NK_SERVICE", "Failed to resolve URI for mediaId: ${item.mediaId}, using placeholder")
+                        item.buildUpon().setUri(android.net.Uri.parse("https://idk.neurokaraoke.com/empty.mp3")).build()
+                    }
                 }
             }.toMutableList()
+            
+            Log.d("NK_SERVICE", "resolveAndExpand finished: ${finalItems.size} items")
+            return finalItems
+        }
+
+        private fun isFolderId(id: String): Boolean {
+            return id == AutoBrowseTree.FAVORITES_ID ||
+                   id == AutoBrowseTree.ALL_SONGS_ID ||
+                   id == AutoBrowseTree.NEURO_ID ||
+                   id == AutoBrowseTree.EVIL_ID ||
+                   id == AutoBrowseTree.DUET_ID ||
+                   id == AutoBrowseTree.PUBLIC_PLAYLISTS_ID ||
+                   id.startsWith(AutoBrowseTree.PUBLIC_PLAYLIST_PREFIX) ||
+                   id.startsWith(AutoBrowseTree.PERSONAL_PLAYLIST_PREFIX) ||
+                   id.startsWith(AutoBrowseTree.OFFICIAL_PLAYLIST_PREFIX)
         }
     }
 
@@ -433,6 +657,7 @@ class MediaPlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        AaosRadioPoller.stop()
         EqualizerManager.release()
         playerListener?.let { listener ->
             player?.removeListener(listener)

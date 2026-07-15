@@ -2,7 +2,6 @@
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.net.Uri
 import android.util.Log
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
 import com.soul.neurokaraoke.data.api.SyncApi
@@ -20,7 +19,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-class UserPlaylistRepository(context: Context) {
+class UserPlaylistRepository(private val context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(
         PREFS_NAME,
@@ -175,7 +174,7 @@ class UserPlaylistRepository(context: Context) {
             isNew = false
         )
 
-        _playlists.value = _playlists.value + playlist
+        _playlists.value += playlist
         savePlaylists()
 
         if (accessToken != null) {
@@ -229,7 +228,7 @@ class UserPlaylistRepository(context: Context) {
     }
 
     /**
-     * Add a song to a playlist. If accessToken is provided and it's a server playlist, also syncs to server.
+     * Add a song to a playlist. If accessToken is provided, and it's a server playlist, syncs to server.
      */
     fun addSongToPlaylist(playlistId: String, song: Song, accessToken: String? = null) {
         _playlists.value = _playlists.value.map { playlist ->
@@ -260,7 +259,7 @@ class UserPlaylistRepository(context: Context) {
     }
 
     /**
-     * Remove a song from a playlist. If accessToken is provided and it's a server playlist, also syncs to server.
+     * Remove a song from a playlist. If accessToken is provided, and it's a server playlist, syncs to server as well.
      */
     fun removeSongFromPlaylist(playlistId: String, songId: String, accessToken: String? = null) {
         _playlists.value = _playlists.value.map { playlist ->
@@ -343,19 +342,20 @@ class UserPlaylistRepository(context: Context) {
     suspend fun loadPlaylistSongs(playlistId: String, accessToken: String? = null) {
         if (!isServerPlaylist(playlistId)) return
 
+        // If no token provided, try to get it from AuthRepository
+        val token = accessToken ?: AuthRepository(context).let { 
+            it.currentUser.value?.apiToken ?: it.currentUser.value?.accessToken 
+        }
+
         // Already have songs? Skip (unless forced or using token for first time).
         val existing = _playlists.value.find { it.id == playlistId }
-        if (existing != null && existing.songs.isNotEmpty()) {
-            // If we have songs but maybe not all (uploads missing), we might want to reload if we now have a token
-            // For now, let's just proceed if songs list is empty or if we have a token and the count is less than expected
-        }
-        if (existing != null && existing.songs.isNotEmpty() && accessToken == null) return
+        if (existing != null && existing.songs.isNotEmpty() && token == null) return
 
         _isSyncing.value = true
         try {
-            if (accessToken != null) {
+            if (token != null) {
                 // Use authenticated endpoint to get full details including uploads
-                syncApi.fetchPlaylistDetails(accessToken, playlistId).onSuccess { fullPlaylist ->
+                syncApi.fetchPlaylistDetails(token, playlistId).onSuccess { fullPlaylist ->
                     _playlists.value = _playlists.value.map { playlist ->
                         if (playlist.id == playlistId) fullPlaylist else playlist
                     }

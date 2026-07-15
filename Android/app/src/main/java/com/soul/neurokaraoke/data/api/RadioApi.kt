@@ -43,19 +43,23 @@ data class RadioState(
     val upcoming: List<RadioSong>,
     val history: List<RadioSong>,
     val listenerCount: Int,
-    val offline: Boolean
+    val offline: Boolean,
+    val currentProgress: Int = 0,
+    val totalDuration: Int = 0
 )
 
 class RadioApi {
     companion object {
         const val STREAM_URL = "https://radio.twinskaraoke.com/listen/neuro_21/radio.mp3"
         private const val STATE_URL = "https://socket.neurokaraoke.com/api/radio/current-state"
+        private const val STATIC_NOWPLAYING_URL = "https://radio.twinskaraoke.com/api/nowplaying_static/neuro_21.json"
         private const val IMAGE_BASE = "https://images.neurokaraoke.com"
         private const val IMAGE_ACCOUNT = "WxURxyML82UkE7gY-PiBKw"
     }
 
     suspend fun fetchCurrentState(): Result<RadioState> = withContext(Dispatchers.IO) {
         try {
+            // 1. Fetch main metadata
             val url = URL(STATE_URL)
             val connection = url.openConnection() as HttpURLConnection
             connection.connectTimeout = 10_000
@@ -64,8 +68,34 @@ class RadioApi {
             val response = connection.inputStream.bufferedReader().readText()
             connection.disconnect()
             val json = JSONObject(response)
+            val state = parseRadioState(json)
 
-            Result.success(parseRadioState(json))
+            // 2. Fetch progress from static endpoint
+            val staticUrl = URL(STATIC_NOWPLAYING_URL)
+            val staticConnection = staticUrl.openConnection() as HttpURLConnection
+            staticConnection.connectTimeout = 5000
+            staticConnection.readTimeout = 5000
+            
+            var progress = 0
+            var duration = 0
+            try {
+                val staticResponse = staticConnection.inputStream.bufferedReader().readText()
+                val staticJson = JSONObject(staticResponse)
+                val nowPlaying = staticJson.optJSONObject("now_playing")
+                if (nowPlaying != null) {
+                    progress = nowPlaying.optInt("elapsed", 0)
+                    duration = nowPlaying.optInt("duration", 0)
+                }
+            } catch (e: Exception) {
+                // Ignore static fetch failure
+            } finally {
+                staticConnection.disconnect()
+            }
+
+            Result.success(state.copy(
+                currentProgress = progress,
+                totalDuration = duration
+            ))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -77,7 +107,8 @@ class RadioApi {
             upcoming = parseSongList(json.optJSONArray("upcoming")),
             history = parseSongList(json.optJSONArray("history")),
             listenerCount = json.optInt("listenerCount", 0),
-            offline = json.optBoolean("offline", false)
+            offline = json.optBoolean("offline", false),
+            currentProgress = json.optInt("currentProgress", 0)
         )
     }
 

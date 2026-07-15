@@ -134,6 +134,10 @@
     <string name="explore_status_loading">加载播放列表…</string>
     <string name="explore_empty_no_match">没有匹配的播放列表</string>
     <string name="explore_empty_no_playlists">暂无播放列表</string>
+    <string name="explore_sort_newest">更新时间 - 从新到旧</string>
+    <string name="explore_sort_oldest">更新时间 - 从旧到新</string>
+    <string name="explore_sort_plays_high">播放次数 - 从高到低</string>
+    <string name="explore_sort_plays_low">播放次数 - 从低到高</string>
 
     <!-- Playlist detail screen -->
     <string name="playlist_detail_label_public">公开播放列表</string>
@@ -208,6 +212,7 @@
     <!-- More screen -->
     <string name="more_header_title">更多</string>
     <string name="more_item_soundbites">音频片段</string>
+    <string name="more_item_public_playlists">公共歌单</string>
     <string name="more_item_setlists">歌单</string>
     <string name="more_item_artists">艺术家</string>
     <string name="more_item_local_music">本地音乐</string>
@@ -342,6 +347,8 @@
     <string name="car_tab_library">曲库</string>
     <string name="car_tab_playlists">播放列表</string>
     <string name="car_tab_radio">电台</string>
+    <string name="car_tab_explore">探索</string>
+    <string name="car_tab_more">更多</string>
     <string name="car_title_library">曲库</string>
     <string name="car_title_playlists">播放列表</string>
     <string name="car_title_radio">电台</string>

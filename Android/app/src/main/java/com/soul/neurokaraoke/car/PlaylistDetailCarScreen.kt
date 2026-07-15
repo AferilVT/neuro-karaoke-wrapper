@@ -17,6 +17,7 @@ import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.repository.SongRepository
+import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,12 +50,26 @@ class PlaylistDetailCarScreen(
     init {
         if (!loaded) {
             loadJob = scope.launch {
-                val fetched = songRepository.getPlaylistSongs(playlist.id).getOrNull().orEmpty()
-                songs = fetched.ifEmpty {
-                    // Fallback: filter all-songs by playlist preview cover URLs (best-effort)
-                    allSongs
+                // If it's a personal playlist and empty, try repository load first
+                if (playlist.id.contains("-") || playlist.id.startsWith("user_") || playlist.songs.isEmpty()) {
+                    val userRepo = UserPlaylistRepository(carContext)
+                    userRepo.loadPlaylistSongs(playlist.id)
+                    val updated = userRepo.getPlaylist(playlist.id)
+                    if (updated != null && updated.songs.isNotEmpty()) {
+                        this@PlaylistDetailCarScreen.songs = updated.songs
+                        loaded = true
+                    }
                 }
-                loaded = true
+
+                if (!loaded) {
+                    val fetched = songRepository.getPlaylistSongs(playlist.id).getOrNull().orEmpty()
+                    this@PlaylistDetailCarScreen.songs = fetched.ifEmpty {
+                        // Fallback: filter all-songs by playlist preview cover URLs (best-effort)
+                        allSongs
+                    }
+                    loaded = true
+                }
+
                 coverCache.prefetch(songs.take(40).map { it.coverUrl }) {
                     mainHandler.post { invalidate() }
                 }

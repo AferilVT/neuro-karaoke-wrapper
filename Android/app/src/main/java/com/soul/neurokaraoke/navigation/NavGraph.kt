@@ -359,6 +359,13 @@ fun NavGraph(
                         restoreState = true
                     }
                 },
+                onPublicPlaylistsClick = {
+                    navController.navigate(Screen.Explore.route) {
+                        popUpTo(Screen.More.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
                 onSetlistsClick = {
                     navController.navigate(Screen.Setlists.route) {
                         popUpTo(Screen.More.route) { saveState = true }

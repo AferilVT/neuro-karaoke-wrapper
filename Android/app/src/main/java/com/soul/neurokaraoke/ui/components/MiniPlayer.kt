@@ -72,8 +72,8 @@ fun MiniPlayer(
         glowRadius = 8.dp
     ) {
         Column {
-            if (isRadioMode) {
-                // Solid accent line for radio mode instead of progress bar
+            if (isRadioMode && progress <= 0f) {
+                // Solid accent line for radio mode if no progress available
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()

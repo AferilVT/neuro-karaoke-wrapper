@@ -229,9 +229,9 @@ class SyncApi {
                     }
                 }
 
-                // Parse songs from songListDTOs if present
+                // Parse songs from songListDTOs if present, fallback to "songs"
                 val songs = mutableListOf<Song>()
-                val songsArray = obj.optJSONArray("songListDTOs")
+                val songsArray = obj.optJSONArray("songListDTOs") ?: obj.optJSONArray("songs")
                 if (songsArray != null) {
                     for (j in 0 until songsArray.length()) {
                         val songObj = songsArray.getJSONObject(j)
@@ -417,9 +417,9 @@ class SyncApi {
                     }
                 }
 
-                // Parse songs from songListDTOs if present
+                // Parse songs from songListDTOs if present, fallback to "songs"
                 val songs = mutableListOf<Song>()
-                val songsArray = obj.optJSONArray("songListDTOs")
+                val songsArray = obj.optJSONArray("songListDTOs") ?: obj.optJSONArray("songs")
                 if (songsArray != null) {
                     for (j in 0 until songsArray.length()) {
                         val songObj = songsArray.getJSONObject(j)
@@ -492,15 +492,17 @@ class SyncApi {
     private fun parseSongObject(obj: JSONObject): Song? {
         try {
             val id = obj.optString("id", "")
+                .ifBlank { obj.optString("songId", "") }
 
             // Title
-            val title = obj.optString("title", "").ifBlank { return null }
+            val title = obj.optString("title", "")
+                .ifBlank { obj.optString("name", "") }
+                .ifBlank { return null }
 
             // Artist - try multiple field names
             val artist = when {
                 obj.has("originalArtists") -> {
-                    val oa = obj.opt("originalArtists")
-                    when (oa) {
+                    when (val oa = obj.opt("originalArtists")) {
                         is JSONArray -> buildList {
                             for (j in 0 until oa.length()) add(oa.optString(j, ""))
                         }.filter { it.isNotBlank() }.joinToString(", ")
@@ -509,6 +511,7 @@ class SyncApi {
                     }
                 }
                 obj.has("artist") -> obj.optString("artist", "")
+                obj.has("performer") -> obj.optString("performer", "")
                 else -> ""
             }.ifBlank { "Unknown Artist" }
 
@@ -518,8 +521,12 @@ class SyncApi {
                     obj.optString("audioUrl", "")
                 obj.has("absolutePath") && obj.optString("absolutePath", "").isNotBlank() -> {
                     val path = obj.optString("absolutePath", "")
-                    if (path.startsWith("http")) path
-                    else "https://storage.neurokaraoke.com/" + path.removePrefix("/")
+                    when {
+                        path.startsWith("http") -> path
+                        path.startsWith("uploads/") || path.startsWith("/uploads/") ->
+                            "https://idk.neurokaraoke.com/" + path.removePrefix("/")
+                        else -> "https://storage.neurokaraoke.com/" + path.removePrefix("/")
+                    }
                 }
                 else -> ""
             }
@@ -529,8 +536,7 @@ class SyncApi {
                 obj.has("coverUrl") && obj.optString("coverUrl", "").isNotBlank() ->
                     obj.optString("coverUrl", "")
                 obj.has("coverArt") -> {
-                    val ca = obj.opt("coverArt")
-                    when (ca) {
+                    when (val ca = obj.opt("coverArt")) {
                         is JSONObject -> resolveMediaUrl(ca)
                         is String -> ca
                         else -> ""

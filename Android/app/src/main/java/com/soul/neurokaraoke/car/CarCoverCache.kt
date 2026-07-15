@@ -2,7 +2,6 @@ package com.soul.neurokaraoke.car
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
