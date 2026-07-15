@@ -4,14 +4,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +46,13 @@ import com.soul.neurokaraoke.R
 
 private const val PAGE_SIZE = 20
 
+enum class ExploreSort(val labelRes: Int) {
+    NEWEST(R.string.explore_sort_newest),
+    OLDEST(R.string.explore_sort_oldest),
+    PLAYS_HIGH(R.string.explore_sort_plays_high),
+    PLAYS_LOW(R.string.explore_sort_plays_low)
+}
+
 @Composable
 fun ExploreScreen(
     onPlaylistClick: (String) -> Unit,
@@ -47,6 +63,8 @@ fun ExploreScreen(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var currentPage by remember { mutableIntStateOf(1) }
+    var currentSort by remember { mutableStateOf(ExploreSort.NEWEST) }
+    var showSortMenu by remember { mutableStateOf(false) }
 
     val api = remember { NeuroKaraokeApi() }
 
@@ -71,15 +89,22 @@ fun ExploreScreen(
         )
     }
 
-    val filteredPlaylists by remember(searchQuery, playlists) {
+    val filteredPlaylists by remember(searchQuery, playlists, currentSort) {
         derivedStateOf {
-            if (searchQuery.isBlank()) {
+            val filtered = if (searchQuery.isBlank()) {
                 playlists
             } else {
                 playlists.filter { playlist ->
                     playlist.title.contains(searchQuery, ignoreCase = true) ||
                     playlist.description.contains(searchQuery, ignoreCase = true)
                 }
+            }
+
+            when (currentSort) {
+                ExploreSort.NEWEST -> filtered.sortedByDescending { it.updatedAt }
+                ExploreSort.OLDEST -> filtered.sortedBy { it.updatedAt }
+                ExploreSort.PLAYS_HIGH -> filtered.sortedByDescending { it.playCount }
+                ExploreSort.PLAYS_LOW -> filtered.sortedBy { it.playCount }
             }
         }
     }
@@ -126,14 +151,46 @@ fun ExploreScreen(
             placeholder = stringResource(R.string.explore_search_placeholder)
         )
 
-        // Pagination
-        if (!isLoading && filteredPlaylists.isNotEmpty()) {
-            Pagination(
-                currentPage = currentPage,
-                totalItems = filteredPlaylists.size,
-                pageSize = PAGE_SIZE,
-                onPageChange = { currentPage = it }
-            )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box {
+                IconButton(onClick = { showSortMenu = true }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Sort,
+                        contentDescription = "Sort",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                DropdownMenu(
+                    expanded = showSortMenu,
+                    onDismissRequest = { showSortMenu = false }
+                ) {
+                    ExploreSort.entries.forEach { sort ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(sort.labelRes)) },
+                            onClick = {
+                                currentSort = sort
+                                showSortMenu = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            // Pagination
+            if (!isLoading && filteredPlaylists.isNotEmpty()) {
+                Pagination(
+                    currentPage = currentPage,
+                    totalItems = filteredPlaylists.size,
+                    pageSize = PAGE_SIZE,
+                    onPageChange = { currentPage = it }
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -210,6 +267,8 @@ private fun ApiPublicPlaylist.toPlaylist(): Playlist {
         description = createdBy?.let { "by $it" } ?: "",
         coverUrl = coverUrl ?: "",
         previewCovers = previewCovers,
-        songCount = songCount
+        songCount = songCount,
+        updatedAt = updatedAt ?: 0L,
+        playCount = playCount
     )
 }

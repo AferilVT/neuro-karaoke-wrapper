@@ -28,13 +28,20 @@ private class DownloadAwareDataSource(
 ) : DataSource {
 
     private var activeSource: DataSource? = null
+    private val transferListeners = mutableListOf<TransferListener>()
 
     override fun open(dataSpec: DataSpec): Long {
+        // Close previous source if any (should have been closed already)
+        close()
+
         val uri = dataSpec.uri.toString()
         val localPath = DownloadRepository.getLocalAudioPath(uri)
 
         return if (localPath != null) {
             val fileSource = FileDataSource()
+            for (listener in transferListeners) {
+                fileSource.addTransferListener(listener)
+            }
             val localSpec = dataSpec.buildUpon()
                 .setUri(Uri.fromFile(java.io.File(localPath)))
                 .build()
@@ -52,6 +59,7 @@ private class DownloadAwareDataSource(
     }
 
     override fun addTransferListener(transferListener: TransferListener) {
+        transferListeners.add(transferListener)
         upstream.addTransferListener(transferListener)
     }
 

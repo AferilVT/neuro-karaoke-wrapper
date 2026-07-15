@@ -16,7 +16,13 @@ class NeuroKaraokeApp : Application(), ImageLoaderFactory {
 
     override fun attachBaseContext(base: Context) {
         LocaleManager.initialize(base)
-        super.attachBaseContext(LocaleManager.wrapContext(base))
+        val wrapped = LocaleManager.wrapContext(base)
+        val withTag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            wrapped.createAttributionContext("neuroAudio")
+        } else {
+            wrapped
+        }
+        super.attachBaseContext(withTag)
     }
 
     override fun onCreate() {

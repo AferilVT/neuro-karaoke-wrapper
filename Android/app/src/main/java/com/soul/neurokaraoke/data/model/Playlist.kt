@@ -9,5 +9,7 @@ data class Playlist(
     val songs: List<Song> = emptyList(),
     val songCount: Int = 0,
     val isPublic: Boolean = true,
-    val isNew: Boolean = false
+    val isNew: Boolean = false,
+    val updatedAt: Long = 0L,
+    val playCount: Int = 0
 )

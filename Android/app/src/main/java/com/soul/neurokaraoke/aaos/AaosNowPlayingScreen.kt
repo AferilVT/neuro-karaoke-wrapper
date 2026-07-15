@@ -147,7 +147,7 @@ fun AaosNowPlayingScreen(
             )
             Spacer(Modifier.height(40.dp))
 
-            if (!isRadio) {
+            if (!isRadio || duration > 0) {
                 ProgressBar(position, duration)
                 Spacer(Modifier.height(40.dp))
             }

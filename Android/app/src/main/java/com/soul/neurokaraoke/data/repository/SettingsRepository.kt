@@ -2,6 +2,7 @@ package com.soul.neurokaraoke.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.soul.neurokaraoke.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,9 @@ object SettingsRepository {
     private val _autoPlay = MutableStateFlow(true)
     val autoPlay: StateFlow<Boolean> = _autoPlay.asStateFlow()
 
+    private val _themeMode = MutableStateFlow(ThemeMode.AUTO)
+    val themeMode: StateFlow<ThemeMode> = _themeMode.asStateFlow()
+
     @Synchronized
     fun initialize(context: Context) {
         if (prefs != null) return
@@ -31,6 +35,8 @@ object SettingsRepository {
             _gaplessPlayback.value = p.getBoolean(KEY_GAPLESS, true)
             _normalizeVolume.value = p.getBoolean(KEY_NORMALIZE_VOLUME, false)
             _autoPlay.value = p.getBoolean(KEY_AUTO_PLAY, true)
+            val themeName = p.getString(KEY_THEME_MODE, ThemeMode.AUTO.name) ?: ThemeMode.AUTO.name
+            _themeMode.value = try { ThemeMode.valueOf(themeName) } catch (_: Exception) { ThemeMode.AUTO }
         }
     }
 
@@ -55,8 +61,14 @@ object SettingsRepository {
         _autoPlay.value = enabled
     }
 
+    fun setThemeMode(mode: ThemeMode) {
+        prefs?.edit()?.putString(KEY_THEME_MODE, mode.name)?.apply()
+        _themeMode.value = mode
+    }
+
     private const val KEY_CROSSFADE = "crossfade_duration"
     private const val KEY_GAPLESS = "gapless_playback"
     private const val KEY_NORMALIZE_VOLUME = "normalize_volume"
     private const val KEY_AUTO_PLAY = "auto_play"
+    private const val KEY_THEME_MODE = "theme_mode"
 }

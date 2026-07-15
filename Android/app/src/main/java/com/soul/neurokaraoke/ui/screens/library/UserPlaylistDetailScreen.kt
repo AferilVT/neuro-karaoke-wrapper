@@ -70,6 +70,7 @@ fun UserPlaylistDetailScreen(
     downloadProgress: Map<String, Float> = emptyMap(),
     onAddToPlaylist: (Song) -> Unit = {},
     onRemoveFromPlaylist: (Song) -> Unit = {},
+    accessToken: String? = null,
     modifier: Modifier = Modifier
 ) {
     val allPlaylists by repository.playlists.collectAsState()
@@ -77,9 +78,9 @@ fun UserPlaylistDetailScreen(
     val isSyncing by repository.isSyncing.collectAsState()
 
     // Lazy-load songs for server playlists
-    LaunchedEffect(playlistId) {
+    LaunchedEffect(playlistId, accessToken) {
         if (repository.isServerPlaylist(playlistId)) {
-            repository.loadPlaylistSongs(playlistId)
+            repository.loadPlaylistSongs(playlistId, accessToken)
         }
     }
 

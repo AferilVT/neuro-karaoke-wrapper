@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.data.repository
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -57,6 +58,7 @@ data class DownloadedSong(
     )
 }
 
+@SuppressLint("StaticFieldLeak")
 object DownloadRepository {
 
     private var context: Context? = null
@@ -205,7 +207,7 @@ object DownloadRepository {
                     )
 
                     synchronized(_downloads) {
-                        _downloads.value = _downloads.value + downloaded
+                        _downloads.value += downloaded
                         saveMetadata()
                     }
                     completedDownloadCount.incrementAndGet()

@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.car
 import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.session.MediaController
@@ -20,10 +21,16 @@ class CarPlayer(private val context: Context) {
 
     private var controller: MediaController? = null
     private var connecting: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
-    private val executor: java.util.concurrent.ExecutorService = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     fun ensureConnected() {
+        if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
+            mainHandler.post { ensureConnected() }
+            return
+        }
+
         if (controller != null || connecting != null) return
+
         val token = SessionToken(
             context,
             ComponentName(context, MediaPlaybackService::class.java)
@@ -38,16 +45,28 @@ class CarPlayer(private val context: Context) {
             } finally {
                 connecting = null
             }
-        }, executor)
+        }, { mainHandler.post(it) })
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int) {
+        val count = songs.size
+        val start = startIndex
+        Log.d("NK_CAR_PLAYER", "playSongs: count=$count, startIndex=$start")
         ensureConnected()
+        
+        // Map to MediaItems on whatever thread we are on
         val items = songs.map { it.toMediaItem() }
+        
         runOnController { c ->
-            c.setMediaItems(items, startIndex.coerceAtLeast(0), 0L)
-            c.prepare()
-            c.play()
+            Log.d("NK_CAR_PLAYER", "Executing setMediaItems on controller: items=${items.size}, firstId=${items.firstOrNull()?.mediaId}")
+            try {
+                c.setMediaItems(items, start.coerceAtLeast(0), 0L)
+                c.prepare()
+                c.play()
+                Log.d("NK_CAR_PLAYER", "Playback commands sent successfully")
+            } catch (e: Exception) {
+                Log.e("NK_CAR_PLAYER", "Error executing playSongs", e)
+            }
         }
     }
 
@@ -77,35 +96,53 @@ class CarPlayer(private val context: Context) {
         controller = null
         connecting?.cancel(true)
         connecting = null
-        executor.shutdown()
     }
 
     private fun runOnController(block: (MediaController) -> Unit) {
-        val c = controller
-        if (c != null) {
-            block(c)
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            val c = controller
+            if (c != null) {
+                block(c)
+            } else {
+                connecting?.addListener({
+                    controller?.let { 
+                        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+                            block(it)
+                        } else {
+                            mainHandler.post { block(it) }
+                        }
+                    }
+                }, { mainHandler.post(it) })
+            }
         } else {
-            // Retry once the connection completes
-            connecting?.addListener({
-                controller?.let(block)
-            }, executor)
+            mainHandler.post { runOnController(block) }
         }
     }
 
-    private fun Song.toMediaItem(): MediaItem = MediaItem.Builder()
-        .setUri(audioUrl)
-        .setMediaId(id)
-        .setMediaMetadata(
-            MediaMetadata.Builder()
-                .setTitle(title)
-                .setArtist("$artist • $coverArtist")
-                .setAlbumTitle(coverArtist)
-                .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                .setIsPlayable(true)
-                .apply {
-                    if (coverUrl.isNotBlank()) setArtworkUri(Uri.parse(coverUrl))
-                }
-                .build()
-        )
-        .build()
+    private fun Song.toMediaItem(): MediaItem {
+        val songUri = if (audioUrl.isNotBlank()) Uri.parse(audioUrl) else Uri.parse("https://idk.neurokaraoke.com/empty.mp3")
+        val coverUri = if (coverUrl.isNotBlank()) Uri.parse(coverUrl) else null
+        
+        return MediaItem.Builder()
+            .setUri(songUri)
+            .setMediaId(id)
+            .setRequestMetadata(
+                MediaItem.RequestMetadata.Builder()
+                    .setMediaUri(songUri)
+                    .build()
+            )
+            .setMediaMetadata(
+                MediaMetadata.Builder()
+                    .setTitle(title)
+                    .setArtist("$artist • $coverArtist")
+                    .setAlbumTitle(coverArtist)
+                    .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
+                    .setIsPlayable(true)
+                    .apply {
+                        if (coverUri != null) setArtworkUri(coverUri)
+                    }
+                    .build()
+            )
+            .build()
+    }
 }

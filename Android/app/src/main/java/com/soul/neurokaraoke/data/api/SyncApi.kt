@@ -197,6 +197,73 @@ class SyncApi {
     }
 
     /**
+     * Fetch full playlist details (including user uploads) using an access token.
+     */
+    suspend fun fetchPlaylistDetails(accessToken: String, playlistId: String): Result<Playlist> = withContext(Dispatchers.IO) {
+        try {
+            val conn = URL("$API_URL/api/playlist/$playlistId").openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.setRequestProperty("Authorization", "Bearer $accessToken")
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+
+            val responseCode = conn.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val response = conn.inputStream.bufferedReader().readText()
+                conn.disconnect()
+                
+                val obj = JSONObject(response)
+                
+                // Parse cover URL from media object
+                val mediaObj = obj.optJSONObject("media")
+                val coverUrl = mediaObj?.let { resolveMediaUrl(it) } ?: ""
+
+                // Parse mosaic covers from mosaicMedia array
+                val previewCovers = mutableListOf<String>()
+                val mosaicArray = obj.optJSONArray("mosaicMedia")
+                if (mosaicArray != null) {
+                    for (j in 0 until minOf(mosaicArray.length(), 4)) {
+                        val mosaicObj = mosaicArray.getJSONObject(j)
+                        val mosaicUrl = resolveMediaUrl(mosaicObj)
+                        if (mosaicUrl.isNotBlank()) previewCovers.add(mosaicUrl)
+                    }
+                }
+
+                // Parse songs from songListDTOs if present, fallback to "songs"
+                val songs = mutableListOf<Song>()
+                val songsArray = obj.optJSONArray("songListDTOs") ?: obj.optJSONArray("songs")
+                if (songsArray != null) {
+                    for (j in 0 until songsArray.length()) {
+                        val songObj = songsArray.getJSONObject(j)
+                        val song = parseSongObject(songObj)
+                        if (song != null) songs.add(song)
+                    }
+                }
+
+                val playlist = Playlist(
+                    id = obj.getString("id"),
+                    title = obj.optString("name", "Unknown Playlist"),
+                    description = obj.optString("description", ""),
+                    coverUrl = coverUrl,
+                    previewCovers = previewCovers,
+                    songs = songs,
+                    songCount = obj.optInt("songCount", songs.size),
+                    isPublic = obj.optBoolean("isPublic", false)
+                )
+                Result.success(playlist)
+            } else {
+                val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
+                conn.disconnect()
+                Log.e(TAG, "Fetch playlist details failed ($responseCode): $errorBody")
+                Result.failure(Exception("HTTP $responseCode: $errorBody"))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Fetch playlist details error", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Create a new user playlist on the server.
      * Returns the server-assigned UUID as plain text.
      */
@@ -312,14 +379,14 @@ class SyncApi {
         val cloudflareId = mediaObj.optString("cloudflareId", "")
         val absolutePath = mediaObj.optString("absolutePath", "")
         return when {
-            cloudflareId.isNotBlank() ->
-                "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
+            cloudflareId.isNotBlank() && cloudflareId != "null" ->
+                "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/thumbnail"
             absolutePath.startsWith("/WxURxyML82UkE7gY-PiBKw/") ->
-                "https://images.neurokaraoke.com$absolutePath/public"
-            absolutePath.isNotBlank() && absolutePath.startsWith("http") ->
+                "https://images.neurokaraoke.com${absolutePath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+            absolutePath.isNotBlank() && absolutePath != "null" && absolutePath.startsWith("http") ->
                 absolutePath
-            absolutePath.isNotBlank() ->
-                "https://storage.neurokaraoke.com$absolutePath"
+            absolutePath.isNotBlank() && absolutePath != "null" ->
+                "https://storage.neurokaraoke.com/" + absolutePath.removePrefix("/")
             else -> ""
         }
     }
@@ -350,9 +417,9 @@ class SyncApi {
                     }
                 }
 
-                // Parse songs from songListDTOs if present
+                // Parse songs from songListDTOs if present, fallback to "songs"
                 val songs = mutableListOf<Song>()
-                val songsArray = obj.optJSONArray("songListDTOs")
+                val songsArray = obj.optJSONArray("songListDTOs") ?: obj.optJSONArray("songs")
                 if (songsArray != null) {
                     for (j in 0 until songsArray.length()) {
                         val songObj = songsArray.getJSONObject(j)
@@ -425,15 +492,17 @@ class SyncApi {
     private fun parseSongObject(obj: JSONObject): Song? {
         try {
             val id = obj.optString("id", "")
+                .ifBlank { obj.optString("songId", "") }
 
             // Title
-            val title = obj.optString("title", "").ifBlank { return null }
+            val title = obj.optString("title", "")
+                .ifBlank { obj.optString("name", "") }
+                .ifBlank { return null }
 
             // Artist - try multiple field names
             val artist = when {
                 obj.has("originalArtists") -> {
-                    val oa = obj.opt("originalArtists")
-                    when (oa) {
+                    when (val oa = obj.opt("originalArtists")) {
                         is JSONArray -> buildList {
                             for (j in 0 until oa.length()) add(oa.optString(j, ""))
                         }.filter { it.isNotBlank() }.joinToString(", ")
@@ -442,6 +511,7 @@ class SyncApi {
                     }
                 }
                 obj.has("artist") -> obj.optString("artist", "")
+                obj.has("performer") -> obj.optString("performer", "")
                 else -> ""
             }.ifBlank { "Unknown Artist" }
 
@@ -451,8 +521,12 @@ class SyncApi {
                     obj.optString("audioUrl", "")
                 obj.has("absolutePath") && obj.optString("absolutePath", "").isNotBlank() -> {
                     val path = obj.optString("absolutePath", "")
-                    if (path.startsWith("http")) path
-                    else "https://storage.neurokaraoke.com/$path"
+                    when {
+                        path.startsWith("http") -> path
+                        path.startsWith("uploads/") || path.startsWith("/uploads/") ->
+                            "https://idk.neurokaraoke.com/" + path.removePrefix("/")
+                        else -> "https://storage.neurokaraoke.com/" + path.removePrefix("/")
+                    }
                 }
                 else -> ""
             }
@@ -462,17 +536,8 @@ class SyncApi {
                 obj.has("coverUrl") && obj.optString("coverUrl", "").isNotBlank() ->
                     obj.optString("coverUrl", "")
                 obj.has("coverArt") -> {
-                    val ca = obj.opt("coverArt")
-                    when (ca) {
-                        is JSONObject -> {
-                            val cfId = ca.optString("cloudflareId", "")
-                            val absPath = ca.optString("absolutePath", "")
-                            when {
-                                cfId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cfId/public"
-                                absPath.isNotBlank() -> absPath
-                                else -> ""
-                            }
-                        }
+                    when (val ca = obj.opt("coverArt")) {
+                        is JSONObject -> resolveMediaUrl(ca)
                         is String -> ca
                         else -> ""
                     }

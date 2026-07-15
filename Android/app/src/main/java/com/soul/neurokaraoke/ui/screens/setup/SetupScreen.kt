@@ -273,7 +273,7 @@ private fun PreloadLoginWebView(
             settings.domStorageEnabled = true
             settings.databaseEnabled = true
             settings.cacheMode = WebSettings.LOAD_DEFAULT
-            settings.userAgentString = settings.userAgentString + " NeuroKaraokeApp"
+            settings.userAgentString += " NeuroKaraokeApp"
 
             CookieManager.getInstance().setAcceptCookie(true)
             CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)

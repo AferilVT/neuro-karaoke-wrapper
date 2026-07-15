@@ -44,7 +44,7 @@ data class ApiSong(
      */
     fun getCoverArtUrl(): String? {
         // Use explicit coverArt if available
-        if (!coverArt.isNullOrBlank()) return coverArt
+        if (!coverArt.isNullOrBlank() && coverArt != "null") return coverArt
 
         // Derive from audio URL
         return audioUrl?.replace("/audio/", "/images/")
@@ -60,7 +60,9 @@ data class ApiPublicPlaylist(
     val coverUrl: String?,
     val mosaicCovers: List<String>,
     val songCount: Int,
-    val createdBy: String?
+    val createdBy: String?,
+    val updatedAt: Long? = 0L,
+    val playCount: Int = 0
 )
 
 class NeuroKaraokeApi {
@@ -147,18 +149,46 @@ class NeuroKaraokeApi {
             val rootObject = JSONObject(json)
             val playlistName = rootObject.optString("name").takeIf { it.isNotEmpty() }
             val playlistArtCredit = rootObject.optString("artCredit", "").cleanApiText()
-            val jsonArray = rootObject.optJSONArray("songs") ?: JSONArray()
+            
+            // Try "songListDTOs" first (full response), then fallback to "songs" (public summary)
+            val jsonArray = rootObject.optJSONArray("songListDTOs") 
+                ?: rootObject.optJSONArray("songs") 
+                ?: JSONArray()
 
             for (i in 0 until jsonArray.length()) {
                 val obj = jsonArray.getJSONObject(i)
+
+                // Handle relative audio URL. Check "audioUrl" (public API) or "absolutePath" (full API)
+                val rawAudioUrl = obj.optString("audioUrl").takeIf { it.isNotBlank() } 
+                    ?: obj.optString("absolutePath").takeIf { it.isNotBlank() }
+                
+                val audioUrl = when {
+                    rawAudioUrl.isNullOrBlank() -> null
+                    rawAudioUrl.startsWith("http") -> rawAudioUrl
+                    rawAudioUrl.startsWith("uploads/") || rawAudioUrl.startsWith("/uploads/") ->
+                        "https://idk.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+                    else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+                }
+
+                // Handle artist names which might be Strings or JSONArrays
+                val parseArtistField = { key: String ->
+                    when (val value = obj.opt(key)) {
+                        is JSONArray -> buildList {
+                            for (j in 0 until value.length()) add(value.optString(j, ""))
+                        }.filter { it.isNotBlank() }.joinToString(", ")
+                        is String -> value
+                        else -> null
+                    }
+                }
+
                 songs.add(
                     ApiSong(
                         playlistName = playlistName,
-                        title = obj.optString("title", "Unknown"),
-                        originalArtists = obj.optString("originalArtists"),
-                        coverArtists = obj.optString("coverArtists"),
-                        coverArt = obj.optString("coverArt"),
-                        audioUrl = obj.optString("audioUrl"),
+                        title = obj.optString("title").ifBlank { obj.optString("name", "Unknown") },
+                        originalArtists = parseArtistField("originalArtists") ?: parseArtistField("artist") ?: parseArtistField("performer"),
+                        coverArtists = parseArtistField("coverArtists"),
+                        coverArt = parseCoverArtUrl(obj),
+                        audioUrl = audioUrl,
                         artCredit = parseArtCredit(obj) ?: playlistArtCredit
                     )
                 )
@@ -167,6 +197,24 @@ class NeuroKaraokeApi {
             if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
         }
         return songs
+    }
+
+    private fun parseCoverArtUrl(songObj: JSONObject): String? {
+        val coverArt = songObj.opt("coverArt") ?: return null
+        return when (coverArt) {
+            is String -> coverArt.takeIf { it.isNotBlank() && it != "null" }
+            is JSONObject -> {
+                val cfId = coverArt.optString("cloudflareId", "")
+                val absPath = coverArt.optString("absolutePath", "")
+                when {
+                    cfId.isNotBlank() && cfId != "null" -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cfId/thumbnail"
+                    absPath.startsWith("/WxURxyML82UkE7gY-PiBKw/") -> "https://images.neurokaraoke.com${absPath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+                    absPath.isNotBlank() && absPath != "null" -> "https://storage.neurokaraoke.com/" + absPath.removePrefix("/")
+                    else -> null
+                }
+            }
+            else -> null
+        }
     }
 
     /**
@@ -204,10 +252,15 @@ class NeuroKaraokeApi {
                         val songObj = songsArray.getJSONObject(i)
 
                         // Try coverArt first, then derive from audioUrl
-                        var coverArtUrl = songObj.optString("coverArt", "")
-                        if (coverArtUrl.isBlank()) {
-                            val audioUrl = songObj.optString("audioUrl", "")
-                            if (audioUrl.isNotBlank()) {
+                        var coverArtUrl = parseCoverArtUrl(songObj)
+                        if (coverArtUrl.isNullOrBlank() || coverArtUrl == "null") {
+                            val rawAudioUrl = songObj.optString("audioUrl", "")
+                            if (rawAudioUrl.isNotBlank()) {
+                                // Fix relative audio URL
+                                val audioUrl = when {
+                                    rawAudioUrl.startsWith("http") -> rawAudioUrl
+                                    else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+                                }
                                 coverArtUrl = audioUrl
                                     .replace("/audio/", "/images/")
                                     .replace(Regex("\\.v\\d+\\)?\\.mp3$"), ".jpg")
@@ -215,7 +268,7 @@ class NeuroKaraokeApi {
                             }
                         }
 
-                        if (coverArtUrl.isNotBlank() && coverArtUrl !in previewCovers) {
+                        if (!coverArtUrl.isNullOrBlank() && coverArtUrl != "null" && coverArtUrl !in previewCovers) {
                             previewCovers.add(coverArtUrl)
                         }
                     }
@@ -283,8 +336,9 @@ class NeuroKaraokeApi {
                         val cloudflareId = mosaicObj.optString("cloudflareId", "")
                         val absolutePath = mosaicObj.optString("absolutePath", "")
                         val mosaicUrl = when {
-                            cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                            absolutePath.isNotBlank() -> absolutePath
+                            cloudflareId.isNotBlank() && cloudflareId != "null" -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/thumbnail"
+                            absolutePath.startsWith("/WxURxyML82UkE7gY-PiBKw/") -> "https://images.neurokaraoke.com${absolutePath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+                            absolutePath.isNotBlank() && absolutePath != "null" -> absolutePath
                             else -> null
                         }
                         mosaicUrl?.let { previewCovers.add(it) }
@@ -297,8 +351,9 @@ class NeuroKaraokeApi {
                     val cloudflareId = media.optString("cloudflareId", "")
                     val absolutePath = media.optString("absolutePath", "")
                     when {
-                        cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                        absolutePath.isNotBlank() -> absolutePath
+                        cloudflareId.isNotBlank() && cloudflareId != "null" -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/thumbnail"
+                        absolutePath.startsWith("/WxURxyML82UkE7gY-PiBKw/") -> "https://images.neurokaraoke.com${absolutePath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+                        absolutePath.isNotBlank() && absolutePath != "null" -> absolutePath
                         else -> ""
                     }
                 } ?: ""
@@ -354,7 +409,7 @@ class NeuroKaraokeApi {
         try {
             val jsonArray = JSONArray(json)
             for (i in 0 until jsonArray.length()) {
-                val obj = jsonArray.getJSONObject(i)
+                val obj = jsonArray.optJSONObject(i) ?: continue
 
                 // Parse cover URL from media object
                 val mediaObj = obj.optJSONObject("media")
@@ -362,8 +417,9 @@ class NeuroKaraokeApi {
                     val cloudflareId = media.optString("cloudflareId", "")
                     val absolutePath = media.optString("absolutePath", "")
                     when {
-                        cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                        absolutePath.isNotBlank() -> absolutePath
+                        cloudflareId.isNotBlank() && cloudflareId != "null" -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/thumbnail"
+                        absolutePath.startsWith("/WxURxyML82UkE7gY-PiBKw/") -> "https://images.neurokaraoke.com${absolutePath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+                        absolutePath.isNotBlank() && absolutePath != "null" -> absolutePath
                         else -> null
                     }
                 }
@@ -373,12 +429,13 @@ class NeuroKaraokeApi {
                 val mosaicArray = obj.optJSONArray("mosaicMedia")
                 if (mosaicArray != null) {
                     for (j in 0 until minOf(mosaicArray.length(), 4)) {
-                        val mosaicObj = mosaicArray.getJSONObject(j)
+                        val mosaicObj = mosaicArray.optJSONObject(j) ?: continue
                         val cloudflareId = mosaicObj.optString("cloudflareId", "")
                         val absolutePath = mosaicObj.optString("absolutePath", "")
                         val mosaicUrl = when {
-                            cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                            absolutePath.isNotBlank() -> absolutePath
+                            cloudflareId.isNotBlank() && cloudflareId != "null" -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/thumbnail"
+                            absolutePath.startsWith("/WxURxyML82UkE7gY-PiBKw/") -> "https://images.neurokaraoke.com${absolutePath.removeSuffix("/public").removeSuffix("/thumbnail")}/thumbnail"
+                            absolutePath.isNotBlank() && absolutePath != "null" -> absolutePath
                             else -> null
                         }
                         mosaicUrl?.let { mosaicCovers.add(it) }
@@ -393,7 +450,9 @@ class NeuroKaraokeApi {
                         coverUrl = coverUrl,
                         mosaicCovers = mosaicCovers,
                         songCount = obj.optInt("songCount", 0),
-                        createdBy = obj.optString("createdBy").takeIf { it.isNotEmpty() }
+                        createdBy = obj.optString("createdBy").takeIf { it.isNotEmpty() },
+                        updatedAt = obj.optLong("updatedAt", 0L),
+                        playCount = obj.optInt("playCount", 0)
                     )
                 )
             }
@@ -548,27 +607,24 @@ class NeuroKaraokeApi {
                     }
                 }.filter { it.isNotBlank() }.joinToString(", ")
 
-                val coverArtObj = obj.optJSONObject("coverArt")
-                val coverArtUrl = coverArtObj?.let { art ->
-                    val cloudflareId = art.optString("cloudflareId", "")
-                    val artAbsPath = art.optString("absolutePath", "")
-                    when {
-                        cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                        artAbsPath.isNotBlank() -> artAbsPath
-                        else -> null
-                    }
-                }
+                val coverArtUrl = parseCoverArtUrl(obj)
                 val artCredit = parseArtCredit(obj)
 
                 val audioPath = obj.optString("absolutePath", "")
-                val audioUrl = if (audioPath.isNotBlank()) "https://storage.neurokaraoke.com/$audioPath" else ""
+                val audioUrl = when {
+                    audioPath.isBlank() -> ""
+                    audioPath.startsWith("http") -> audioPath
+                    audioPath.startsWith("uploads/") || audioPath.startsWith("/uploads/") ->
+                        "https://idk.neurokaraoke.com/" + audioPath.removePrefix("/")
+                    else -> "https://storage.neurokaraoke.com/" + audioPath.removePrefix("/")
+                }
 
                 out.add(
                     AllSongEntry(
                         id = id,
                         apiSong = ApiSong(
                             playlistName = null,
-                            title = obj.optString("title", "Unknown"),
+                            title = obj.optString("title").ifBlank { obj.optString("name", "Unknown") },
                             originalArtists = originalArtists.ifEmpty { "Unknown Artist" },
                             coverArtists = coverArtists.ifEmpty { null },
                             coverArt = coverArtUrl,
@@ -625,29 +681,24 @@ class NeuroKaraokeApi {
                     }.filter { it.isNotBlank() }.joinToString(", ")
 
                     // Cover art image from nested coverArt object
-                    val coverArtObj = obj.optJSONObject("coverArt")
-                    val coverArtUrl = coverArtObj?.let { art ->
-                        val cloudflareId = art.optString("cloudflareId", "")
-                        val artAbsPath = art.optString("absolutePath", "")
-                        when {
-                            cloudflareId.isNotBlank() -> "https://images.neurokaraoke.com/WxURxyML82UkE7gY-PiBKw/$cloudflareId/public"
-                            artAbsPath.isNotBlank() -> artAbsPath
-                            else -> null
-                        }
-                    }
+                    val coverArtUrl = parseCoverArtUrl(obj)
 
                     val artCredit = parseArtCredit(obj)
 
                     // Audio URL from absolutePath
                     val audioPath = obj.optString("absolutePath", "")
-                    val audioUrl = if (audioPath.isNotBlank()) {
-                        "https://storage.neurokaraoke.com/$audioPath"
-                    } else ""
+                    val audioUrl = when {
+                        audioPath.isBlank() -> ""
+                        audioPath.startsWith("http") -> audioPath
+                        audioPath.startsWith("uploads/") || audioPath.startsWith("/uploads/") ->
+                            "https://idk.neurokaraoke.com/" + audioPath.removePrefix("/")
+                        else -> "https://storage.neurokaraoke.com/" + audioPath.removePrefix("/")
+                    }
 
                     songs.add(
                         ApiSong(
                             playlistName = null,
-                            title = obj.optString("title", "Unknown"),
+                            title = obj.optString("title").ifBlank { obj.optString("name", "Unknown") },
                             originalArtists = originalArtists.ifEmpty { "Unknown Artist" },
                             coverArtists = coverArtists.ifEmpty { null },
                             coverArt = coverArtUrl,
@@ -753,7 +804,7 @@ class NeuroKaraokeApi {
      */
     suspend fun findSongIdByAudioUrl(audioUrl: String): String? {
         ensureSongIdMap()
-        // Extract the path portion from the audioUrl
+        // Extract the path portion from the audioUrl:
         // audioUrl: "https://storage.neurokaraoke.com/audio/X.mp3"
         // absolutePath in API: "audio/X.mp3"
         val path = audioUrl

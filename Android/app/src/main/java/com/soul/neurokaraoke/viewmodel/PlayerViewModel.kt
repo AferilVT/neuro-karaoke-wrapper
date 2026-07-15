@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.viewmodel
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
@@ -82,9 +83,7 @@ class PlayerViewModel(
     private val radioApi: RadioApi = RadioApi()
     private val authRepository: AuthRepository = AuthRepository(application)
     private val prefs = application.getSharedPreferences("playback_state", Context.MODE_PRIVATE)
-    private val guestId: String = android.provider.Settings.Secure.getString(
-        application.contentResolver, android.provider.Settings.Secure.ANDROID_ID
-    ) ?: java.util.UUID.randomUUID().toString()
+    private val guestId: String = Settings.Secure.ANDROID_ID ?: java.util.UUID.randomUUID().toString()
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
@@ -614,7 +613,7 @@ class PlayerViewModel(
                         currentSong = currentState.currentSong ?: songs.firstOrNull()
                     )
 
-                    // If we expanded the queue and the player is already active, sync the new items to it
+                    // If we expanded the queue and the player are already active, sync the new items to it
                     if (shouldUpdateQueue) {
                         mediaController?.let { controller ->
                             val currentSong = _uiState.value.currentSong
@@ -628,7 +627,7 @@ class PlayerViewModel(
                     if (playlist != null && (playlist.previewCovers.isEmpty() || playlist.songCount == 0)) {
                         val previewCovers = songs.take(4).map { it.coverUrl }.filter { it.isNotBlank() }
                         val updatedPlaylist = playlist.copy(
-                            previewCovers = if (playlist.previewCovers.isEmpty()) previewCovers else playlist.previewCovers,
+                            previewCovers = playlist.previewCovers.ifEmpty { previewCovers },
                             songCount = if (playlist.songCount == 0) songs.size else playlist.songCount
                         )
                         viewModelScope.launch {
@@ -951,7 +950,7 @@ class PlayerViewModel(
     }
 
     /**
-     * Play a random song from all available playlists (auto-play when queue ends)
+     * Play a random song from all available playlists (autoplay when queue ends)
      */
     private fun playRandomSongFromAllPlaylists() {
         viewModelScope.launch {
