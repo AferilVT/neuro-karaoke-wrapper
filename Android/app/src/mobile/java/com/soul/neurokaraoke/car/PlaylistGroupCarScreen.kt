@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.car
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.ActionStrip
 import androidx.car.app.model.CarIcon
 import androidx.car.app.model.GridItem
 import androidx.car.app.model.GridTemplate
@@ -12,6 +13,10 @@ import androidx.core.graphics.drawable.IconCompat
 import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.model.Song
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class PlaylistGroupCarScreen(
     carContext: CarContext,
@@ -21,6 +26,24 @@ class PlaylistGroupCarScreen(
     private val coverCache: CarCoverCache,
     private val allSongs: List<Song>
 ) : Screen(carContext) {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val invalidateRunnable = Runnable { invalidate() }
+
+    private fun invalidateOnMain() {
+        mainHandler.removeCallbacks(invalidateRunnable)
+        mainHandler.postDelayed(invalidateRunnable, 100)
+    }
+
+    init {
+        scope.launch {
+            val covers = playlists.flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+            coverCache.prefetch(covers) {
+                invalidateOnMain()
+            }
+        }
+    }
 
     override fun onGetTemplate(): Template {
         if (playlists.isEmpty()) {
@@ -50,19 +73,32 @@ class PlaylistGroupCarScreen(
             
             val coverUrl = pl.coverUrl.ifBlank { pl.previewCovers.firstOrNull() ?: "" }
             val bmp = coverCache.get(coverUrl)
-            if (bmp != null) {
-                gridItem.setImage(CarIcon.Builder(IconCompat.createWithBitmap(bmp)).build(), GridItem.IMAGE_TYPE_LARGE)
+            val icon = if (bmp != null) {
+                CarIcon.Builder(IconCompat.createWithBitmap(bmp)).build()
             } else {
-                gridItem.setImage(CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse)).build(), GridItem.IMAGE_TYPE_ICON)
+                CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse)).build()
             }
+            gridItem.setImage(icon, GridItem.IMAGE_TYPE_LARGE)
             
             listBuilder.addItem(gridItem.build())
         }
+
+        val actionStrip = ActionStrip.Builder()
+            .addAction(
+                Action.Builder()
+                    .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_radio)).build())
+                    .setOnClickListener {
+                        screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    }
+                    .build()
+            )
+            .build()
 
         return GridTemplate.Builder()
             .setTitle(title)
             .setSingleList(listBuilder.build())
             .setHeaderAction(Action.BACK)
+            .setActionStrip(actionStrip)
             .build()
     }
 }

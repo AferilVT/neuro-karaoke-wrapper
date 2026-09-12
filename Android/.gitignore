@@ -22,3 +22,5 @@ CLAUDE.md
 .externalNativeBuild
 .cxx
 local.properties
+/app/src/automotiveRelease/
+/app/src/mobileRelease/

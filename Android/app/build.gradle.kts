@@ -38,6 +38,19 @@ android {
         buildConfigField("boolean", "ENABLE_UPDATER", "$updaterEnabled")
     }
 
+    flavorDimensions += "platform"
+    productFlavors {
+        create("mobile") {
+            dimension = "platform"
+            // Default applicationId
+        }
+        create("automotive") {
+            dimension = "platform"
+            // For AAOS, we might want a different suffix or just keep it same if it's a different track
+            // Usually it's the same package name but different distribution.
+        }
+    }
+
     signingConfigs {
         create("release") {
             // CI: environment variables (set by GitHub Actions)
@@ -120,6 +133,7 @@ dependencies {
     implementation(libs.androidx.media3.session)
     implementation(libs.androidx.media3.datasource)
     implementation(libs.androidx.media3.exoplayer.hls)
+    implementation("androidx.media:media:1.7.0")
 
     // Lifecycle ViewModel Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)

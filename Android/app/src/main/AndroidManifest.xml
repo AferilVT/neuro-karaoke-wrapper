@@ -13,13 +13,6 @@
     <!-- Required for the Car App Library media template (category.MEDIA) -->
     <uses-permission android:name="androidx.car.app.MEDIA_TEMPLATES" />
 
-    <uses-feature
-        android:name="android.hardware.type.automotive"
-        android:required="false" />
-    <uses-feature
-        android:name="android.software.car.templates_host"
-        android:required="false" />
-
     <!-- Android TV: run on TV without requiring touch, appear in the TV launcher -->
     <uses-feature
         android:name="android.software.leanback"
@@ -47,60 +40,14 @@
             android:name="androidx.car.app.minCarApiLevel"
             android:value="8" />
 
-        <!-- app-projected injects com.google.android.gms.car.application, which
-             Play rejects alongside the AAOS automotive feature. Strip the
-             library-injected declaration; the Car App Library CarAppService
-             provides the car UI on both projected Android Auto and AAOS. -->
-        <meta-data
-            android:name="com.google.android.gms.car.application"
-            tools:node="remove" />
-
-        <!-- Custom Android Auto UI via Car App Library -->
-        <service
-            android:name=".car.NeuroKaraokeCarAppService"
-            android:exported="true"
-            android:attributionTags="neuroAudio">
-            <intent-filter>
-                <action android:name="androidx.car.app.CarAppService" />
-                <category android:name="androidx.car.app.category.MEDIA" />
-            </intent-filter>
-        </service>
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.NeuroKaraoke"
             android:launchMode="singleTask"
-            android:attributionTags="neuroAudio"
-            tools:ignore="MissingClass">
+            android:attributionTags="neuroAudio">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-
-            <!-- Deep link for Discord auth callback. autoVerify is intentionally absent:
-                 App Links verification only applies to http(s) schemes, not custom ones. -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <!-- Custom scheme: neurokaraoke://auth -->
-                <data
-                    android:scheme="neurokaraoke"
-                    android:host="auth" />
-            </intent-filter>
-
-            <!-- HTTPS deep link (if you want to use https://neurokaraoke.com/app-auth) -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="neurokaraoke.com"
-                    android:pathPrefix="/app-auth" />
             </intent-filter>
         </activity>
 
@@ -116,20 +63,6 @@
                 <action android:name="android.media.browse.MediaBrowserService" />
             </intent-filter>
         </service>
-
-        <!-- AAOS: launched programmatically from MainActivity on automotive runtime -->
-        <activity
-            android:name=".aaos.AaosLauncherActivity"
-            android:exported="false"
-            android:label="@string/app_name"
-            android:launchMode="singleTask"
-            android:resizeableActivity="true"
-            android:theme="@style/Theme.NeuroKaraoke"
-            android:attributionTags="neuroAudio">
-            <meta-data
-                android:name="distractionOptimized"
-                android:value="true" />
-        </activity>
     </application>
 
 </manifest>

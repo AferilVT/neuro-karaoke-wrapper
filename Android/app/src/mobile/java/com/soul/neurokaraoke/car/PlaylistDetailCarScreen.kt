@@ -42,6 +42,11 @@ class PlaylistDetailCarScreen(
     private val songRepository = SongRepository(NeuroKaraokeApi())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val invalidateRunnable = Runnable { invalidate() }
+    private fun invalidateOnMain() {
+        mainHandler.removeCallbacks(invalidateRunnable)
+        mainHandler.postDelayed(invalidateRunnable, 100)
+    }
 
     private var songs: List<Song> = playlist.songs
     private var loaded = playlist.songs.isNotEmpty()
@@ -71,7 +76,7 @@ class PlaylistDetailCarScreen(
                 }
 
                 coverCache.prefetch(songs.take(40).map { it.coverUrl }) {
-                    mainHandler.post { invalidate() }
+                    invalidateOnMain()
                 }
                 withContext(Dispatchers.Main) { invalidate() }
             }
@@ -93,8 +98,25 @@ class PlaylistDetailCarScreen(
         }
 
         val limit = listLimit()
-        val displayed = songs.take(limit)
+        // Capping at limit - 1 to account for the "Shuffle Play" row
+        val displayed = songs.take(limit - 1)
         val items = ItemList.Builder()
+
+        items.addItem(
+            Row.Builder()
+                .setTitle("Shuffle Play")
+                .setImage(
+                    CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse)).build(),
+                    Row.IMAGE_TYPE_SMALL
+                )
+                .setOnClickListener {
+                    val shuffled = displayed.shuffled()
+                    carPlayer.playSongs(shuffled, 0, playlist.title)
+                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                }
+                .build()
+        )
+
         displayed.forEachIndexed { idx, song ->
             items.addItem(trackRow(song, idx, displayed))
         }
@@ -105,18 +127,9 @@ class PlaylistDetailCarScreen(
                 CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song))
                     .build()
             )
-            .setOnClickListener { carPlayer.playSongs(displayed, 0) }
-            .build()
-
-        val shuffleAction = Action.Builder()
-            .setTitle(res.getString(R.string.car_playlist_button_shuffle))
-            .setIcon(
-                CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_browse))
-                    .build()
-            )
-            .setOnClickListener {
-                val shuffled = displayed.shuffled()
-                carPlayer.playSongs(shuffled, 0)
+            .setOnClickListener { 
+                carPlayer.playSongs(displayed, 0, playlist.title) 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
             }
             .build()
 
@@ -126,7 +139,6 @@ class PlaylistDetailCarScreen(
             .setActionStrip(
                 ActionStrip.Builder()
                     .addAction(playAction)
-                    .addAction(shuffleAction)
                     .build()
             )
             .setSingleList(items.build())
@@ -137,7 +149,10 @@ class PlaylistDetailCarScreen(
         val builder = Row.Builder()
             .setTitle("${index + 1}. ${song.title}")
             .addText("${song.artist} • ${song.coverArtist}")
-            .setOnClickListener { carPlayer.playSongs(list, index) }
+            .setOnClickListener { 
+                carPlayer.playSongs(list, index, playlist.title) 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            }
 
         val bmp = coverCache.get(song.coverUrl)
         val icon = if (bmp != null) {
@@ -147,14 +162,15 @@ class PlaylistDetailCarScreen(
                 IconCompat.createWithResource(carContext, R.drawable.ic_car_song)
             ).build()
         }
-        builder.setImage(icon, if (bmp != null) Row.IMAGE_TYPE_LARGE else Row.IMAGE_TYPE_ICON)
+        builder.setImage(icon, Row.IMAGE_TYPE_SMALL)
         return builder.build()
     }
 
     private fun listLimit(): Int = try {
         carContext.getCarService(ConstraintManager::class.java)
             .getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
+            .coerceAtMost(30)
     } catch (_: Throwable) {
-        100
+        30
     }
 }

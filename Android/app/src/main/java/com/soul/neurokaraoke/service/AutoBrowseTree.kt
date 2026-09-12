@@ -43,13 +43,13 @@ class AutoBrowseTree(private val context: Context) {
         loaded = false
     }
 
-    fun rootItem(): MediaItem = browsable(ROOT_ID, "Neuro Karaoke")
+    fun rootItem(): MediaItem = browsable(ROOT_ID, "Neuro Karaoke", null)
 
     private fun radioItem(): MediaItem = playable(
         mediaId = RADIO_ID,
         title = "Listen Live",
         subtitle = "Neuro 21 Station",
-        artworkUri = null,
+        artworkUri = "https://idk.neurokaraoke.com/radio.png", // Use a static icon for radio
         playbackUri = RadioApi.STREAM_URL
     )
 
@@ -69,13 +69,13 @@ class AutoBrowseTree(private val context: Context) {
             )
         }
 
-        items += browsable(ALL_SONGS_ID, "All Songs")
-        items += browsable(FAVORITES_ID, "Favorites")
+        items += browsable(ALL_SONGS_ID, "All Songs", null)
+        items += browsable(FAVORITES_ID, "Favorites", favoritesRepo.favorites.value.firstOrNull()?.coverUrl)
         items += radioItem()
-        items += browsable(NEURO_ID, "Neuro Sings")
-        items += browsable(EVIL_ID, "Evil Sings")
-        items += browsable(DUET_ID, "Duets")
-        items += browsable(MORE_ID, "More")
+        items += browsable(NEURO_ID, "Neuro Sings", allSongs.firstOrNull { it.singer == Singer.NEURO }?.coverUrl)
+        items += browsable(EVIL_ID, "Evil Sings", allSongs.firstOrNull { it.singer == Singer.EVIL }?.coverUrl)
+        items += browsable(DUET_ID, "Duets", allSongs.firstOrNull { it.singer == Singer.DUET }?.coverUrl)
+        items += browsable(MORE_ID, "More", null)
 
         return items
     }
@@ -114,18 +114,19 @@ class AutoBrowseTree(private val context: Context) {
                         .build()
                 }
             MORE_ID -> listOf(
-                browsable(PERSONAL_PLAYLISTS_ID, "My Playlists"),
-                browsable(OFFICIAL_PLAYLISTS_ID, "Official Setlists"),
-                browsable(PUBLIC_PLAYLISTS_ID, "Public Playlists"),
-                browsable(NEURO_ID, "Neuro Sings"),
-                browsable(EVIL_ID, "Evil Sings"),
-                browsable(DUET_ID, "Duets")
+                browsable(PERSONAL_PLAYLISTS_ID, "My Playlists", null),
+                browsable(OFFICIAL_PLAYLISTS_ID, "Official Setlists", null),
+                browsable(PUBLIC_PLAYLISTS_ID, "Public Playlists", null),
+                browsable(NEURO_ID, "Neuro Sings", null),
+                browsable(EVIL_ID, "Evil Sings", null),
+                browsable(DUET_ID, "Duets", null)
             )
             PERSONAL_PLAYLISTS_ID -> {
                 userRepo.playlists.value.map { playlist ->
                     browsable(
                         mediaId = "$PERSONAL_PLAYLIST_PREFIX${playlist.id}",
-                        title = playlist.title
+                        title = playlist.title,
+                        artworkUri = playlist.coverUrl.ifBlank { playlist.previewCovers.firstOrNull() }
                     )
                 }
             }
@@ -133,15 +134,16 @@ class AutoBrowseTree(private val context: Context) {
                 catalog.getPlaylists().map { playlist ->
                     browsable(
                         mediaId = "$OFFICIAL_PLAYLIST_PREFIX${playlist.id}",
-                        title = playlist.title
+                        title = playlist.title,
+                        artworkUri = playlist.coverUrl.ifBlank { playlist.previewCovers.firstOrNull() }
                     )
                 }
             }
             PUBLIC_PLAYLISTS_ID -> listOf(
-                browsable(PUBLIC_PLAYLISTS_NEWEST_ID, "Updated - New to Old"),
-                browsable(PUBLIC_PLAYLISTS_OLDEST_ID, "Updated - Old to New"),
-                browsable(PUBLIC_PLAYLISTS_PLAYS_HIGH_ID, "Play Count - High to Low"),
-                browsable(PUBLIC_PLAYLISTS_PLAYS_LOW_ID, "Play Count - Low to High")
+                browsable(PUBLIC_PLAYLISTS_NEWEST_ID, "Updated - New to Old", null),
+                browsable(PUBLIC_PLAYLISTS_OLDEST_ID, "Updated - Old to New", null),
+                browsable(PUBLIC_PLAYLISTS_PLAYS_HIGH_ID, "Play Count - High to Low", null),
+                browsable(PUBLIC_PLAYLISTS_PLAYS_LOW_ID, "Play Count - Low to High", null)
             )
             PUBLIC_PLAYLISTS_NEWEST_ID -> fetchAndSortPublicPlaylists { it.sortedByDescending { p -> p.updatedAt } }
             PUBLIC_PLAYLISTS_OLDEST_ID -> fetchAndSortPublicPlaylists { it.sortedBy { p -> p.updatedAt } }
@@ -212,32 +214,34 @@ class AutoBrowseTree(private val context: Context) {
             mediaId == ROOT_ID -> rootItem()
             mediaId == RADIO_ID -> radioItem()
 
-            mediaId == FAVORITES_ID -> browsable(FAVORITES_ID, "Favorites")
-            mediaId == ALL_SONGS_ID -> browsable(ALL_SONGS_ID, "All Items")
-            mediaId == NEURO_ID -> browsable(NEURO_ID, "Neuro Sings")
-            mediaId == EVIL_ID -> browsable(EVIL_ID, "Evil Sings")
-            mediaId == DUET_ID -> browsable(DUET_ID, "Duets")
-            mediaId == MORE_ID -> browsable(MORE_ID, "More")
+            mediaId == FAVORITES_ID -> browsable(FAVORITES_ID, "Favorites", favoritesRepo.favorites.value.firstOrNull()?.coverUrl)
+            mediaId == ALL_SONGS_ID -> browsable(ALL_SONGS_ID, "All Items", null)
+            mediaId == NEURO_ID -> browsable(NEURO_ID, "Neuro Sings", allSongs.firstOrNull { it.singer == Singer.NEURO }?.coverUrl)
+            mediaId == EVIL_ID -> browsable(EVIL_ID, "Evil Sings", allSongs.firstOrNull { it.singer == Singer.EVIL }?.coverUrl)
+            mediaId == DUET_ID -> browsable(DUET_ID, "Duets", allSongs.firstOrNull { it.singer == Singer.DUET }?.coverUrl)
+            mediaId == MORE_ID -> browsable(MORE_ID, "More", null)
 
-            mediaId == PUBLIC_PLAYLISTS_ID -> browsable(PUBLIC_PLAYLISTS_ID, "Public Playlists")
-            mediaId == PUBLIC_PLAYLISTS_NEWEST_ID -> browsable(PUBLIC_PLAYLISTS_NEWEST_ID, "Updated - New to Old")
-            mediaId == PUBLIC_PLAYLISTS_OLDEST_ID -> browsable(PUBLIC_PLAYLISTS_OLDEST_ID, "Updated - Old to New")
-            mediaId == PUBLIC_PLAYLISTS_PLAYS_HIGH_ID -> browsable(PUBLIC_PLAYLISTS_PLAYS_HIGH_ID, "Play Count - High to Low")
-            mediaId == PUBLIC_PLAYLISTS_PLAYS_LOW_ID -> browsable(PUBLIC_PLAYLISTS_PLAYS_LOW_ID, "Play Count - Low to High")
-            mediaId == PERSONAL_PLAYLISTS_ID -> browsable(PERSONAL_PLAYLISTS_ID, "My Playlists")
-            mediaId == OFFICIAL_PLAYLISTS_ID -> browsable(OFFICIAL_PLAYLISTS_ID, "Official Setlists")
+            mediaId == PUBLIC_PLAYLISTS_ID -> browsable(PUBLIC_PLAYLISTS_ID, "Public Playlists", null)
+            mediaId == PUBLIC_PLAYLISTS_NEWEST_ID -> browsable(PUBLIC_PLAYLISTS_NEWEST_ID, "Updated - New to Old", null)
+            mediaId == PUBLIC_PLAYLISTS_OLDEST_ID -> browsable(PUBLIC_PLAYLISTS_OLDEST_ID, "Updated - Old to New", null)
+            mediaId == PUBLIC_PLAYLISTS_PLAYS_HIGH_ID -> browsable(PUBLIC_PLAYLISTS_PLAYS_HIGH_ID, "Play Count - High to Low", null)
+            mediaId == PUBLIC_PLAYLISTS_PLAYS_LOW_ID -> browsable(PUBLIC_PLAYLISTS_PLAYS_LOW_ID, "Play Count - Low to High", null)
+            mediaId == PERSONAL_PLAYLISTS_ID -> browsable(PERSONAL_PLAYLISTS_ID, "My Playlists", null)
+            mediaId == OFFICIAL_PLAYLISTS_ID -> browsable(OFFICIAL_PLAYLISTS_ID, "Official Setlists", null)
             mediaId.startsWith(PUBLIC_PLAYLIST_PREFIX) -> {
-                browsable(mediaId, "Playlist")
+                browsable(mediaId, "Playlist", null)
             }
             mediaId.startsWith(PERSONAL_PLAYLIST_PREFIX) -> {
                 val id = mediaId.removePrefix(PERSONAL_PLAYLIST_PREFIX)
                 val pl = userRepo.playlists.value.find { it.id == id }
-                browsable(mediaId, pl?.title ?: "My Playlist")
+                val artwork = pl?.let { it.coverUrl.ifBlank { it.previewCovers.firstOrNull() } }
+                browsable(mediaId, pl?.title ?: "My Playlist", artwork)
             }
             mediaId.startsWith(OFFICIAL_PLAYLIST_PREFIX) -> {
                 val id = mediaId.removePrefix(OFFICIAL_PLAYLIST_PREFIX)
                 val pl = catalog.getPlaylists().find { it.id == id }
-                browsable(mediaId, pl?.title ?: "Setlist")
+                val artwork = pl?.let { it.coverUrl.ifBlank { it.previewCovers.firstOrNull() } }
+                browsable(mediaId, pl?.title ?: "Setlist", artwork)
             }
             mediaId.startsWith(RESUME_PREFIX) -> {
                 val songId = mediaId.removePrefix(RESUME_PREFIX)
@@ -258,19 +262,23 @@ class AutoBrowseTree(private val context: Context) {
         if (mediaId.startsWith(SONG_URL_PREFIX)) {
             val fullId = mediaId.removePrefix(SONG_URL_PREFIX)
             val parts = fullId.split("|", limit = 2)
+            val parentId = if (parts.size == 2) parts[0] else ""
             val url = if (parts.size == 2) parts[1] else parts[0]
 
             // Try to find in cache for better metadata, else return generic
             val song = allSongs.firstOrNull { it.audioUrl == url }
+            val parentName = if (parentId.isNotBlank()) getParentName(parentId) else "Public Playlist"
+            
             return if (song != null) {
-                song.toPlayable()
+                song.toPlayable(parentName)
             } else {
                 playable(
                     mediaId = mediaId,
                     title = "Song",
                     subtitle = "Public Playlist",
                     artworkUri = null,
-                    playbackUri = url
+                    playbackUri = url,
+                    albumTitle = parentName
                 )
             }
         }
@@ -278,27 +286,27 @@ class AutoBrowseTree(private val context: Context) {
 
         if (mediaId.startsWith(ALL_SONGS_PREFIX)) {
             val songId = mediaId.removePrefix(ALL_SONGS_PREFIX)
-            return resolveSongMediaItem(songId)
+            return resolveSongMediaItem(songId, "All Songs")
         }
 
         if (mediaId.startsWith(FAVORITE_SONG_PREFIX)) {
             val songId = mediaId.removePrefix(FAVORITE_SONG_PREFIX)
-            return resolveSongMediaItem(songId)
+            return resolveSongMediaItem(songId, "Favorites")
         }
 
         if (mediaId.startsWith(NEURO_SONG_PREFIX)) {
             val songId = mediaId.removePrefix(NEURO_SONG_PREFIX)
-            return resolveSongMediaItem(songId)
+            return resolveSongMediaItem(songId, "Neuro Sings")
         }
 
         if (mediaId.startsWith(EVIL_SONG_PREFIX)) {
             val songId = mediaId.removePrefix(EVIL_SONG_PREFIX)
-            return resolveSongMediaItem(songId)
+            return resolveSongMediaItem(songId, "Evil Sings")
         }
 
         if (mediaId.startsWith(DUET_SONG_PREFIX)) {
             val songId = mediaId.removePrefix(DUET_SONG_PREFIX)
-            return resolveSongMediaItem(songId)
+            return resolveSongMediaItem(songId, "Duets")
         }
 
         if (mediaId.startsWith(PERSONAL_SONG_PREFIX) || mediaId.startsWith(OFFICIAL_SONG_PREFIX)) {
@@ -307,12 +315,35 @@ class AutoBrowseTree(private val context: Context) {
             else 
                 mediaId.removePrefix(OFFICIAL_SONG_PREFIX)
             val parts = fullId.split("|", limit = 2)
+            val parentId = if (parts.size == 2) parts[0] else ""
             val songId = if (parts.size == 2) parts[1] else parts[0]
-            return resolveSongMediaItem(songId)
+            
+            val parentName = if (parentId.isNotBlank()) getParentName(parentId) else "Playlist"
+            return resolveSongMediaItem(songId, parentName)
         }
 
         val songId = mediaId.removePrefix(RESUME_PREFIX)
         return resolveSongMediaItem(songId)
+    }
+
+    private suspend fun getParentName(parentId: String): String {
+        return when {
+            parentId == FAVORITES_ID -> "Favorites"
+            parentId == ALL_SONGS_ID -> "All Songs"
+            parentId == NEURO_ID -> "Neuro Sings"
+            parentId == EVIL_ID -> "Evil Sings"
+            parentId == DUET_ID -> "Duets"
+            parentId.startsWith(PERSONAL_PLAYLIST_PREFIX) -> {
+                val id = parentId.removePrefix(PERSONAL_PLAYLIST_PREFIX)
+                userRepo.playlists.value.find { it.id == id }?.title ?: "My Playlist"
+            }
+            parentId.startsWith(OFFICIAL_PLAYLIST_PREFIX) -> {
+                val id = parentId.removePrefix(OFFICIAL_PLAYLIST_PREFIX)
+                catalog.getPlaylists().find { it.id == id }?.title ?: "Setlist"
+            }
+            parentId.startsWith(PUBLIC_PLAYLIST_PREFIX) -> "Public Playlist"
+            else -> "Neuro Karaoke"
+        }
     }
 
     suspend fun search(query: String): List<MediaItem> {
@@ -327,24 +358,24 @@ class AutoBrowseTree(private val context: Context) {
                     it.titleEnglish?.lowercase()?.contains(q) == true
             }
             .take(MAX_SEARCH_RESULTS)
-            .map { it.toPlayable() }
+            .map { it.toPlayable("Search Results") }
             .toList()
     }
 
-    fun resolveSongMediaItem(songId: String): MediaItem? {
+    fun resolveSongMediaItem(songId: String, albumTitle: String? = null): MediaItem? {
         // 1. Try to find in cached songs
         val song = allSongs.firstOrNull { it.id == songId }
-        if (song != null) return song.toPlayable()
+        if (song != null) return song.toPlayable(albumTitle)
 
         // 2. Try to find in favorites
         val favorite = favoritesRepo.favorites.value.firstOrNull { it.id == songId }
-        if (favorite != null) return favorite.toPlayable()
+        if (favorite != null) return favorite.toPlayable(albumTitle)
 
         // 3. Try to find in user playlists
         val userSong = userRepo.playlists.value.asSequence()
             .flatMap { it.songs }
             .firstOrNull { it.id == songId }
-        if (userSong != null) return userSong.toPlayable()
+        if (userSong != null) return userSong.toPlayable(albumTitle)
 
         return null
     }
@@ -356,7 +387,8 @@ class AutoBrowseTree(private val context: Context) {
         return sortBlock(playlists).map { playlist ->
             browsable(
                 mediaId = "$PUBLIC_PLAYLIST_PREFIX${playlist.id}",
-                title = playlist.name
+                title = playlist.name,
+                artworkUri = playlist.coverUrl
             )
         }
     }
@@ -367,20 +399,24 @@ class AutoBrowseTree(private val context: Context) {
         return allSongs.firstOrNull { it.id == id }
     }
 
-    private fun Song.toPlayable(): MediaItem = playable(
+    private fun Song.toPlayable(albumTitle: String? = null): MediaItem = playable(
         mediaId = id,
         title = title,
         subtitle = "$artist • $coverArtist",
         artworkUri = coverUrl,
-        playbackUri = audioUrl.takeIf { it.isNotBlank() } ?: "about:blank"
+        playbackUri = audioUrl.takeIf { it.isNotBlank() } ?: "about:blank",
+        albumTitle = albumTitle ?: coverArtist
     )
 
-    private fun browsable(mediaId: String, title: String): MediaItem {
+    private fun browsable(mediaId: String, title: String, artworkUri: String?): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(title)
             .setIsBrowsable(true)
             .setIsPlayable(false)
             .setMediaType(MediaMetadata.MEDIA_TYPE_FOLDER_MIXED)
+            .apply {
+                if (!artworkUri.isNullOrBlank()) setArtworkUri(Uri.parse(artworkUri))
+            }
             .build()
         return MediaItem.Builder()
             .setMediaId(mediaId)
@@ -393,11 +429,13 @@ class AutoBrowseTree(private val context: Context) {
         title: String,
         subtitle: String?,
         artworkUri: String?,
-        playbackUri: String
+        playbackUri: String,
+        albumTitle: String? = null
     ): MediaItem {
         val metadata = MediaMetadata.Builder()
             .setTitle(title)
             .setArtist(subtitle)
+            .setAlbumTitle(albumTitle)
             .setIsBrowsable(false)
             .setIsPlayable(true)
             .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
