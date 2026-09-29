@@ -12,6 +12,7 @@ Check [wiki](https://github.com/AferilVT/neuro-karaoke-wrapper/wiki) for API doc
 ## Features
 
 ### Desktop
+
 <details>
   <summary>Click to expand!</summary>
   <ul>
@@ -25,6 +26,7 @@ Check [wiki](https://github.com/AferilVT/neuro-karaoke-wrapper/wiki) for API doc
 </details>
 
 ### Android
+
 <details>
   <summary>Click to expand!</summary>
   <ul>
@@ -54,9 +56,11 @@ Check [wiki](https://github.com/AferilVT/neuro-karaoke-wrapper/wiki) for API doc
 ## Installation
 
 ### Windows
+
 Download and run `Neuro.Karaoke.Setup.exe` from the [latest release](../../releases/latest).
 
 ### macOS
+
 Download `Neuro.Karaoke.Player.Setup.dmg` from the [latest release](../../releases/latest), open it, and drag the app to your Applications folder.
 
 Apple Silicon users can also download `Neuro.Karaoke.Player.Setup.Apple.Silicon.zip`.
@@ -83,20 +87,53 @@ chmod +x ./Neuro.Karaoke.Player-*.AppImage
 ./Neuro.Karaoke.Player-*.AppImage
 ```
 
+#### Nix
+
+```bash
+nix profile install github:AferilVT/neuro-karaoke-wrapper
+```
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    neuro-karaoke-wrapper.url = "github:AferilVT/neuro-karaoke-wrapper";
+  };
+
+  outputs = { self, nixpkgs, neuro-karaoke-wrapper, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./configuration.nix
+        neuro-karaoke-wrapper.nixosModules.default
+      ];
+    };
+  };
+}
+```
+
 ### Android
+
 Download `Neuro.Karaoke.Player.apk` from the [latest release](../../releases/latest) and install it on your device.
 
 ## Development
+
 ### Desktop (`./Desktop/`)
+
 #### Prerequisites
+
 - Node.js 18+
 - yarn
+
 #### Setup
+
 ```bash
 # install dependencies
 yarn install
 ```
+
 ### Building & Running
+
 ```bash
 # build unpackaged
 yarn build:pre
@@ -112,10 +149,13 @@ yarn build:win
 yarn build:linux
 yarn build:mac
 ```
+
 ### Structure
+
 #### Code
+
 | File | Description |
-|-|-|
+| - | - |
 | `assets/` | Application icons/resources/scripts |
 | `src/` | TypeScript source code |
 | `src/main.ts` | Main Electron process (window management, IPC handling) |
@@ -124,35 +164,48 @@ yarn build:mac
 | `src/discord-manager.ts` | Discord Rich Presence integration |
 | `src/neurokaraoke-api.ts` | NeuroKaraoke Playback API client |
 | `src/config.ts` | Static Application configuration |
+
 #### Environment Variables
+
 | Environment Variable | Usage |
-|-|-|
+| - | - |
 | `DEVTOOLS` | if set, enables chromium DevTools |
 | `DISABLE_CUSTOM_TITLEBAR` | if set, disables the custom titlebar (useful where you may not want a titlebar, like some compositors on linux like hyprland) |
 | `TEST_SITE_LINK` | if set, allows accessing the test site with the provided link (its a secret) |
 | `DISABLE_AUTOUPDATE` | if set, disables the automatic updater |
+
 #### Tech Stack
+
 - **TypeScript** - Language
 - **Electron** - Desktop app framework
 - **Node.js** - Runtime
 - **discord-rpc** - Discord Rich Presence integration
 
 ### Android (`./Android/`)
+
 #### Prerequisites
+
 - Android Studio
 - Android device or emulator
+
 #### Setup
+
 1. Open the project in Android Studio
 2. Connect a device or start an emulator
 3. Click **Run**, or build from the command line:
+
    ```bash
    ./gradlew assembleDebug
    ```
+
 #### Building
+
 ```bash
 ./gradlew assembleDebug
 ```
+
 #### Tech Stack
+
 - **Kotlin** - Primary language
 - **Jetpack Compose** - UI toolkit with Material3
 - **Media3 / ExoPlayer** - Audio playback with MediaSession
@@ -161,6 +214,7 @@ yarn build:mac
 - **Jetpack Navigation** - Screen navigation
 - **Coroutines & Flow** - Asynchronous programming
 - **Android AudioFX** - Equalizer and BassBoost effects
+
 ## License
 
 Neuro Karaoke is licensed under the **GNU General Public License v3.0** — see
