@@ -361,6 +361,11 @@ class AutoBrowseTree(private val context: Context) {
         }
     }
 
+    suspend fun cachedSongs(): List<Song> {
+        ensureLoaded()
+        return allSongs
+    }
+
     fun resumeSong(): Song? {
         val id = playbackPrefs.getString("last_song_id", null) ?: return null
         if (id.isBlank() || id == "radio_live") return null

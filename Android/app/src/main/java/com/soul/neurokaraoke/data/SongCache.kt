@@ -56,21 +56,7 @@ class SongCache(private val context: Context) {
             val jsonArray = JSONArray()
 
             songs.forEach { song ->
-                val obj = JSONObject().apply {
-                    put("id", song.id)
-                    put("title", song.title)
-                    put("artist", song.artist)
-                    put("coverUrl", song.coverUrl)
-                    put("audioUrl", song.audioUrl)
-                    put("duration", song.duration)
-                    put("singer", song.singer.name)
-                    put("coverArtists", song.coverArtists)
-                    put("artCredit", song.artCredit ?: "")
-                    put("titleRomaji", song.titleRomaji)
-                    put("titleEnglish", song.titleEnglish ?: "")
-                    put("artistRomaji", song.artistRomaji)
-                }
-                jsonArray.put(obj)
+                jsonArray.put(song.toJson())
             }
 
             val root = JSONObject().apply {
@@ -132,32 +118,7 @@ class SongCache(private val context: Context) {
 
             val songs = mutableListOf<Song>()
             for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                val singer = try {
-                    Singer.valueOf(obj.optString("singer", "NEURO"))
-                } catch (e: Exception) {
-                    Singer.NEURO
-                }
-
-                val title = obj.optString("title", "Unknown")
-                val artist = obj.optString("artist", "Unknown")
-
-                songs.add(
-                    Song(
-                        id = obj.getString("id"),
-                        title = title,
-                        artist = artist,
-                        coverUrl = obj.optString("coverUrl", ""),
-                        audioUrl = obj.optString("audioUrl", ""),
-                        duration = obj.optLong("duration", 0L),
-                        singer = singer,
-                        coverArtists = obj.optString("coverArtists", ""),
-                        artCredit = obj.optString("artCredit", "").takeIf { it.isNotBlank() },
-                        titleRomaji = obj.optString("titleRomaji", ""),
-                        titleEnglish = obj.optString("titleEnglish", "").takeIf { it.isNotBlank() },
-                        artistRomaji = obj.optString("artistRomaji", "")
-                    )
-                )
+                songs.add(songFromJson(array.getJSONObject(i)))
             }
             songs
         } catch (e: Exception) {
@@ -199,5 +160,42 @@ class SongCache(private val context: Context) {
         val songCount: Int,
         val cachedAt: Long,
         val fileSizeBytes: Long
+    )
+}
+
+internal fun Song.toJson(): JSONObject = JSONObject().apply {
+    put("id", id)
+    put("title", title)
+    put("artist", artist)
+    put("coverUrl", coverUrl)
+    put("audioUrl", audioUrl)
+    put("duration", duration)
+    put("singer", singer.name)
+    put("coverArtists", coverArtists)
+    put("artCredit", artCredit ?: "")
+    put("titleRomaji", titleRomaji)
+    put("titleEnglish", titleEnglish ?: "")
+    put("artistRomaji", artistRomaji)
+}
+
+internal fun songFromJson(obj: JSONObject): Song {
+    val singer = try {
+        Singer.valueOf(obj.optString("singer", "NEURO"))
+    } catch (e: Exception) {
+        Singer.NEURO
+    }
+    return Song(
+        id = obj.getString("id"),
+        title = obj.optString("title", "Unknown"),
+        artist = obj.optString("artist", "Unknown"),
+        coverUrl = obj.optString("coverUrl", ""),
+        audioUrl = obj.optString("audioUrl", ""),
+        duration = obj.optLong("duration", 0L),
+        singer = singer,
+        coverArtists = obj.optString("coverArtists", ""),
+        artCredit = obj.optString("artCredit", "").takeIf { it.isNotBlank() },
+        titleRomaji = obj.optString("titleRomaji", ""),
+        titleEnglish = obj.optString("titleEnglish", "").takeIf { it.isNotBlank() },
+        artistRomaji = obj.optString("artistRomaji", "")
     )
 }

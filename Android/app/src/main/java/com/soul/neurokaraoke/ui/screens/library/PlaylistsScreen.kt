@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Playlist
 import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
+import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientText
 import androidx.compose.ui.res.stringResource
@@ -86,6 +87,15 @@ fun PlaylistsScreen(
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var playlistToDelete by remember { mutableStateOf<Playlist?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val filteredPlaylists = remember(searchQuery, userPlaylists) {
+        if (searchQuery.isBlank()) userPlaylists
+        else userPlaylists.filter { playlist ->
+            playlist.title.contains(searchQuery, ignoreCase = true) ||
+                playlist.description.contains(searchQuery, ignoreCase = true)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -149,7 +159,29 @@ fun PlaylistsScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (userPlaylists.isEmpty()) {
+        if (userPlaylists.isNotEmpty()) {
+            SearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                placeholder = stringResource(R.string.explore_search_placeholder)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        if (userPlaylists.isNotEmpty() && filteredPlaylists.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = stringResource(R.string.explore_empty_no_match),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else if (userPlaylists.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -187,7 +219,7 @@ fun PlaylistsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(userPlaylists, key = { it.id }) { playlist ->
+                items(filteredPlaylists, key = { it.id }) { playlist ->
                     UserPlaylistCard(
                         playlist = playlist,
                         isServerPlaylist = !playlist.id.startsWith("user_"),

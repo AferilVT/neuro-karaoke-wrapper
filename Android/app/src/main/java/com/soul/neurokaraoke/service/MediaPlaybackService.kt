@@ -253,12 +253,31 @@ class MediaPlaybackService : MediaLibraryService() {
             mediaSession: MediaSession,
             controller: MediaSession.ControllerInfo
         ): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = serviceScope.future {
+            // Rebuild the queue the song was played from (setlist / user playlist / all songs)
+            // so a headset or system "resume" doesn't fall into random autoplay after one song.
+            val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)
+            val lastSongId = prefs.getString("last_song_id", null)
+            val saved = PlaybackQueueStore.load(this@MediaPlaybackService)
+            val savedQueue = when {
+                saved == null -> emptyList()
+                saved.isAllSongs -> browseTree.cachedSongs()
+                else -> saved.songs
+            }
+            val startIndex = savedQueue.indexOfFirst { it.id == lastSongId }
+            val lastPosition = prefs.getLong("last_position", 0L).coerceAtLeast(0L)
+            browseTree.ensureLoaded()  // resumeSong() reads the song cache
             val song = browseTree.resumeSong()
-            if (song != null) {
+            if (lastSongId != null && startIndex >= 0 && savedQueue[startIndex].audioUrl.isNotBlank()) {
+                MediaSession.MediaItemsWithStartPosition(
+                    savedQueue.map { it.toQueueMediaItem() },
+                    startIndex,
+                    lastPosition
+                )
+            } else if (song != null) {
                 MediaSession.MediaItemsWithStartPosition(
                     ImmutableList.of(browseTree.resolve("${AutoBrowseTree.RESUME_PREFIX}${song.id}")!!),
                     0,
-                    0L
+                    lastPosition
                 )
             } else {
                 throw UnsupportedOperationException()
@@ -642,6 +661,8 @@ class MediaPlaybackService : MediaLibraryService() {
     private fun savePlaybackStateFromService() {
         val p = player ?: return
         val mediaItem = p.currentMediaItem ?: return
+        // The radio stream isn't a resumable song — keep the last real song instead
+        if (mediaItem.mediaId == "radio_live" || mediaItem.mediaId == AutoBrowseTree.RADIO_ID) return
         val metadata = mediaItem.mediaMetadata
 
         val prefs = getSharedPreferences("playback_state", MODE_PRIVATE)

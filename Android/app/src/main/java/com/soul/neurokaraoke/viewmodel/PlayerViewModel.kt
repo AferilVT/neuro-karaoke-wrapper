@@ -26,6 +26,8 @@ import com.soul.neurokaraoke.data.repository.RecentlyPlayedStore
 import com.soul.neurokaraoke.data.repository.SettingsRepository
 import com.soul.neurokaraoke.data.repository.SongRepository
 import com.soul.neurokaraoke.service.MediaPlaybackService
+import com.soul.neurokaraoke.service.PlaybackQueueStore
+import com.soul.neurokaraoke.service.toQueueMediaItem
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Job
@@ -98,6 +100,9 @@ class PlayerViewModel(
     private var hasRestoredState = false
     private var isRestoringState = false
     private var savedResumePosition: Long = 0L  // Position to seek to when resuming after restore
+
+    // Cold-start restore of the saved queue (see PlaybackQueueStore)
+    private var queueRestoreJob: Job? = null
     @Volatile
     private var isCleared = false
 
@@ -374,14 +379,69 @@ class PlayerViewModel(
         }
         mediaController?.shuffleModeEnabled = _uiState.value.isShuffleEnabled
 
-        // Sync current song and queue if player is empty (e.g. after restoration or service restart)
+        restoreQueueOnConnect()
+    }
+
+    /**
+     * Runs once the controller connects. A fresh service (cold start) has an empty player:
+     * rebuild the saved queue and load it PAUSED at the saved position — opening the app
+     * must never start playback by itself. If the service is still alive with items,
+     * keep its queue and only restore whether it was a custom queue.
+     */
+    private fun restoreQueueOnConnect() {
+        val controller = mediaController ?: return
         val currentSong = _uiState.value.currentSong
-        if (currentSong != null && mediaController?.mediaItemCount == 0) {
-            playSong(currentSong, _uiState.value.currentPosition)
-        } else {
-            // Player is not empty, refresh our local queue state to match the player's true order
+
+        if (controller.mediaItemCount > 0 || currentSong == null || _uiState.value.isRadioMode) {
+            refreshQueueFromPlayer()
+            val playerMediaId = controller.currentMediaItem?.mediaId ?: return
+            viewModelScope.launch {
+                val saved = PlaybackQueueStore.load(getApplication()) ?: return@launch
+                if (saved.isAllSongs || saved.songs.any { it.id == playerMediaId }) {
+                    _uiState.value = _uiState.value.copy(isCustomQueue = saved.isCustom)
+                }
+            }
+            return
+        }
+
+        val position = savedResumePosition
+        queueRestoreJob = viewModelScope.launch {
+            val saved = PlaybackQueueStore.load(getApplication())
+            val candidates = when {
+                saved == null -> emptyList()
+                saved.isAllSongs -> _uiState.value.allSongs.ifEmpty { songCache.getCachedSongs() }
+                else -> saved.songs
+            }
+            val queue = if (candidates.any { it.id == currentSong.id }) candidates else listOf(currentSong)
+            val index = queue.indexOfFirst { it.id == currentSong.id }
+
+            // Something else started playing while we were reading — leave it alone
+            if (isCleared || controller.mediaItemCount > 0 || _uiState.value.currentSong?.id != currentSong.id) {
+                return@launch
+            }
+
+            _uiState.value = _uiState.value.copy(
+                queue = queue,
+                isCustomQueue = saved?.isCustom ?: false
+            )
+            controller.shuffleModeEnabled = _uiState.value.isShuffleEnabled
+            controller.setMediaItems(queue.map(Song::toQueueMediaItem), index, position)
+            controller.playWhenReady = false
+            controller.prepare()
+            savedResumePosition = 0L
             refreshQueueFromPlayer()
         }
+    }
+
+    /** Persist the queue just handed to the player so a cold start can rebuild it. */
+    private fun persistQueue(queue: List<Song>) {
+        val state = _uiState.value
+        if (state.isRadioMode) return
+        val isAllSongs = !state.isCustomQueue &&
+            state.allSongs.isNotEmpty() &&
+            queue.size == state.allSongs.size &&
+            queue == state.allSongs
+        PlaybackQueueStore.save(getApplication(), queue, state.isCustomQueue, isAllSongs)
     }
 
     /**
@@ -620,7 +680,21 @@ class PlayerViewModel(
                         mediaController?.let { controller ->
                             val currentSong = _uiState.value.currentSong
                             if (currentSong != null && controller.mediaItemCount <= 1) {
-                                playSong(currentSong, controller.currentPosition)
+                                if (controller.isPlaying) {
+                                    playSong(currentSong, controller.currentPosition)
+                                } else {
+                                    // Expand the queue without starting playback
+                                    val index = newQueue.indexOfFirst { it.id == currentSong.id }
+                                    if (index >= 0) {
+                                        val position = if (controller.mediaItemCount == 0) savedResumePosition else controller.currentPosition
+                                        savedResumePosition = 0L
+                                        controller.setMediaItems(newQueue.map(Song::toQueueMediaItem), index, position)
+                                        controller.playWhenReady = false
+                                        controller.prepare()
+                                        persistQueue(newQueue)
+                                        refreshQueueFromPlayer()
+                                    }
+                                }
                             }
                         }
                     }
@@ -652,6 +726,9 @@ class PlayerViewModel(
      * Play a specific song
      */
     fun playSong(song: Song, startPosition: Long = 0L) {
+        // An explicit play wins over the cold-start queue restore
+        queueRestoreJob?.cancel()
+
         // Cancel any in-progress crossfade and restore volume
         crossfadeJob?.cancel()
         isCrossfading = false
@@ -718,6 +795,7 @@ class PlayerViewModel(
         // Update the UI state with the base queue. 
         // If shuffle is ON, refreshQueueFromPlayer() will soon override this with the shuffled order.
         _uiState.value = _uiState.value.copy(queue = queueSongs)
+        persistQueue(queueSongs)
 
         val controller = mediaController ?: return
 
@@ -736,33 +814,7 @@ class PlayerViewModel(
             }
         }
 
-        // Build media items for the queue
-        val mediaItems = queueSongs.map { s ->
-            val extras = android.os.Bundle()
-            extras.putBoolean("androidx.media3.session.MediaSession.EXTRA_KEY_QUEUE_SUPPORTED", true)
-            extras.putInt("androidx.media3.session.MediaSession.EXTRA_KEY_QUEUE_SUPPORTED", 1)
-            extras.putBoolean("androidx.media.utils.Extras.SLOT_RESERVATION_QUEUE", true)
-            extras.putBoolean("androidx.media.PlaybackStateCompat.Extras.COMMAND_GET_TIMELINE", true)
-            extras.putBoolean("android.media.session.extra.QUEUE_SUPPORTED", true)
-            extras.putInt("android.media.session.extra.QUEUE_SUPPORTED", 1)
-
-            MediaItem.Builder()
-                .setUri(s.audioUrl)
-                .setMediaId(s.id)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(s.title)
-                        .setArtist("${s.artist} • ${s.coverArtist}")
-                        .setAlbumTitle(s.coverArtist)
-                        .setArtworkUri(android.net.Uri.parse(s.coverUrl))
-                        .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
-                        .setIsBrowsable(false)
-                        .setIsPlayable(true)
-                        .setExtras(extras)
-                        .build()
-                )
-                .build()
-        }
+        val mediaItems = queueSongs.map(Song::toQueueMediaItem)
 
         // Set the queue and start at the selected song, resuming from saved position
         controller.setMediaItems(mediaItems, songIndex, resumePos)
@@ -791,6 +843,14 @@ class PlayerViewModel(
      * Toggle play/pause
      */
     fun togglePlayPause() {
+        // Cold-start queue restore still running — finish it first so the right queue plays
+        queueRestoreJob?.takeIf { it.isActive }?.let { job ->
+            viewModelScope.launch {
+                job.join()
+                togglePlayPause()
+            }
+            return
+        }
         val controller = mediaController ?: return
         if (controller.isPlaying) {
             controller.pause()
