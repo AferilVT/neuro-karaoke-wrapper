@@ -34,6 +34,22 @@ enum class Singer {
     }
 }
 
+/**
+ * Case-insensitive match for in-list song search: title, artist, cover artists,
+ * romaji and English titles.
+ */
+fun Song.matchesQuery(query: String): Boolean {
+    val q = query.trim()
+    if (q.isEmpty()) return true
+    val lower = q.lowercase()
+    return title.contains(q, ignoreCase = true) ||
+        artist.contains(q, ignoreCase = true) ||
+        coverArtists.contains(q, ignoreCase = true) ||
+        titleRomaji.contains(lower, ignoreCase = true) ||
+        artistRomaji.contains(lower, ignoreCase = true) ||
+        titleEnglish?.contains(q, ignoreCase = true) == true
+}
+
 data class Song(
     val id: String,
     val title: String,

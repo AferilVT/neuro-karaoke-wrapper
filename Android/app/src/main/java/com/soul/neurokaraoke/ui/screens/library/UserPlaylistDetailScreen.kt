@@ -47,6 +47,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.soul.neurokaraoke.data.model.matchesQuery
+import com.soul.neurokaraoke.ui.components.SearchBar
 import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 import com.soul.neurokaraoke.ui.components.SongListItem
 import com.soul.neurokaraoke.ui.theme.AccentDivider
@@ -119,6 +124,11 @@ fun UserPlaylistDetailScreen(
 
     val songs = playlist.songs
     val totalDurationMinutes = songs.sumOf { it.duration } / 1000 / 60
+
+    // In-playlist song search; results keep their original track numbers
+    var songQuery by remember { mutableStateOf("") }
+    val filteredSongs = remember(songs, songQuery) { songs.filter { it.matchesQuery(songQuery) } }
+    val trackNumbers = remember(songs) { songs.withIndex().associate { (i, s) -> s.id to i + 1 } }
 
     Box(modifier = modifier.fillMaxSize()) {
         // Blurred background from first preview cover
@@ -343,6 +353,15 @@ fun UserPlaylistDetailScreen(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
+                if (songs.size > 1) {
+                    SearchBar(
+                        query = songQuery,
+                        onQueryChange = { songQuery = it },
+                        placeholder = stringResource(R.string.playlist_detail_search_placeholder),
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
             }
 
             if (songs.isEmpty()) {
@@ -388,10 +407,23 @@ fun UserPlaylistDetailScreen(
                     }
                 }
             } else {
-                itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+                if (filteredSongs.isEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.playlist_detail_search_no_match),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp)
+                        )
+                    }
+                }
+                itemsIndexed(filteredSongs, key = { _, song -> song.id }) { index, song ->
                     SongListItem(
                         song = song,
-                        index = index + 1,
+                        index = trackNumbers[song.id] ?: (index + 1),
                         onClick = { onPlaySong(song, songs) },
                         isDownloaded = isDownloaded(song.id),
                         downloadProgress = downloadProgress[song.id],

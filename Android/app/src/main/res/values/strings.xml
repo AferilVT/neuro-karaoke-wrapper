@@ -461,4 +461,6 @@
     <string name="song_menu_add_to_playlist">Add to Playlist</string>
     <string name="song_menu_remove_download">Remove Download</string>
     <string name="song_menu_remove_from_playlist">Remove from Playlist</string>
+    <string name="playlist_detail_search_placeholder">Search songs in this playlist</string>
+    <string name="playlist_detail_search_no_match">No songs match your search</string>
 </resources>
