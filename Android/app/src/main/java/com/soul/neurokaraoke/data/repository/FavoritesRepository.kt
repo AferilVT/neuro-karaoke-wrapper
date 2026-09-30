@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
 import com.soul.neurokaraoke.data.api.NeuroKaraokeApi
+import com.soul.neurokaraoke.data.api.RadioApi
 import com.soul.neurokaraoke.data.api.SyncApi
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
@@ -45,9 +46,9 @@ class FavoritesRepository(context: Context) {
                 val jsonArray = JSONArray(json)
                 val songs = mutableListOf<Song>()
                 for (i in 0 until jsonArray.length()) {
-                    songs.add(parseSong(jsonArray.getJSONObject(i)))
+                    songs.add(parseSong(jsonArray.getJSONObject(i)).withoutRadioStream())
                 }
-                _favorites.value = songs
+                _favorites.value = songs.distinctBy { it.id }
             } catch (e: Exception) {
                 if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
                 _favorites.value = emptyList()
@@ -100,6 +101,29 @@ class FavoritesRepository(context: Context) {
         }
     }
 
+    /**
+     * Older builds saved radio favorites as "radio_<id>" entries pointing at the live
+     * stream. Strip that back to the real song id; [repairFromCatalog] restores the audio.
+     */
+    private fun Song.withoutRadioStream(): Song =
+        if (id.startsWith("radio_") || audioUrl == RadioApi.STREAM_URL) {
+            copy(id = id.removePrefix("radio_"), audioUrl = "")
+        } else this
+
+    /** Fill in favorites that lost their audio (repaired radio entries) from the song catalog. */
+    fun repairFromCatalog(catalog: List<Song>) {
+        val current = _favorites.value
+        if (catalog.isEmpty() || current.none { it.audioUrl.isBlank() }) return
+        val byId = catalog.associateBy { it.id }
+        val repaired = current.map { song ->
+            if (song.audioUrl.isBlank()) byId[song.id] ?: song else song
+        }
+        if (repaired != current) {
+            _favorites.value = repaired
+            saveFavorites()
+        }
+    }
+
     fun isFavorite(songId: String, audioUrl: String = ""): Boolean {
         return _favorites.value.any {
             it.id == songId || (audioUrl.isNotBlank() && it.matchesByAudioUrl(audioUrl))
@@ -134,9 +158,10 @@ class FavoritesRepository(context: Context) {
                 if (serverSongs.isNotEmpty()) {
                     // Merge: keep server songs + any local-only songs (deduplicate by audioUrl)
                     val serverAudioUrls = serverSongs.map { normalizeAudioUrl(it.audioUrl) }.filter { it.isNotBlank() }.toSet()
+                    val serverIds = serverSongs.map { it.id }.toSet()
                     val localOnly = _favorites.value.filter { local ->
                         val localUrl = normalizeAudioUrl(local.audioUrl)
-                        localUrl.isBlank() || localUrl !in serverAudioUrls
+                        local.id !in serverIds && (localUrl.isBlank() || localUrl !in serverAudioUrls)
                     }
                     _favorites.value = serverSongs + localOnly
                     saveFavorites()

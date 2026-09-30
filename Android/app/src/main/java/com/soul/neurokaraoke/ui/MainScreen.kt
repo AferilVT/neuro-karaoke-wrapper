@@ -231,9 +231,18 @@ fun MainScreen(
         }
     }
 
+    // Repair favorites saved from the radio by older builds once the catalog is available
+    LaunchedEffect(playerState.allSongs) {
+        favoritesRepository.repairFromCatalog(playerState.allSongs)
+    }
+
     // Full player bottom sheet
     val currentSong = playerState.currentSong
     if (showFullPlayer && currentSong != null) {
+        // Radio shows a "radio_" entry streaming the live URL; act on the real song instead
+        val actionSong = remember(currentSong, playerState.allSongs) {
+            playerViewModel.catalogSongFor(currentSong)
+        }
         ModalBottomSheet(
             onDismissRequest = { showFullPlayer = false },
             sheetState = playerSheetState,
@@ -260,20 +269,20 @@ fun MainScreen(
                 onRepeatClick = { playerViewModel.cycleRepeatMode() },
                 onCollapseClick = { showFullPlayer = false },
                 onQueueSongClick = { songId -> playerViewModel.playSongById(songId) },
-                isDownloaded = downloadViewModel.isDownloaded(currentSong.id),
-                downloadProgress = downloadProgress[currentSong.id],
-                onDownloadClick = { downloadViewModel.downloadSong(currentSong) },
+                isDownloaded = downloadViewModel.isDownloaded(actionSong.id),
+                downloadProgress = downloadProgress[actionSong.id],
+                onDownloadClick = { downloadViewModel.downloadSong(actionSong) },
                 sleepTimerRemainingMs = playerState.sleepTimerRemainingMs,
                 sleepTimerActive = playerState.sleepTimerEndTimeMs != null || playerState.sleepTimerEndOfSong,
                 onSetSleepTimer = { minutes -> playerViewModel.setSleepTimer(minutes) },
                 onCancelSleepTimer = { playerViewModel.cancelSleepTimer() },
                 onSetSleepTimerEndOfSong = { playerViewModel.setSleepTimerEndOfSong() },
                 isFavorite = favoriteSongs.any {
-                    it.id == currentSong.id ||
-                    (currentSong.audioUrl.isNotBlank() && it.audioUrl.isNotBlank() && it.audioUrl == currentSong.audioUrl)
+                    it.id == actionSong.id ||
+                    (actionSong.audioUrl.isNotBlank() && it.audioUrl.isNotBlank() && it.audioUrl == actionSong.audioUrl)
                 },
-                onToggleFavorite = { favoritesRepository.toggleFavorite(currentSong, authViewModel.getAccessToken()) },
-                onAddToPlaylist = { songToAddToPlaylist = currentSong },
+                onToggleFavorite = { favoritesRepository.toggleFavorite(actionSong, authViewModel.getAccessToken()) },
+                onAddToPlaylist = { songToAddToPlaylist = actionSong },
                 isRadioMode = playerState.isRadioMode,
                 radioListenerCount = playerState.radioListenerCount,
                 accessToken = authViewModel.getAccessToken()

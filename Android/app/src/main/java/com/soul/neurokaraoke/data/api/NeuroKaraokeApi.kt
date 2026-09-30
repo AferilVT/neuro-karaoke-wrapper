@@ -70,6 +70,15 @@ class NeuroKaraokeApi {
         private const val BASE_URL = "https://idk.neurokaraoke.com"
         private const val API_URL = "https://api.neurokaraoke.com"
         private const val MAX_CACHE_SIZE = 20 // Limit cache to 20 playlists
+
+        /** Turn an API audio path ("audioUrl" / "absolutePath") into a playable URL. */
+        fun resolveAudioUrl(rawAudioUrl: String?): String? = when {
+            rawAudioUrl.isNullOrBlank() || rawAudioUrl == "null" -> null
+            rawAudioUrl.startsWith("http") -> rawAudioUrl
+            rawAudioUrl.startsWith("uploads/") || rawAudioUrl.startsWith("/uploads/") ->
+                "https://idk.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+            else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
+        }
     }
 
     // LRU cache with size limit to prevent memory issues
@@ -162,13 +171,7 @@ class NeuroKaraokeApi {
                 val rawAudioUrl = obj.optString("audioUrl").takeIf { it.isNotBlank() } 
                     ?: obj.optString("absolutePath").takeIf { it.isNotBlank() }
                 
-                val audioUrl = when {
-                    rawAudioUrl.isNullOrBlank() -> null
-                    rawAudioUrl.startsWith("http") -> rawAudioUrl
-                    rawAudioUrl.startsWith("uploads/") || rawAudioUrl.startsWith("/uploads/") ->
-                        "https://idk.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
-                    else -> "https://storage.neurokaraoke.com/" + rawAudioUrl.removePrefix("/")
-                }
+                val audioUrl = resolveAudioUrl(rawAudioUrl)
 
                 // Handle artist names which might be Strings or JSONArrays
                 val parseArtistField = { key: String ->

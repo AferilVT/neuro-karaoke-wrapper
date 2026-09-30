@@ -16,8 +16,13 @@ data class RadioSong(
     val coverArtists: List<String>,
     val duration: Int, // seconds
     val coverUrl: String,
-    val artCredit: String?
+    val artCredit: String?,
+    val audioPath: String = ""
 ) {
+    /**
+     * Now-playing display entry. The id is prefixed and the audio is the live stream,
+     * so it must never be stored as a real song — use [toCatalogSong] for that.
+     */
     fun toSong(): Song {
         val coverArtistText = coverArtists.joinToString(", ")
 
@@ -33,6 +38,19 @@ data class RadioSong(
             artCredit = artCredit
         )
     }
+
+    /** The actual catalog song (real id + its own audio file) for favorites, downloads, playlists. */
+    fun toCatalogSong(): Song = toSong().copy(
+        id = id,
+        // The radio sends a raw path ("audio/LADY BUG.mp3"); catalog URLs are percent-encoded
+        audioUrl = NeuroKaraokeApi.resolveAudioUrl(encodePath(audioPath)) ?: ""
+    )
+
+    private fun encodePath(path: String): String =
+        if (path.startsWith("http")) path
+        else path.split("/").joinToString("/") { segment ->
+            java.net.URLEncoder.encode(segment, "UTF-8").replace("+", "%20")
+        }
 
     val coverArtistDisplay: String
         get() = coverArtists.joinToString(", ").ifBlank { "Neuro-sama" }
@@ -153,7 +171,8 @@ class RadioApi {
             coverArtists = coverArtists,
             duration = obj.optInt("duration", 0),
             coverUrl = coverUrl,
-            artCredit = artCredit
+            artCredit = artCredit,
+            audioPath = obj.optString("absolutePath", "")
         )
     }
 

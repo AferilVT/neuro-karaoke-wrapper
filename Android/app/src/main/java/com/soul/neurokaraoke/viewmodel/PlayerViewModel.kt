@@ -103,6 +103,10 @@ class PlayerViewModel(
 
     // Cold-start restore of the saved queue (see PlaybackQueueStore)
     private var queueRestoreJob: Job? = null
+
+    // Real catalog song behind the radio's now-playing entry (see catalogSongFor)
+    @Volatile
+    private var radioCatalogSong: Song? = null
     @Volatile
     private var isCleared = false
 
@@ -1446,6 +1450,7 @@ class PlayerViewModel(
             radioApi.fetchCurrentState().fold(
                 onSuccess = { state ->
                     val currentRadioSong = state.current?.toSong()
+                    radioCatalogSong = state.current?.toCatalogSong()
 
                     _uiState.value = _uiState.value.copy(
                         isRadioMode = true,
@@ -1500,6 +1505,19 @@ class PlayerViewModel(
     }
 
     /**
+     * The song to favorite / download / add to a playlist for [song]. Radio now-playing
+     * entries carry a "radio_" id and the live stream URL, so map them back to the real
+     * catalog song — otherwise the saved entry would just play the radio stream.
+     */
+    fun catalogSongFor(song: Song): Song {
+        if (!song.id.startsWith("radio_")) return song
+        val realId = song.id.removePrefix("radio_")
+        return _uiState.value.allSongs.firstOrNull { it.id == realId }
+            ?: radioCatalogSong?.takeIf { it.id == realId }
+            ?: song.copy(id = realId, audioUrl = "")
+    }
+
+    /**
      * Stop the live radio stream and exit radio mode.
      */
     fun stopRadio() {
@@ -1526,6 +1544,7 @@ class PlayerViewModel(
                     )
                     // Update song info if it changed
                     if (newSong != null && newSong.id != currentId) {
+                        radioCatalogSong = state.current?.toCatalogSong()
                         _uiState.value = _uiState.value.copy(currentSong = newSong)
                         // Push metadata to the player so notification + Bluetooth/car display update.
                         // Replacing the media item with the same stream URI updates metadata
