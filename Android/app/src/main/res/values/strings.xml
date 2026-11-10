@@ -465,6 +465,19 @@
     <string name="upload_edit_field_cover_artist">Cover artist</string>
     <string name="upload_edit_save">Save</string>
     <string name="upload_edit_cancel">Cancel</string>
+    <string name="upload_edit_upload_button">Upload to my account</string>
+    <string name="upload_edit_uploaded">Uploaded to your account</string>
+    <string name="upload_edit_sign_in_hint">Sign in to upload this song to your account.</string>
+    <string name="upload_edit_upload_note">Title and artist sync to the uploaded copy. Cover artist and cover image stay on this device.</string>
+    <string name="upload_status_uploading">Uploading…</string>
+    <string name="upload_toast_uploaded">Uploaded \"%1$s\"</string>
+    <string name="upload_toast_failed">Upload failed: %1$s</string>
+    <string name="upload_toast_quota_songs">Upload limit reached (%1$d songs)</string>
+    <string name="upload_toast_quota_storage">Not enough upload storage left</string>
+    <string name="upload_toast_too_large">This file is too large to upload</string>
+    <string name="upload_toast_session_expired">Your session expired. Sign in again to upload.</string>
+    <string name="upload_toast_missing_file">The song file is missing</string>
+    <string name="upload_toast_sync_failed">Couldn\'t update the uploaded copy: %1$s</string>
 
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">Add to Playlist</string>

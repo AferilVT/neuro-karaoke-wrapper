@@ -1,6 +1,8 @@
 package com.soul.neurokaraoke.ui.screens.more
 
+import android.content.Context
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +27,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
@@ -33,6 +37,7 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -63,6 +68,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.R
+import com.soul.neurokaraoke.data.api.ProfileApi
+import com.soul.neurokaraoke.data.api.UploadHttpException
+import com.soul.neurokaraoke.data.api.UserSongsApi
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.repository.LocalMusicStore
@@ -76,13 +84,37 @@ import java.io.File
 fun UploadSongsScreen(
     onBackClick: () -> Unit,
     onPlaySong: (Song, List<Song>) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Bearer token when signed in; enables uploading songs to the user's account. */
+    accessToken: String? = null
 ) {
     val context = LocalContext.current
     val appContext = context.applicationContext
     val scope = rememberCoroutineScope()
     val localSongs = remember { mutableStateListOf<LocalSong>() }
     var editing by remember { mutableStateOf<LocalSong?>(null) }
+    val uploading = remember { mutableStateListOf<String>() }
+
+    fun replaceSong(updated: LocalSong) {
+        val i = localSongs.indexOfFirst { it.fileName == updated.fileName }
+        if (i >= 0) localSongs[i] = updated
+    }
+
+    fun startUpload(song: LocalSong) {
+        val token = accessToken ?: return
+        if (song.fileName in uploading) return
+        uploading += song.fileName
+        scope.launch {
+            val result = uploadLocalSong(appContext, token, song)
+            uploading -= song.fileName
+            result.onSuccess { updated ->
+                replaceSong(updated)
+                toast(appContext, appContext.getString(R.string.upload_toast_uploaded, updated.title))
+            }.onFailure { e ->
+                toast(appContext, uploadErrorMessage(appContext, e))
+            }
+        }
+    }
 
     // Load previously imported songs from internal storage
     LaunchedEffect(Unit) {
@@ -269,6 +301,23 @@ fun UploadSongsScreen(
                                 )
                             }
 
+                            when {
+                                song.fileName in uploading -> CircularProgressIndicator(
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .size(18.dp),
+                                    strokeWidth = 2.dp
+                                )
+                                song.serverId != null -> Icon(
+                                    imageVector = Icons.Default.CloudDone,
+                                    contentDescription = stringResource(R.string.upload_edit_uploaded),
+                                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                        .size(18.dp)
+                                )
+                            }
+
                             IconButton(onClick = { editing = song }) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
@@ -318,8 +367,10 @@ fun UploadSongsScreen(
     editing?.let { song ->
         EditLocalSongDialog(
             song = song,
+            canUpload = accessToken != null,
+            isUploading = song.fileName in uploading,
             onDismiss = { editing = null },
-            onSave = { title, artist, coverArtists, newCover, removeCover ->
+            onSave = { title, artist, coverArtists, newCover, removeCover, upload ->
                 editing = null
                 scope.launch {
                     val updated = withContext(Dispatchers.IO) {
@@ -327,8 +378,27 @@ fun UploadSongsScreen(
                             appContext, song.fileName, title, artist, coverArtists, newCover, removeCover
                         )
                     } ?: return@launch
-                    val i = localSongs.indexOfFirst { it.fileName == song.fileName }
-                    if (i >= 0) localSongs[i] = updated
+                    replaceSong(updated)
+
+                    val token = accessToken
+                    val serverId = updated.serverId
+                    if (upload && serverId == null) {
+                        startUpload(updated)
+                    } else if (token != null && serverId != null &&
+                        (updated.title != song.title || updated.artist != song.artist)
+                    ) {
+                        // Keep the uploaded copy in step. Only title and artist exist server-side.
+                        UserSongsApi.update(token, serverId, updated.title, updated.artist)
+                            .onFailure { e ->
+                                toast(
+                                    appContext,
+                                    appContext.getString(
+                                        R.string.upload_toast_sync_failed,
+                                        uploadErrorMessage(appContext, e)
+                                    )
+                                )
+                            }
+                    }
                 }
             }
         )
@@ -367,8 +437,17 @@ private fun CoverThumb(path: String?, size: Dp, model: Any? = null) {
 @Composable
 private fun EditLocalSongDialog(
     song: LocalSong,
+    canUpload: Boolean,
+    isUploading: Boolean,
     onDismiss: () -> Unit,
-    onSave: (title: String, artist: String, coverArtists: String, newCover: Uri?, removeCover: Boolean) -> Unit
+    onSave: (
+        title: String,
+        artist: String,
+        coverArtists: String,
+        newCover: Uri?,
+        removeCover: Boolean,
+        upload: Boolean
+    ) -> Unit
 ) {
     var title by remember { mutableStateOf(song.title) }
     var artist by remember { mutableStateOf(song.artist) }
@@ -440,10 +519,56 @@ private fun EditLocalSongDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                when {
+                    song.serverId != null -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.CloudDone,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.upload_edit_uploaded),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    isUploading -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.upload_status_uploading),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                    canUpload -> OutlinedButton(
+                        onClick = { onSave(title, artist, coverArtists, newCover, removeCover, true) },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.upload_edit_upload_button))
+                    }
+                    else -> Text(
+                        text = stringResource(R.string.upload_edit_sign_in_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (canUpload || song.serverId != null) {
+                    Text(
+                        text = stringResource(R.string.upload_edit_upload_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(title, artist, coverArtists, newCover, removeCover) }) {
+            TextButton(onClick = { onSave(title, artist, coverArtists, newCover, removeCover, false) }) {
                 Text(stringResource(R.string.upload_edit_save))
             }
         },
@@ -453,6 +578,54 @@ private fun EditLocalSongDialog(
             }
         }
     )
+}
+
+/**
+ * Uploads [song]'s audio to the user's account and records the new song id locally.
+ * The upload response has no documented body, so the id is found by diffing
+ * `GET /api/user/songs` before and after.
+ */
+private suspend fun uploadLocalSong(context: Context, token: String, song: LocalSong): Result<LocalSong> =
+    runCatching {
+        val file = LocalMusicStore.audioFile(context, song.fileName)
+        if (!file.exists()) error(context.getString(R.string.upload_toast_missing_file))
+
+        ProfileApi.fetchUploadLimits(token).getOrNull()?.let { limits ->
+            if (limits.maxSongs > 0 && limits.currentSongCount >= limits.maxSongs) {
+                error(context.getString(R.string.upload_toast_quota_songs, limits.maxSongs))
+            }
+            if (limits.maxStorageBytes > 0 &&
+                limits.usedStorageBytes + file.length() > limits.maxStorageBytes
+            ) {
+                error(context.getString(R.string.upload_toast_quota_storage))
+            }
+        }
+
+        val before = UserSongsApi.listUploads(token).getOrNull()?.map { it.id }?.toSet()
+        val idFromResponse = UserSongsApi.upload(token, file, song.title, song.artist).getOrThrow()
+        val serverId = idFromResponse ?: before?.let { ids ->
+            UserSongsApi.listUploads(token).getOrNull()
+                ?.let { UserSongsApi.findNewUpload(ids, it, song.title) }?.id
+        }
+
+        if (serverId == null) {
+            // Uploaded, but we can't tell which entry it is; later edits just won't sync.
+            song
+        } else {
+            withContext(Dispatchers.IO) {
+                LocalMusicStore.setServerId(context, song.fileName, serverId)
+            } ?: song
+        }
+    }
+
+private fun uploadErrorMessage(context: Context, e: Throwable): String = when {
+    e is UploadHttpException && e.code == 401 -> context.getString(R.string.upload_toast_session_expired)
+    e is UploadHttpException && e.code == 413 -> context.getString(R.string.upload_toast_too_large)
+    else -> context.getString(R.string.upload_toast_failed, e.message ?: e.javaClass.simpleName)
+}
+
+private fun toast(context: Context, message: String) {
+    Toast.makeText(context, message, Toast.LENGTH_LONG).show()
 }
 
 private fun LocalSong.toSong(): Song {

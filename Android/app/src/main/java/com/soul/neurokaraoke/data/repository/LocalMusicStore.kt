@@ -15,7 +15,9 @@ data class LocalSong(
     val artist: String,
     val coverArtists: String,
     /** Absolute path of the cover image (user-picked or extracted from the file), or null. */
-    val coverPath: String?
+    val coverPath: String?,
+    /** Id of the copy uploaded to the user's account, or null if never uploaded. */
+    val serverId: String? = null
 )
 
 /**
@@ -37,7 +39,8 @@ object LocalMusicStore {
         val title: String?,
         val artist: String?,
         val coverArtists: String?,
-        val coverFile: String?
+        val coverFile: String?,
+        val serverId: String? = null
     )
 
     private fun musicDir(context: Context) = File(context.filesDir, DIR)
@@ -57,7 +60,8 @@ object LocalMusicStore {
                     title = o.optString("title").takeIf { it.isNotBlank() },
                     artist = o.optString("artist").takeIf { it.isNotBlank() },
                     coverArtists = o.optString("coverArtists").takeIf { it.isNotBlank() },
-                    coverFile = o.optString("coverFile").takeIf { it.isNotBlank() }
+                    coverFile = o.optString("coverFile").takeIf { it.isNotBlank() },
+                    serverId = o.optString("serverId").takeIf { it.isNotBlank() }
                 )
             }
             map
@@ -76,6 +80,7 @@ object LocalMusicStore {
                 o.artist?.let { put("artist", it) }
                 o.coverArtists?.let { put("coverArtists", it) }
                 o.coverFile?.let { put("coverFile", it) }
+                o.serverId?.let { put("serverId", it) }
             })
         }
         val file = metaFile(context)
@@ -128,7 +133,8 @@ object LocalMusicStore {
             title = overrides?.title ?: tagTitle?.takeIf { it.isNotBlank() } ?: file.nameWithoutExtension,
             artist = overrides?.artist ?: tagArtist?.takeIf { it.isNotBlank() } ?: "Unknown Artist",
             coverArtists = overrides?.coverArtists.orEmpty(),
-            coverPath = customCover ?: embeddedCover
+            coverPath = customCover ?: embeddedCover,
+            serverId = overrides?.serverId
         )
     }
 
@@ -221,13 +227,28 @@ object LocalMusicStore {
             title = title.trim().ifBlank { null },
             artist = artist.trim().ifBlank { null },
             coverArtists = coverArtists.trim().ifBlank { null },
-            coverFile = coverFile
+            coverFile = coverFile,
+            serverId = old?.serverId
         )
         writeMeta(context, meta)
         return buildSong(context, audio, meta[fileName])
     }
 
-    /** Deletes the audio file plus its metadata and covers. */
+    /** The imported audio file for [fileName] (for uploading). */
+    fun audioFile(context: Context, fileName: String): File = File(musicDir(context), fileName)
+
+    /** Records the id of the uploaded copy so later edits can be pushed to it. */
+    fun setServerId(context: Context, fileName: String, serverId: String): LocalSong? {
+        val audio = File(musicDir(context), fileName)
+        if (!audio.exists()) return null
+        val meta = readMeta(context)
+        val o = meta[fileName] ?: Overrides(null, null, null, null)
+        meta[fileName] = o.copy(serverId = serverId)
+        writeMeta(context, meta)
+        return buildSong(context, audio, meta[fileName])
+    }
+
+    /** Deletes the audio file plus its metadata and covers (not the uploaded copy). */
     fun delete(context: Context, fileName: String) {
         File(musicDir(context), fileName).delete()
         coversDir(context).listFiles()

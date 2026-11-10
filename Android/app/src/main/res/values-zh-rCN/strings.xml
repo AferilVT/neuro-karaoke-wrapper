@@ -461,6 +461,19 @@
     <string name="upload_edit_field_cover_artist">翻唱</string>
     <string name="upload_edit_save">保存</string>
     <string name="upload_edit_cancel">取消</string>
+    <string name="upload_edit_upload_button">上传到我的账号</string>
+    <string name="upload_edit_uploaded">已上传到你的账号</string>
+    <string name="upload_edit_sign_in_hint">登录后可将这首歌上传到你的账号。</string>
+    <string name="upload_edit_upload_note">标题和原唱会同步到已上传的副本。翻唱和封面仅保存在此设备上。</string>
+    <string name="upload_status_uploading">正在上传…</string>
+    <string name="upload_toast_uploaded">已上传“%1$s”</string>
+    <string name="upload_toast_failed">上传失败：%1$s</string>
+    <string name="upload_toast_quota_songs">已达到上传上限（%1$d 首）</string>
+    <string name="upload_toast_quota_storage">上传空间不足</string>
+    <string name="upload_toast_too_large">文件太大，无法上传</string>
+    <string name="upload_toast_session_expired">登录已过期，请重新登录后上传。</string>
+    <string name="upload_toast_missing_file">歌曲文件不存在</string>
+    <string name="upload_toast_sync_failed">无法更新已上传的副本：%1$s</string>
 
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">添加到播放列表</string>

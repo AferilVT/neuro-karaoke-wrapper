@@ -452,7 +452,8 @@ fun NavGraph(
         composable(Screen.UploadSongs.route) {
             UploadSongsScreen(
                 onBackClick = { navController.popBackStack() },
-                onPlaySong = onPlaySongWithQueue
+                onPlaySong = onPlaySongWithQueue,
+                accessToken = if (isLoggedIn) accessToken else null
             )
         }
     }
