@@ -1,9 +1,10 @@
 package com.soul.neurokaraoke.ui.screens.more
 
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,14 +19,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Shuffle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
@@ -34,31 +39,38 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import com.soul.neurokaraoke.R
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.soul.neurokaraoke.R
+import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.data.repository.LocalMusicStore
+import com.soul.neurokaraoke.data.repository.LocalSong
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
-
-data class LocalSong(
-    val uri: Uri,
-    val title: String,
-    val artist: String,
-    val fileName: String
-)
 
 @Composable
 fun UploadSongsScreen(
@@ -67,86 +79,27 @@ fun UploadSongsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val appContext = context.applicationContext
+    val scope = rememberCoroutineScope()
     val localSongs = remember { mutableStateListOf<LocalSong>() }
+    var editing by remember { mutableStateOf<LocalSong?>(null) }
 
     // Load previously imported songs from internal storage
     LaunchedEffect(Unit) {
-        val musicDir = File(context.filesDir, "local_music")
-        if (musicDir.exists()) {
-            musicDir.listFiles()?.filter { it.extension == "mp3" }?.forEach { file ->
-                val retriever = MediaMetadataRetriever()
-                try {
-                    retriever.setDataSource(file.absolutePath)
-                    val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                        ?: file.nameWithoutExtension
-                    val artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                        ?: "Unknown Artist"
-                    localSongs.add(
-                        LocalSong(
-                            uri = Uri.fromFile(file),
-                            title = title,
-                            artist = artist,
-                            fileName = file.name
-                        )
-                    )
-                } catch (_: Exception) {
-                    localSongs.add(
-                        LocalSong(
-                            uri = Uri.fromFile(file),
-                            title = file.nameWithoutExtension,
-                            artist = "Unknown Artist",
-                            fileName = file.name
-                        )
-                    )
-                } finally {
-                    retriever.release()
-                }
-            }
-        }
+        val loaded = withContext(Dispatchers.IO) { LocalMusicStore.loadAll(appContext) }
+        localSongs.clear()
+        localSongs.addAll(loaded)
     }
 
     val filePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenMultipleDocuments()
     ) { uris ->
-        uris.forEach { uri ->
-            val musicDir = File(context.filesDir, "local_music")
-            musicDir.mkdirs()
-
-            val retriever = MediaMetadataRetriever()
-            var title = "Unknown"
-            var artist = "Unknown Artist"
-
-            try {
-                context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                    retriever.setDataSource(pfd.fileDescriptor)
-                    title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                        ?: uri.lastPathSegment?.substringAfterLast("/")?.removeSuffix(".mp3")
-                        ?: "Unknown"
-                    artist = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST)
-                        ?: "Unknown Artist"
-                }
-            } catch (_: Exception) { }
-            finally { retriever.release() }
-
-            val fileName = "${title.replace(Regex("[^a-zA-Z0-9._-]"), "_")}_${System.currentTimeMillis()}.mp3"
-            val destFile = File(musicDir, fileName)
-
-            try {
-                context.contentResolver.openInputStream(uri)?.use { input ->
-                    destFile.outputStream().use { output ->
-                        input.copyTo(output)
-                    }
-                }
-
-                localSongs.add(
-                    LocalSong(
-                        uri = Uri.fromFile(destFile),
-                        title = title,
-                        artist = artist,
-                        fileName = fileName
-                    )
-                )
-            } catch (_: Exception) { }
+        if (uris.isEmpty()) return@rememberLauncherForActivityResult
+        scope.launch {
+            val imported = withContext(Dispatchers.IO) {
+                uris.mapNotNull { LocalMusicStore.import(appContext, it) }
+            }
+            localSongs.addAll(imported)
         }
     }
 
@@ -281,7 +234,7 @@ fun UploadSongsScreen(
                         )
                     }
 
-                    itemsIndexed(localSongs) { index, song ->
+                    itemsIndexed(localSongs, key = { _, s -> s.fileName }) { index, song ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
@@ -290,15 +243,11 @@ fun UploadSongsScreen(
                                     val songs = localSongs.map { it.toSong() }
                                     onPlaySong(songs[index], songs)
                                 }
-                                .padding(horizontal = 16.dp, vertical = 10.dp)
+                                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp)
                         ) {
-                            // Track number
-                            Text(
-                                text = "${index + 1}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.width(28.dp)
-                            )
+                            CoverThumb(song.coverPath, size = 44.dp)
+
+                            Spacer(modifier = Modifier.width(12.dp))
 
                             // Song info
                             Column(modifier = Modifier.weight(1f)) {
@@ -311,7 +260,8 @@ fun UploadSongsScreen(
                                     overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
-                                    text = song.artist,
+                                    text = if (song.coverArtists.isBlank()) song.artist
+                                    else "${song.artist} • ${song.coverArtists}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
@@ -319,12 +269,21 @@ fun UploadSongsScreen(
                                 )
                             }
 
-                            // Delete button
+                            IconButton(onClick = { editing = song }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = stringResource(R.string.upload_content_description_edit),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
                             IconButton(
                                 onClick = {
-                                    val file = File(context.filesDir, "local_music/${song.fileName}")
-                                    file.delete()
-                                    localSongs.removeAt(index)
+                                    localSongs.remove(song)
+                                    scope.launch(Dispatchers.IO) {
+                                        LocalMusicStore.delete(appContext, song.fileName)
+                                    }
                                 }
                             ) {
                                 Icon(
@@ -336,6 +295,8 @@ fun UploadSongsScreen(
                             }
                         }
                     }
+
+                    item { Spacer(modifier = Modifier.height(88.dp)) }
                 }
             }
         }
@@ -353,6 +314,145 @@ fun UploadSongsScreen(
             }
         }
     }
+
+    editing?.let { song ->
+        EditLocalSongDialog(
+            song = song,
+            onDismiss = { editing = null },
+            onSave = { title, artist, coverArtists, newCover, removeCover ->
+                editing = null
+                scope.launch {
+                    val updated = withContext(Dispatchers.IO) {
+                        LocalMusicStore.saveDetails(
+                            appContext, song.fileName, title, artist, coverArtists, newCover, removeCover
+                        )
+                    } ?: return@launch
+                    val i = localSongs.indexOfFirst { it.fileName == song.fileName }
+                    if (i >= 0) localSongs[i] = updated
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun CoverThumb(path: String?, size: Dp, model: Any? = null) {
+    val shape = RoundedCornerShape(6.dp)
+    val data = model ?: path?.let { File(it) }
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        if (data != null) {
+            AsyncImage(
+                model = data,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.MusicNote,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(size / 2)
+            )
+        }
+    }
+}
+
+@Composable
+private fun EditLocalSongDialog(
+    song: LocalSong,
+    onDismiss: () -> Unit,
+    onSave: (title: String, artist: String, coverArtists: String, newCover: Uri?, removeCover: Boolean) -> Unit
+) {
+    var title by remember { mutableStateOf(song.title) }
+    var artist by remember { mutableStateOf(song.artist) }
+    var coverArtists by remember { mutableStateOf(song.coverArtists) }
+    var newCover by remember { mutableStateOf<Uri?>(null) }
+    var removeCover by remember { mutableStateOf(false) }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            newCover = uri
+            removeCover = false
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.upload_edit_title)) },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CoverThumb(
+                        path = if (removeCover) null else song.coverPath,
+                        size = 72.dp,
+                        model = newCover
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        TextButton(onClick = {
+                            imagePicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }) {
+                            Text(stringResource(R.string.upload_edit_change_cover))
+                        }
+                        val hasCustomCover = song.coverPath != null &&
+                            !song.coverPath.endsWith(LocalMusicStore.EMBEDDED_COVER_SUFFIX)
+                        if (newCover != null || (hasCustomCover && !removeCover)) {
+                            TextButton(onClick = {
+                                newCover = null
+                                removeCover = hasCustomCover
+                            }) {
+                                Text(stringResource(R.string.upload_edit_reset_cover))
+                            }
+                        }
+                    }
+                }
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(stringResource(R.string.upload_edit_field_title)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = artist,
+                    onValueChange = { artist = it },
+                    label = { Text(stringResource(R.string.upload_edit_field_artist)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = coverArtists,
+                    onValueChange = { coverArtists = it },
+                    label = { Text(stringResource(R.string.upload_edit_field_cover_artist)) },
+                    placeholder = { Text("Neuro-sama") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(title, artist, coverArtists, newCover, removeCover) }) {
+                Text(stringResource(R.string.upload_edit_save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.upload_edit_cancel))
+            }
+        }
+    )
 }
 
 private fun LocalSong.toSong(): Song {
@@ -360,7 +460,9 @@ private fun LocalSong.toSong(): Song {
         id = fileName,
         title = title,
         artist = artist,
-        coverUrl = "",
-        audioUrl = uri.toString()
+        coverUrl = coverPath?.let { Uri.fromFile(File(it)).toString() } ?: "",
+        audioUrl = uri.toString(),
+        singer = Singer.fromCoverArtists(coverArtists),
+        coverArtists = coverArtists
     )
 }

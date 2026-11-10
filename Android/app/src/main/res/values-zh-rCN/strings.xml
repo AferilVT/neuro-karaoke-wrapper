@@ -452,6 +452,15 @@
     <string name="upload_label_song_count">%1$d 首歌曲</string>
     <string name="upload_content_description_remove">移除</string>
     <string name="upload_content_description_import">导入音乐</string>
+    <string name="upload_content_description_edit">编辑信息</string>
+    <string name="upload_edit_title">编辑信息</string>
+    <string name="upload_edit_change_cover">更换封面</string>
+    <string name="upload_edit_reset_cover">重置封面</string>
+    <string name="upload_edit_field_title">标题</string>
+    <string name="upload_edit_field_artist">原唱</string>
+    <string name="upload_edit_field_cover_artist">翻唱</string>
+    <string name="upload_edit_save">保存</string>
+    <string name="upload_edit_cancel">取消</string>
 
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">添加到播放列表</string>

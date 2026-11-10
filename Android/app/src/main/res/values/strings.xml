@@ -456,6 +456,15 @@
     <string name="upload_label_song_count">%1$d songs</string>
     <string name="upload_content_description_remove">Remove</string>
     <string name="upload_content_description_import">Import music</string>
+    <string name="upload_content_description_edit">Edit details</string>
+    <string name="upload_edit_title">Edit details</string>
+    <string name="upload_edit_change_cover">Change cover</string>
+    <string name="upload_edit_reset_cover">Reset cover</string>
+    <string name="upload_edit_field_title">Title</string>
+    <string name="upload_edit_field_artist">Original artist</string>
+    <string name="upload_edit_field_cover_artist">Cover artist</string>
+    <string name="upload_edit_save">Save</string>
+    <string name="upload_edit_cancel">Cancel</string>
 
     <!-- Song list item menu -->
     <string name="song_menu_add_to_playlist">Add to Playlist</string>
