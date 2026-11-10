@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.ui.screens.library
 
+import com.soul.neurokaraoke.ui.components.uniqueLazyKeys
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -179,7 +180,8 @@ fun DownloadsScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                itemsIndexed(downloads, key = { _, dl -> dl.id }) { index, download ->
+                val downloadKeys = uniqueLazyKeys(downloads) { it.id }
+                itemsIndexed(downloads, key = { i, _ -> downloadKeys[i] }) { index, download ->
                     SongListItem(
                         song = download.toSong(),
                         index = index + 1,

@@ -231,8 +231,10 @@ fun MainScreen(
         }
     }
 
-    // Repair favorites saved from the radio by older builds once the catalog is available
-    LaunchedEffect(playerState.allSongs) {
+    // Repair favorites saved from the radio by older builds once the catalog is available.
+    // Also keyed on favorites so entries arriving after the catalog (e.g. server sync) get fixed;
+    // repairFromCatalog is a no-op when nothing is missing audio.
+    LaunchedEffect(playerState.allSongs, favoriteSongs) {
         favoritesRepository.repairFromCatalog(playerState.allSongs)
     }
 

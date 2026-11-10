@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.ui.screens.library
 
+import com.soul.neurokaraoke.ui.components.uniqueLazyKeys
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,7 +84,8 @@ fun RecentlyPlayedScreen(
                     }
                 }
             }
-            itemsIndexed(songs, key = { _, song -> song.id }) { index, song ->
+            val songKeys = uniqueLazyKeys(songs) { it.id }
+            itemsIndexed(songs, key = { i, _ -> songKeys[i] }) { index, song ->
                 SimpleSongListItem(
                     song = song,
                     index = index + 1,

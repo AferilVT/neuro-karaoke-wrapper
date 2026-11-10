@@ -1,5 +1,6 @@
 package com.soul.neurokaraoke.ui.screens.library
 
+import com.soul.neurokaraoke.ui.components.uniqueLazyKeys
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -163,7 +164,8 @@ fun FavoritesScreen(
             }
 
             // Song list
-            itemsIndexed(favoriteSongs, key = { _, song -> song.id }) { index, song ->
+            val songKeys = uniqueLazyKeys(favoriteSongs) { it.id }
+            itemsIndexed(favoriteSongs, key = { i, _ -> songKeys[i] }) { index, song ->
                 SimpleSongListItem(
                     song = song,
                     index = index + 1,

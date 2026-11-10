@@ -48,7 +48,7 @@ class FavoritesRepository(context: Context) {
                 for (i in 0 until jsonArray.length()) {
                     songs.add(parseSong(jsonArray.getJSONObject(i)).withoutRadioStream())
                 }
-                _favorites.value = songs.distinctBy { it.id }
+                _favorites.value = songs.deduped()
             } catch (e: Exception) {
                 if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
                 _favorites.value = emptyList()
@@ -73,7 +73,7 @@ class FavoritesRepository(context: Context) {
         } else {
             current.add(0, song)
         }
-        _favorites.value = current
+        _favorites.value = current.deduped()
         saveFavorites()
 
         // Sync to server in background if logged in
@@ -119,7 +119,7 @@ class FavoritesRepository(context: Context) {
             if (song.audioUrl.isBlank()) byId[song.id] ?: song else song
         }
         if (repaired != current) {
-            _favorites.value = repaired
+            _favorites.value = repaired.deduped()
             saveFavorites()
         }
     }
@@ -127,6 +127,23 @@ class FavoritesRepository(context: Context) {
     fun isFavorite(songId: String, audioUrl: String = ""): Boolean {
         return _favorites.value.any {
             it.id == songId || (audioUrl.isNotBlank() && it.matchesByAudioUrl(audioUrl))
+        }
+    }
+
+    /**
+     * Drop repeated songs (same id, or same audio file under different ids). The server can
+     * return the same song more than once, and the favorites list uses song.id as its lazy-list
+     * key — a duplicate key crashes Compose as soon as the Library tab opens.
+     */
+    private fun List<Song>.deduped(): List<Song> {
+        val seenIds = HashSet<String>()
+        val seenAudio = HashSet<String>()
+        return filter { song ->
+            val audio = normalizeAudioUrl(song.audioUrl)
+            if (song.id in seenIds || (audio.isNotBlank() && audio in seenAudio)) return@filter false
+            seenIds += song.id
+            if (audio.isNotBlank()) seenAudio += audio
+            true
         }
     }
 
@@ -163,7 +180,7 @@ class FavoritesRepository(context: Context) {
                         val localUrl = normalizeAudioUrl(local.audioUrl)
                         local.id !in serverIds && (localUrl.isBlank() || localUrl !in serverAudioUrls)
                     }
-                    _favorites.value = serverSongs + localOnly
+                    _favorites.value = (serverSongs + localOnly).deduped()
                     saveFavorites()
                     Log.d("FavoritesRepo", "Synced ${serverSongs.size} favorites from server")
                 } else {

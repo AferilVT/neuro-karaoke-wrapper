@@ -1,5 +1,7 @@
 ﻿package com.soul.neurokaraoke.ui.screens.library
 
+import com.soul.neurokaraoke.ui.components.uniqueLazyKeys
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,7 +23,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -219,7 +220,8 @@ fun PlaylistsScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(filteredPlaylists, key = { it.id }) { playlist ->
+                val playlistKeys = uniqueLazyKeys(filteredPlaylists) { it.id }
+                itemsIndexed(filteredPlaylists, key = { i, _ -> playlistKeys[i] }) { _, playlist ->
                     UserPlaylistCard(
                         playlist = playlist,
                         isServerPlaylist = !playlist.id.startsWith("user_"),
