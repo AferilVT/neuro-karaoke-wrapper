@@ -98,7 +98,14 @@ class SyncApi {
                 conn.disconnect()
                 Log.d(TAG, "Favorites response: ${response.take(500)}")
                 val songs = parseSongsResponse(response)
-                Result.success(songs)
+                // The server list now replaces local favorites, so an unreadable response
+                // must not look like "no favorites" (that would wipe the user's list).
+                val rawCount = rawItemCount(response)
+                if (rawCount == null || (rawCount > 0 && songs.isEmpty())) {
+                    Result.failure(Exception("Unrecognized favorites response"))
+                } else {
+                    Result.success(songs)
+                }
             } else {
                 val errorBody = conn.errorStream?.bufferedReader()?.readText() ?: "Unknown error"
                 conn.disconnect()
@@ -458,6 +465,24 @@ class SyncApi {
      * Handles both array format and object-with-array format.
      * Adapts to the song format used by trending/setlist endpoints.
      */
+    /** Number of entries in a list response, or null when its shape isn't recognized. */
+    private fun rawItemCount(response: String): Int? = try {
+        val trimmed = response.trimStart()
+        when {
+            trimmed.startsWith("[") -> JSONArray(response).length()
+            trimmed.startsWith("{") -> {
+                val obj = JSONObject(response)
+                (obj.optJSONArray("songs")
+                    ?: obj.optJSONArray("items")
+                    ?: obj.optJSONArray("favorites")
+                    ?: obj.optJSONArray("data"))?.length()
+            }
+            else -> null
+        }
+    } catch (e: Exception) {
+        null
+    }
+
     private fun parseSongsResponse(response: String): List<Song> {
         val songs = mutableListOf<Song>()
         try {

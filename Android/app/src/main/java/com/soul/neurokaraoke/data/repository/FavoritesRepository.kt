@@ -15,9 +15,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Favorites, kept in sync with the user's account (issue #25).
+ *
+ * Signed in, the server's list is the source of truth: each sync replaces the local list
+ * with the server's, so removals and reorders made on the website or another device show
+ * up here. Changes made on this device are queued ([PendingFavorite], persisted) and sent
+ * before each sync, so a failed or offline toggle is retried instead of lost.
+ */
 class FavoritesRepository(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(
@@ -29,6 +39,11 @@ class FavoritesRepository(context: Context) {
     private val karaokeApi = NeuroKaraokeApi()
     private val syncScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    /** Serializes server round-trips so a toggle's push and a full sync don't interleave. */
+    private val syncMutex = Mutex()
+    private val pendingLock = Any()
+    private var pending: List<PendingFavorite> = emptyList()
+
     private val _favorites = MutableStateFlow<List<Song>>(emptyList())
     val favorites: StateFlow<List<Song>> = _favorites.asStateFlow()
 
@@ -37,6 +52,7 @@ class FavoritesRepository(context: Context) {
 
     init {
         loadFavorites()
+        loadPending()
     }
 
     private fun loadFavorites() {
@@ -64,6 +80,47 @@ class FavoritesRepository(context: Context) {
         prefs.edit().putString(KEY_FAVORITES, jsonArray.toString()).apply()
     }
 
+    private fun loadPending() {
+        val json = prefs.getString(KEY_PENDING, null) ?: return
+        try {
+            val arr = JSONArray(json)
+            val list = mutableListOf<PendingFavorite>()
+            for (i in 0 until arr.length()) {
+                val o = arr.getJSONObject(i)
+                list += PendingFavorite(
+                    song = parseSong(o.getJSONObject("song")),
+                    add = o.getBoolean("add"),
+                    attempts = o.optInt("attempts", 0)
+                )
+            }
+            synchronized(pendingLock) { pending = list }
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not read pending favorite changes", e)
+        }
+    }
+
+    /** Must be called with [pendingLock] held. */
+    private fun savePendingLocked() {
+        val arr = JSONArray()
+        for (p in pending) {
+            arr.put(JSONObject().apply {
+                put("song", songToJson(p.song))
+                put("add", p.add)
+                put("attempts", p.attempts)
+            })
+        }
+        prefs.edit().putString(KEY_PENDING, arr.toString()).apply()
+    }
+
+    private fun updatePending(transform: (List<PendingFavorite>) -> List<PendingFavorite>) {
+        synchronized(pendingLock) {
+            pending = transform(pending)
+            savePendingLocked()
+        }
+    }
+
+    private fun pendingSnapshot(): List<PendingFavorite> = synchronized(pendingLock) { pending }
+
     fun toggleFavorite(song: Song, accessToken: String? = null) {
         val current = _favorites.value.toMutableList()
         val existing = current.indexOfFirst { it.id == song.id || it.matchesByAudioUrl(song) }
@@ -71,34 +128,68 @@ class FavoritesRepository(context: Context) {
         if (isRemoving) {
             current.removeAt(existing)
         } else {
-            current.add(0, song)
+            // New favorites go to the bottom, like on the website
+            current.add(song)
         }
         _favorites.value = current.deduped()
         saveFavorites()
 
-        // Sync to server in background if logged in
-        if (accessToken != null && song.id.isNotBlank()) {
-            syncScope.launch {
-                // Song ID should be a server UUID now; if it's still a hash fallback, resolve it
-                val serverSongId = if (song.id.contains("-")) {
-                    song.id // Already a UUID
-                } else if (song.audioUrl.isNotBlank()) {
-                    karaokeApi.findSongIdByAudioUrl(song.audioUrl)
-                } else null
+        // Queue the change even when signed out, so it reaches the account after sign-in
+        if (song.id.isNotBlank()) {
+            updatePending { FavoritesSync.recordToggle(it, song, add = !isRemoving) }
+        }
+        if (accessToken != null) {
+            syncScope.launch { syncMutex.withLock { pushPending(accessToken) } }
+        }
+    }
 
-                if (serverSongId.isNullOrBlank()) {
-                    Log.w("FavoritesRepo", "Could not resolve server song ID for: ${song.title}")
-                    return@launch
+    /**
+     * Send queued changes to the server. Changes that fail for network/server reasons stay
+     * queued for the next sync. Must be called with [syncMutex] held.
+     */
+    private suspend fun pushPending(accessToken: String) {
+        for (change in pendingSnapshot()) {
+            val song = change.song
+            val serverSongId = resolveServerId(song)
+            if (serverSongId.isNullOrBlank()) {
+                val attempts = change.attempts + 1
+                Log.w(TAG, "Could not resolve server song ID for: ${song.title} (attempt $attempts)")
+                updatePending { list ->
+                    list.mapNotNull {
+                        if (it !== change) it
+                        else if (attempts >= FavoritesSync.MAX_RESOLVE_ATTEMPTS) null
+                        else it.copy(attempts = attempts)
+                    }
                 }
+                continue
+            }
 
-                Log.d("FavoritesRepo", "Syncing favorite: ${song.title} (serverId=$serverSongId, removing=$isRemoving)")
-                if (isRemoving) {
-                    syncApi.removeFavorite(accessToken, serverSongId)
-                } else {
-                    syncApi.addFavorite(accessToken, serverSongId)
+            Log.d(TAG, "Syncing favorite: ${song.title} (serverId=$serverSongId, add=${change.add})")
+            val result = if (change.add) {
+                syncApi.addFavorite(accessToken, serverSongId)
+            } else {
+                syncApi.removeFavorite(accessToken, serverSongId)
+            }
+            val code = result.exceptionOrNull()?.message
+                ?.removePrefix("HTTP ")?.trim()?.toIntOrNull()
+            when {
+                result.isSuccess -> updatePending { list -> list.filterNot { it === change } }
+                code == 401 || code == 403 -> return // Session expired: keep everything for later
+                code != null && code in 400..499 && code != 408 && code != 429 -> {
+                    // The server rejected this change for good (e.g. 404 removing a song that
+                    // isn't favorited). Drop it; the next fetch shows the real state.
+                    Log.w(TAG, "Dropping favorite change for ${song.title}: HTTP $code")
+                    updatePending { list -> list.filterNot { it === change } }
                 }
+                else -> Unit // Network or server error: retry on the next sync
             }
         }
+    }
+
+    private suspend fun resolveServerId(song: Song): String? = when {
+        song.id.contains("-") -> song.id // Already a server UUID
+        song.audioUrl.isNotBlank() -> karaokeApi.findSongIdByAudioUrl(song.audioUrl)
+        else -> null
     }
 
     /**
@@ -135,17 +226,7 @@ class FavoritesRepository(context: Context) {
      * return the same song more than once, and the favorites list uses song.id as its lazy-list
      * key — a duplicate key crashes Compose as soon as the Library tab opens.
      */
-    private fun List<Song>.deduped(): List<Song> {
-        val seenIds = HashSet<String>()
-        val seenAudio = HashSet<String>()
-        return filter { song ->
-            val audio = normalizeAudioUrl(song.audioUrl)
-            if (song.id in seenIds || (audio.isNotBlank() && audio in seenAudio)) return@filter false
-            seenIds += song.id
-            if (audio.isNotBlank()) seenAudio += audio
-            true
-        }
-    }
+    private fun List<Song>.deduped(): List<Song> = FavoritesSync.dedupe(this)
 
     /** Match by normalized audioUrl as fallback for ID mismatches */
     private fun Song.matchesByAudioUrl(other: Song): Boolean {
@@ -158,36 +239,41 @@ class FavoritesRepository(context: Context) {
                 normalizeAudioUrl(audioUrl) == normalizeAudioUrl(otherUrl)
     }
 
-    private fun normalizeAudioUrl(url: String): String {
-        return url
-            .removePrefix("https://storage.neurokaraoke.com/")
-            .removePrefix("http://storage.neurokaraoke.com/")
-    }
+    private fun normalizeAudioUrl(url: String): String = FavoritesSync.normalizeAudioUrl(url)
 
     /**
-     * Sync favorites from the server. Merges server data with local data.
-     * Server favorites take precedence for songs that exist on server.
+     * Sync with the server: send queued changes, then replace the local list with the
+     * server's (keeping changes still queued and device-only songs on top).
      */
     suspend fun syncFromServer(accessToken: String) {
         _isSyncing.value = true
         try {
-            syncApi.fetchFavorites(accessToken).onSuccess { serverSongs ->
-                if (serverSongs.isNotEmpty()) {
-                    // Merge: keep server songs + any local-only songs (deduplicate by audioUrl)
-                    val serverAudioUrls = serverSongs.map { normalizeAudioUrl(it.audioUrl) }.filter { it.isNotBlank() }.toSet()
-                    val serverIds = serverSongs.map { it.id }.toSet()
-                    val localOnly = _favorites.value.filter { local ->
-                        val localUrl = normalizeAudioUrl(local.audioUrl)
-                        local.id !in serverIds && (localUrl.isBlank() || localUrl !in serverAudioUrls)
+            syncMutex.withLock {
+                if (!prefs.getBoolean(KEY_MIGRATED, false)) {
+                    // Older builds kept favorites the server never got; queue them once so
+                    // the first server-wins sync uploads them instead of dropping them.
+                    val server = syncApi.fetchFavorites(accessToken).getOrElse { e ->
+                        Log.e(TAG, "Sync favorites failed: ${e.message}")
+                        return
                     }
-                    _favorites.value = (serverSongs + localOnly).deduped()
-                    saveFavorites()
-                    Log.d("FavoritesRepo", "Synced ${serverSongs.size} favorites from server")
-                } else {
-                    Log.d("FavoritesRepo", "Server returned empty favorites")
+                    val local = _favorites.value
+                    updatePending { FavoritesSync.localOnlyAsPending(server, local, it) }
+                    prefs.edit().putBoolean(KEY_MIGRATED, true).apply()
                 }
-            }.onFailure { e ->
-                Log.e("FavoritesRepo", "Sync favorites failed: ${e.message}")
+
+                pushPending(accessToken)
+
+                syncApi.fetchFavorites(accessToken).onSuccess { serverSongs ->
+                    _favorites.value = FavoritesSync.merge(
+                        server = serverSongs.map { it.withoutRadioStream() },
+                        local = _favorites.value,
+                        pending = pendingSnapshot()
+                    )
+                    saveFavorites()
+                    Log.d(TAG, "Synced ${serverSongs.size} favorites from server, ${pendingSnapshot().size} pending")
+                }.onFailure { e ->
+                    Log.e(TAG, "Sync favorites failed: ${e.message}")
+                }
             }
         } finally {
             _isSyncing.value = false
@@ -227,7 +313,11 @@ class FavoritesRepository(context: Context) {
     }
 
     companion object {
+        private const val TAG = "FavoritesRepo"
         private const val PREFS_NAME = "neurokaraoke_favorites"
         private const val KEY_FAVORITES = "favorites"
+        private const val KEY_PENDING = "pending_changes"
+        /** Set once the pre-#25 local-only favorites have been queued for upload. */
+        private const val KEY_MIGRATED = "server_truth_migrated"
     }
 }
