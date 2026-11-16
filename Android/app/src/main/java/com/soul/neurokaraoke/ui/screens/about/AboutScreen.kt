@@ -322,6 +322,29 @@ private fun CreditsContent() {
             )
         }
 
+        // Open Source & Licensing (GPLv3 attribution)
+        SectionCard(title = "Open Source & Licenses") {
+            Text(
+                text = "Neuro Karaoke is free software, licensed under the GNU General Public License v3.0. The complete source code is available at:",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "github.com/AferilVT/neuro-karaoke-wrapper",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/AferilVT/neuro-karaoke-wrapper"))
+                    context.startActivity(intent)
+                }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            CheckPoint(text = "Neurolings mascot packs — from NeurolingsCE by Luda, licensed under the GNU GPL v3.0")
+            CheckPoint(text = "Neurolings animation engine — ported from Shimeji-ee (by Kilkakon; original Shimeji by Yuki Yamada), used under its permissive BSD/zlib-style license")
+        }
+
         // View Full Credits Link
         SectionCard(title = "Full Credits") {
             Text(

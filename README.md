@@ -28,11 +28,14 @@ Check [wiki](https://github.com/AferilVT/neuro-karaoke-wrapper/wiki) for API doc
 <details>
   <summary>Click to expand!</summary>
   <ul>
+    <li><strong>Android TV</strong> — Full 10-foot Leanback UI: D-pad navigation, immersive now-playing, TV-native browse grids</li>
     <li><strong>Browse Setlists &amp; Playlists</strong> — Grid view with 2x2 cover previews, detailed playlist screens</li>
     <li><strong>Search All Songs</strong> — Search across all playlists with real-time results</li>
     <li><strong>Media Playback</strong> — Background playback with lock screen controls and media notifications</li>
     <li><strong>Queue Management</strong> — View and interact with the playback queue</li>
     <li><strong>Synced Lyrics</strong> — Auto-scrolling lyrics from NeuroKaraoke API with lrclib.net fallback</li>
+    <li><strong>Radio</strong> — Live 24/7 Neuro station with synced lyrics and metadata</li>
+    <li><strong>Video Gallery</strong> — Watchalongs &amp; Karaoke videos streamed natively over HLS</li>
     <li><strong>Audio Caching</strong> — 500MB disk cache for smooth offline-capable playback</li>
     <li><strong>Equalizer &amp; Bass Boost</strong> — 5-band EQ with presets (Normal, Bass, Rock, Pop, Jazz, Classical)</li>
     <li><strong>User Playlists</strong> — Create custom playlists, add/remove songs, play all or shuffle</li>
@@ -43,7 +46,8 @@ Check [wiki](https://github.com/AferilVT/neuro-karaoke-wrapper/wiki) for API doc
     <li><strong>Download Notifications</strong> — Progress and completion notifications for song downloads</li>
     <li><strong>Playback Persistence</strong> — Remembers last played song and position across app restarts</li>
     <li><strong>Theme Support</strong> — Neuro (cyan), Evil (pink), Duet (purple), and Auto (switches based on current song)</li>
-    <li><strong>Discord Sign-in</strong> — OAuth2 authentication with token exchange</li>
+    <li><strong>Sign-in</strong> — Username &amp; password or Discord OAuth2, on both phone and TV</li>
+    <li><strong>Neurolings</strong> — Shimeji-style desktop-pet mascots on TV (mascot packs from <a href="THIRD_PARTY_NOTICES.md">NeurolingsCE, GPL-3.0</a>)</li>
   </ul>
 </details>
 
@@ -158,4 +162,9 @@ yarn build:mac
 - **Coroutines & Flow** - Asynchronous programming
 - **Android AudioFX** - Equalizer and BassBoost effects
 ## License
-MIT
+
+Neuro Karaoke is licensed under the **GNU General Public License v3.0** — see
+[LICENSE](LICENSE). It bundles GPL-3.0 components (the NeurolingsCE mascot packs
+by Luda, and a Neurolings animation engine ported from Shimeji-ee), so the
+project as a whole is GPL-3.0. Third-party attributions are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

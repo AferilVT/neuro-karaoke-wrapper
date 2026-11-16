@@ -34,6 +34,17 @@ class LyricsApi {
          * counts match (the server contract); otherwise returns lines unchanged.
          * Android-free so it can be unit tested on the JVM.
          */
+        /**
+         * The NeuroKaraoke song UUID embedded in a local [Song.id], or null if the id
+         * isn't a server id. Radio songs carry it as "radio_<uuid>"; catalog/favourite
+         * songs carry the bare UUID. Lets lyrics resolve by id without an audioUrl match
+         * (radio's audioUrl is the shared stream URL, which never matches a song).
+         */
+        fun neuroSongIdFromLocalId(localId: String): String? {
+            val id = localId.removePrefix("radio_")
+            return id.takeIf { it.length == 36 && it.count { c -> c == '-' } == 4 }
+        }
+
         fun mergeTranslations(lines: List<LyricLine>, translations: List<String>): List<LyricLine> {
             if (translations.size != lines.size) return lines
             return lines.mapIndexed { i, line ->

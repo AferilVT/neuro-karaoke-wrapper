@@ -20,6 +20,14 @@
         android:name="android.software.car.templates_host"
         android:required="false" />
 
+    <!-- Android TV: run on TV without requiring touch, appear in the TV launcher -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
     <application
         android:name=".NeuroKaraokeApp"
         android:allowBackup="true"
@@ -30,6 +38,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/neuro_round"
         android:supportsRtl="true"
+        android:banner="@drawable/tv_banner"
         android:theme="@style/Theme.NeuroKaraoke">
 
         <!-- Car App Library minimum API level. Level 8 is required for the
@@ -66,10 +75,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
 
-            <!-- Deep link for Discord auth callback -->
-            <intent-filter android:autoVerify="true">
+            <!-- Deep link for Discord auth callback. autoVerify is intentionally absent:
+                 App Links verification only applies to http(s) schemes, not custom ones. -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />

@@ -1,5 +1,6 @@
 import { Tray, Menu, app, BrowserWindow, nativeImage, NativeImage } from 'electron';
 import { ChangeSiteFunction, CloseToTrayFunction } from './main';
+import { WebContentsView } from 'electron/main';
 
 /**
  * Manages system tray icon and menu
@@ -83,6 +84,10 @@ export class TrayManager {
     }
 
     const contextMenu = Menu.buildFromTemplate([
+      {
+        label: 'Play/Pause',
+        click: () => this.playPause()
+      },
       {
         label: 'Open',
         click: () => this.showWindow()
@@ -273,14 +278,22 @@ export class TrayManager {
    */
   pausePlayback() {
     if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
-    this.mainWindow.webContents.executeJavaScript(`
-      (function() {
-        var media = document.querySelector('audio, video');
-        if (media && !media.paused) {
-          media.pause();
-        }
-      })();
-    `).catch(err => console.error('Sleep timer pause failed:', err));
+    (this.mainWindow.contentView.children[0] as WebContentsView).webContents
+      .executeJavaScript(`
+        (function() { console.log('abc');
+          var media = document.querySelector('audio, video');
+          if (media && !media.paused) {
+            media.pause();
+          }
+        })();
+      `).catch(err => `tray-manager::pausePlayback::executeJavaScript [ERROR]: ${err}`);
+  }
+
+  playPause() {
+      if (!this.mainWindow || this.mainWindow.isDestroyed()) return;
+      (this.mainWindow.contentView.children[0] as WebContentsView).webContents
+        .executeJavaScript(`document.getElementsByClassName('play-btn')[0].click()`)
+        .catch(err => `tray-manager::playPause::executeJavaScript [ERROR]: ${err}`);
   }
 
   /**

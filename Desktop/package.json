@@ -1,7 +1,7 @@
 {
   "name": "neuro-karaoke-player",
   "productName": "Neuro Karaoke Player",
-  "version": "1.6.0",
+  "version": "1.8.5",
   "description": "Desktop wrapper for neurokaraoke.com with media controls and tray support",
   "homepage": "https://neurokaraoke.com",
   "main": "dist/tsc/main.js",
@@ -9,7 +9,7 @@
     "name": "aferil",
     "email": "aferil@aferil.cc"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "scripts": {
     "build:pre": "yarn tsc",
     "start": "yarn build:pre && yarn electron .",

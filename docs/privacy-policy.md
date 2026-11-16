@@ -7,7 +7,7 @@ title: Privacy Policy — Neuro Karaoke
 **Effective date:** 28 July 2026
 **App:** Neuro Karaoke (`com.neurokaraoke`)
 **Developer:** aferil
-**Contact:** aferil@aferil.cc
+**Contact:** aferil.official@gmail.com
 
 Neuro Karaoke is an unofficial companion app for the website **neurokaraoke.com**. This policy explains what information the app handles and how. Please read it alongside the privacy practices of neurokaraoke.com, which is operated by the website's creator and is a separate service.
 

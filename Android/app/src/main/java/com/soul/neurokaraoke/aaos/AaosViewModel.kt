@@ -75,8 +75,9 @@ class AaosViewModel(app: Application) : AndroidViewModel(app) {
                 _setlists.value = PlaylistCatalog(context).getPlaylists()
 
                 // Daily mix: deterministic shuffle by today's date so it stays
-                // stable across screen reopens within the same day.
-                val seed = java.time.LocalDate.now().toEpochDay()
+                // stable across screen reopens within the same day. Epoch-day math
+                // (no java.time) keeps it API 24-safe.
+                val seed = System.currentTimeMillis() / 86_400_000L
                 _dailyMix.value = _songs.value.shuffled(java.util.Random(seed)).take(15)
 
                 // Trending: server-side weekly chart

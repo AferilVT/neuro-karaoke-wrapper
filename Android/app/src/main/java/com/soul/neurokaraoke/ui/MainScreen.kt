@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.soul.neurokaraoke.ui.components.UsernameLoginDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +63,7 @@ fun MainScreen(
     val downloadProgress by downloadViewModel.downloadProgress.collectAsState()
     var showFullPlayer by remember { mutableStateOf(false) }
     var showPairCarDialog by remember { mutableStateOf(false) }
+    var showUsernameLogin by remember { mutableStateOf(false) }
 
     val playerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
@@ -112,7 +114,10 @@ fun MainScreen(
             NeuroTopBar(
                 isLoggedIn = authState.isLoggedIn,
                 avatarUrl = authState.user?.avatarUrl,
-                onProfileClick = { context.startActivity(authViewModel.getSignInIntent()) },
+                onProfileClick = {
+                    if (authState.isLoggedIn) context.startActivity(authViewModel.getSignInIntent())
+                    else showUsernameLogin = true
+                },
                 onPairCar = { showPairCarDialog = true },
                 onSignOut = { authViewModel.logout() }
             )
@@ -310,5 +315,10 @@ fun MainScreen(
         } else {
             showPairCarDialog = false
         }
+    }
+
+    // Sign-in card (username/password + Discord), styled like the website.
+    if (showUsernameLogin) {
+        UsernameLoginDialog(authViewModel = authViewModel, onDismiss = { showUsernameLogin = false })
     }
 }

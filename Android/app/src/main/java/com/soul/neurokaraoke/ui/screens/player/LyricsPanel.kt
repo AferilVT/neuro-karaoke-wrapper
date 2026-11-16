@@ -79,10 +79,14 @@ fun LyricsPanel(
         } else if (cached?.plainLyrics?.isNotBlank() == true) {
             lyricLines = lyricsApi.parsePlainLyrics(cached.plainLyrics!!); isSynced = false
         }
-        if (song.audioUrl.isNotBlank()) {
-            val songId = neuroApi.findSongIdByAudioUrl(song.audioUrl)
+        if (lyricLines.isEmpty()) {
+            // Prefer the song's own NeuroKaraoke id (radio + catalog songs carry the real
+            // UUID). Radio's audioUrl is the shared stream URL and never matches a song, so
+            // audioUrl lookup is only the fallback for songs without a usable id.
+            val songId = LyricsApi.neuroSongIdFromLocalId(song.id)
+                ?: if (song.audioUrl.isNotBlank()) neuroApi.findSongIdByAudioUrl(song.audioUrl) else null
             resolvedSongId = songId
-            if (songId != null && lyricLines.isEmpty()) {
+            if (songId != null) {
                 neuroApi.fetchSongLyrics(songId).onSuccess { lines ->
                     if (lines.isNotEmpty()) { lyricLines = lines; isSynced = true }
                 }

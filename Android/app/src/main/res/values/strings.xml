@@ -19,7 +19,7 @@
     <!-- Top bar / Profile -->
     <string name="topbar_content_description_logo">NeuroKaraoke Logo</string>
     <string name="topbar_content_description_profile">Profile</string>
-    <string name="topbar_menu_pair_car">Pair Car</string>
+    <string name="topbar_menu_pair_car">Pair a device</string>
     <string name="topbar_menu_sign_out">Sign out</string>
 
     <!-- Mini player -->
@@ -277,8 +277,8 @@
     <string name="radio_covered_by">%1$s  •  covered by %2$s</string>
 
     <!-- Pair car dialog -->
-    <string name="pair_car_title">Pair Car</string>
-    <string name="pair_car_instruction">Enter this 6-character code on your car\'s screen.</string>
+    <string name="pair_car_title">Pair a device</string>
+    <string name="pair_car_instruction">Enter this 6-character code on your car or TV screen.</string>
     <string name="pair_car_code_expired">Code expired</string>
     <string name="pair_car_generating">Generating…</string>
     <string name="pair_car_error">Error: %1$s</string>
@@ -342,7 +342,7 @@
     <string name="aaos_pairing_title">Pair with phone</string>
     <string name="aaos_pairing_content_description_back">Back</string>
     <string name="aaos_pairing_content_description_backspace">Backspace</string>
-    <string name="aaos_pairing_step_1">1. On your phone: tap Profile → Pair Car</string>
+    <string name="aaos_pairing_step_1">1. On your phone: tap Profile → Pair a device</string>
     <string name="aaos_pairing_step_2">2. A 6-character code will appear on your phone</string>
     <string name="aaos_pairing_step_3">3. Enter that code with the keypad</string>
 

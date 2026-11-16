@@ -7,7 +7,9 @@ import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.C
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
@@ -273,6 +275,7 @@ class PlayerViewModel(
         }
     }
 
+    @OptIn(UnstableApi::class)
     private fun initializeMediaController() {
         val context = getApplication<Application>()
         val sessionToken = SessionToken(
@@ -846,6 +849,11 @@ class PlayerViewModel(
     /**
      * Toggle play/pause
      */
+    /** Pause playback if currently playing (e.g. when a fullscreen video takes over audio). */
+    fun pausePlayback() {
+        mediaController?.let { if (it.isPlaying) it.pause() }
+    }
+
     fun togglePlayPause() {
         // Cold-start queue restore still running — finish it first so the right queue plays
         queueRestoreJob?.takeIf { it.isActive }?.let { job ->

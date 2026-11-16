@@ -28,6 +28,7 @@ import com.soul.neurokaraoke.ui.MainScreen
 import com.soul.neurokaraoke.ui.components.UpdateDialog
 import com.soul.neurokaraoke.ui.screens.setup.SetupScreen
 import com.soul.neurokaraoke.ui.theme.NeuroKaraokeTheme
+import com.soul.neurokaraoke.ui.tv.isTelevision
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 import com.soul.neurokaraoke.viewmodel.UpdateViewModel
@@ -97,6 +98,8 @@ class MainActivity : ComponentActivity() {
                                 playerViewModel.loadCachedSongs()
                             }
                         )
+                    } else if (isTelevision()) {
+                        com.soul.neurokaraoke.ui.tv.TvApp(playerViewModel = playerViewModel, authViewModel = authViewModel)
                     } else {
                         MainScreen(
                             playerViewModel = playerViewModel,

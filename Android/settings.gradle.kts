@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Neuro Karaoke"
 include(":app")
+include(":baselineprofile")

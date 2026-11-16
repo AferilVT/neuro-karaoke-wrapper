@@ -1,0 +1,4 @@
+report/
+__pycache__/
+*.pyc
+t_smoke.png

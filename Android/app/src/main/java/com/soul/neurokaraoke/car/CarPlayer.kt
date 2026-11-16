@@ -4,8 +4,10 @@ import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.soul.neurokaraoke.R
@@ -23,6 +25,7 @@ class CarPlayer(private val context: Context) {
     private var connecting: com.google.common.util.concurrent.ListenableFuture<MediaController>? = null
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
+    @OptIn(UnstableApi::class)
     fun ensureConnected() {
         if (android.os.Looper.myLooper() != android.os.Looper.getMainLooper()) {
             mainHandler.post { ensureConnected() }

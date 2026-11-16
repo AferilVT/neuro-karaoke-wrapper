@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hierarchy rotation="0">
+  <node resource-id="com.neurokaraoke:id/home" class="android.widget.Button" text="Home" clickable="true" focusable="true" focused="false" content-desc="" bounds="[100,50][300,120]"/>
+  <node resource-id="" class="android.widget.Button" text="Search" clickable="false" focusable="true" focused="true" content-desc="" bounds="[320,50][520,120]"/>
+  <node resource-id="" class="android.widget.TextView" text="label" clickable="false" focusable="false" bounds="[100,200][400,260]"/>
+</hierarchy>

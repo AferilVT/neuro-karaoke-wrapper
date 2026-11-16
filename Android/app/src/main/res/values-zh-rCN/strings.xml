@@ -19,7 +19,7 @@
     <!-- Top bar / Profile -->
     <string name="topbar_content_description_logo">Neuro 卡拉OK标志</string>
     <string name="topbar_content_description_profile">个人资料</string>
-    <string name="topbar_menu_pair_car">配对车机</string>
+    <string name="topbar_menu_pair_car">配对设备</string>
     <string name="topbar_menu_sign_out">退出登录</string>
 
     <!-- Mini player -->
@@ -277,8 +277,8 @@
     <string name="radio_covered_by">%1$s  ·  翻唱：%2$s</string>
 
     <!-- Pair car dialog -->
-    <string name="pair_car_title">配对车机</string>
-    <string name="pair_car_instruction">在车机屏幕上输入此 6 位配对码。</string>
+    <string name="pair_car_title">配对设备</string>
+    <string name="pair_car_instruction">在车机或电视屏幕上输入此 6 位配对码。</string>
     <string name="pair_car_code_expired">配对码已过期</string>
     <string name="pair_car_generating">生成中…</string>
     <string name="pair_car_error">错误：%1$s</string>
@@ -362,6 +362,8 @@
     <string name="car_title_library">曲库</string>
     <string name="car_title_playlists">播放列表</string>
     <string name="car_title_radio">电台</string>
+    <string name="car_title_more">更多</string>
+    <string name="car_item_public_playlists">公开播放列表</string>
     <string name="car_empty_no_songs">暂无缓存歌曲，请先在手机上打开应用。</string>
     <string name="car_empty_no_playlists">暂无播放列表</string>
     <string name="car_radio_station_title">Neuro 21 电台</string>

@@ -6,6 +6,8 @@ import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.data.util.EnglishTitleMap
 import com.soul.neurokaraoke.data.util.RomajiUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class SongRepository(
     private val api: NeuroKaraokeApi = NeuroKaraokeApi()
@@ -21,13 +23,17 @@ class SongRepository(
         // Build the server ID map once (lazy, cached after first call)
         api.ensureSongIdMap()
 
-        val songs = apiSongs.mapIndexed { index, apiSong ->
-            val song = apiSong.toSong(playlistId, index)
-            // Replace hash-based ID with server UUID if available
-            val serverId = if (song.audioUrl.isNotBlank()) {
-                api.findSongIdByAudioUrl(song.audioUrl)
-            } else null
-            if (serverId != null) song.copy(id = serverId) else song
+        // Romaji transliteration (ICU) + ID resolution is CPU-bound and runs for every
+        // song; keep it off the caller's (often main) dispatcher so catalog load never janks.
+        val songs = withContext(Dispatchers.Default) {
+            apiSongs.mapIndexed { index, apiSong ->
+                val song = apiSong.toSong(playlistId, index)
+                // Replace hash-based ID with server UUID if available
+                val serverId = if (song.audioUrl.isNotBlank()) {
+                    api.findSongIdByAudioUrl(song.audioUrl)
+                } else null
+                if (serverId != null) song.copy(id = serverId) else song
+            }
         }
         return Result.success(songs)
     }
@@ -40,11 +46,14 @@ class SongRepository(
         val result = api.fetchAllSongs()
         if (result.isFailure) return Result.failure(result.exceptionOrNull()!!)
         val entries = result.getOrThrow()
-        val songs = entries.mapIndexed { index, entry ->
-            entry.apiSong.toSong(playlistId = "all", index = index).copy(
-                id = entry.id,
-                duration = entry.durationSeconds * 1000L
-            )
+        // CPU-bound romaji mapping over the full catalog — off the main dispatcher.
+        val songs = withContext(Dispatchers.Default) {
+            entries.mapIndexed { index, entry ->
+                entry.apiSong.toSong(playlistId = "all", index = index).copy(
+                    id = entry.id,
+                    duration = entry.durationSeconds * 1000L
+                )
+            }
         }
         return Result.success(songs)
     }

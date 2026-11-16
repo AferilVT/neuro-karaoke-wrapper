@@ -17,6 +17,12 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.SecureRandom
 
+/** A QR device-login session created on the server (TV → phone approval flow). */
+data class QrSession(val sessionId: String, val qrImageDataUrl: String, val expiresAt: String)
+
+/** One poll of a QR session: `status` is "pending"/"approved"/"expired"; `token` set once approved. */
+data class QrPoll(val status: String, val token: String?)
+
 class AuthRepository(context: Context) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences(
@@ -243,6 +249,140 @@ class AuthRepository(context: Context) {
     }
 
     /**
+     * Sign in with a NeuroKaraoke username + password (the "merged" login the iOS app
+     * and website use). Yields the same JWT as the Discord flow. The password-login JWT
+     * carries no Discord claims, so we build a minimal [User] from the entered username;
+     * avatar/level/badges are enriched later by ProfileViewModel.load(token).
+     */
+    suspend fun loginWithPassword(username: String, password: String): Result<User> =
+        withContext(Dispatchers.IO) {
+            var conn: HttpURLConnection? = null
+            try {
+                conn = (URL(LOGIN_URL).openConnection() as HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json")
+                    connectTimeout = 15000
+                    readTimeout = 15000
+                    doOutput = true
+                }
+                val body = JSONObject()
+                    .put("username", username)
+                    .put("password", password)
+                    .toString()
+                conn.outputStream.use { it.write(body.toByteArray()) }
+
+                val code = conn.responseCode
+                if (code != HttpURLConnection.HTTP_OK) {
+                    val err = conn.errorStream?.bufferedReader()?.readText().orEmpty()
+                    val msg = runCatching { JSONObject(err).optString("message") }
+                        .getOrNull()?.takeIf { it.isNotBlank() } ?: "Sign-in failed ($code)"
+                    return@withContext Result.failure(Exception(msg))
+                }
+
+                val jwt = parseLoginToken(conn.inputStream.bufferedReader().readText())
+                if (jwt.isBlank()) {
+                    return@withContext Result.failure(Exception("No token in response"))
+                }
+                val user = User(
+                    id = username,
+                    username = username,
+                    discriminator = "0",
+                    avatar = null,
+                    apiToken = jwt,
+                )
+                saveUser(user)
+                Log.d("AuthRepository", "Password login OK for $username")
+                Result.success(user)
+            } catch (e: Exception) {
+                Log.e("AuthRepository", "Password login failed", e)
+                Result.failure(e)
+            } finally {
+                conn?.disconnect()
+            }
+        }
+
+    /**
+     * Create a QR device-login session (TV shows the QR, phone scans + approves).
+     * POST /api/auth/qr-session -> { sessionId, qrCodeImageDataUrl, expiresAt }.
+     */
+    suspend fun createQrSession(): Result<QrSession> = withContext(Dispatchers.IO) {
+        var conn: HttpURLConnection? = null
+        try {
+            conn = (URL(QR_SESSION_URL).openConnection() as HttpURLConnection).apply {
+                requestMethod = "POST"
+                setRequestProperty("Accept", "application/json")
+                connectTimeout = 15000
+                readTimeout = 15000
+                // Server requires a Content-Length (returns 411 without one); send an
+                // explicit empty body so Content-Length: 0 is set on the bodyless POST.
+                doOutput = true
+                setFixedLengthStreamingMode(0)
+            }
+            conn.outputStream.use { /* empty body */ }
+            val code = conn.responseCode
+            if (code != HttpURLConnection.HTTP_OK && code != HttpURLConnection.HTTP_CREATED) {
+                return@withContext Result.failure(Exception("QR session failed ($code)"))
+            }
+            val o = JSONObject(conn.inputStream.bufferedReader().readText())
+            Result.success(
+                QrSession(
+                    sessionId = o.getString("sessionId"),
+                    qrImageDataUrl = o.getString("qrCodeImageDataUrl"),
+                    expiresAt = o.optString("expiresAt", "")
+                )
+            )
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "createQrSession failed", e)
+            Result.failure(e)
+        } finally {
+            conn?.disconnect()
+        }
+    }
+
+    /**
+     * Poll a QR session for approval.
+     * GET /api/auth/qr-session/{sessionId} -> { status, token, expiresAt }.
+     */
+    suspend fun pollQrSession(sessionId: String): Result<QrPoll> = withContext(Dispatchers.IO) {
+        var conn: HttpURLConnection? = null
+        try {
+            conn = (URL("$QR_SESSION_URL/$sessionId").openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                setRequestProperty("Accept", "application/json")
+                connectTimeout = 15000
+                readTimeout = 15000
+            }
+            if (conn.responseCode != HttpURLConnection.HTTP_OK) {
+                return@withContext Result.failure(Exception("Poll failed (${conn.responseCode})"))
+            }
+            val o = JSONObject(conn.inputStream.bufferedReader().readText())
+            Result.success(
+                QrPoll(
+                    status = o.optString("status", "pending"),
+                    token = o.optString("token", "").ifBlank { null }
+                )
+            )
+        } catch (e: Exception) {
+            Result.failure(e)
+        } finally {
+            conn?.disconnect()
+        }
+    }
+
+    /**
+     * Finalize a QR login with the approved NeuroKaraoke JWT. Reuses the JWT-claims
+     * parser (same backend as Discord); falls back to a minimal user if the token
+     * carries no claims (profile is enriched later by ProfileViewModel.load).
+     */
+    fun finalizeQrLogin(token: String) {
+        if (!parseJwtAndSaveUser(token)) {
+            saveUser(
+                User(id = "qr_user", username = "Account", discriminator = "0", avatar = null, apiToken = token)
+            )
+        }
+    }
+
+    /**
      * Log out the current user
      */
     fun logout() {
@@ -257,6 +397,12 @@ class AuthRepository(context: Context) {
     fun isUserLoggedIn(): Boolean = _isLoggedIn.value
 
     companion object {
+        /** Extract the JWT from a login response (`token`, falling back to `accessToken`). */
+        fun parseLoginToken(json: String): String {
+            val o = JSONObject(json)
+            return o.optString("token", o.optString("accessToken", ""))
+        }
+
         private const val PREFS_NAME = "neurokaraoke_auth"
         private const val KEY_USER_ID = "user_id"
         private const val KEY_USERNAME = "username"
@@ -270,6 +416,8 @@ class AuthRepository(context: Context) {
         private const val DISCORD_TOKEN_URL = "https://discord.com/api/oauth2/token"
         private const val DISCORD_USER_URL = "https://discord.com/api/users/@me"
         private const val NEUROKARAOKE_TOKEN_EXCHANGE_URL = "https://idk.neurokaraoke.com/api/auth/discord-token"
+        private const val LOGIN_URL = "https://idk.neurokaraoke.com/api/auth/login"
+        private const val QR_SESSION_URL = "https://api.neurokaraoke.com/api/auth/qr-session"
 
         private fun generateCodeVerifier(): String {
             val bytes = ByteArray(64)
