@@ -3,6 +3,7 @@ package com.soul.neurokaraoke.data.repository
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.util.Log
 import org.json.JSONObject
 import java.io.File
@@ -153,22 +154,34 @@ object LocalMusicStore {
         }
     }
 
+    private fun displayName(context: Context, uri: Uri): String? = try {
+        context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+    } catch (_: Exception) {
+        null
+    }
+
     /** Copies a picked audio file into the store and returns the loaded song. */
     fun import(context: Context, source: Uri): LocalSong? {
         val dir = musicDir(context).apply { mkdirs() }
-        var title = "Unknown"
+        var tagTitle: String? = null
         val retriever = MediaMetadataRetriever()
         try {
             context.contentResolver.openFileDescriptor(source, "r")?.use { pfd ->
                 retriever.setDataSource(pfd.fileDescriptor)
-                title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
-                    ?: source.lastPathSegment?.substringAfterLast("/")?.removeSuffix(".mp3")
-                    ?: "Unknown"
+                tagTitle = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE)
+                    ?.takeIf { it.isNotBlank() }
             }
         } catch (_: Exception) {
         } finally {
             try { retriever.release() } catch (_: Exception) { }
         }
+        // Untagged file: use the picked file's name. Document URIs end in an opaque id
+        // ("audio:1000000264"), so ask the provider for the real display name.
+        val nameTitle = if (tagTitle == null) {
+            displayName(context, source)?.substringBeforeLast('.')?.takeIf { it.isNotBlank() }
+        } else null
+        val title = tagTitle ?: nameTitle ?: "Unknown"
 
         val fileName = "${title.replace(Regex("[^a-zA-Z0-9._-]"), "_")}_${System.currentTimeMillis()}.mp3"
         val dest = File(dir, fileName)
@@ -176,7 +189,15 @@ object LocalMusicStore {
             context.contentResolver.openInputStream(source)?.use { input ->
                 dest.outputStream().use { output -> input.copyTo(output) }
             } ?: return null
-            buildSong(context, dest, null)
+            // Keep the clean name as the title; otherwise reloads would show the stored
+            // file name, which carries an import timestamp.
+            val overrides = nameTitle?.let { Overrides(title = it, artist = null, coverArtists = null, coverFile = null) }
+            if (overrides != null) {
+                val meta = readMeta(context)
+                meta[fileName] = overrides
+                writeMeta(context, meta)
+            }
+            buildSong(context, dest, overrides)
         } catch (e: Exception) {
             Log.e(TAG, "Import failed: ${e.message}")
             dest.delete()
