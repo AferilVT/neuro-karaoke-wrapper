@@ -28,6 +28,7 @@ object LocaleManager {
     val SUPPORTED_LOCALES: List<SupportedLocale> = listOf(
         SupportedLocale("en",    Locale.ENGLISH,      "English"),
         SupportedLocale("zh-CN", Locale("zh", "CN"),  "简体中文"),
+        SupportedLocale("ru",    Locale("ru"),      "Русский"),
     )
     // ─────────────────────────────────────────────────────────────────────────
 

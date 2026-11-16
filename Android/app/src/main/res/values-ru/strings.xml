@@ -1,0 +1,464 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Neuro Karaoke</string>
+
+    <!-- Brand names (keep untranslated) -->
+    <string name="brand_neuro_karaoke">Neuro Karaoke</string>
+    <string name="brand_neuro_21_station">Neuro 21 Station</string>
+    <string name="brand_name_discord">Discord</string>
+
+    <string name="media3_audio_label">NeuroKaraoke Playback Engine</string>
+
+    <!-- Bottom navigation bar -->
+    <string name="nav_tab_home">Главная</string>
+    <string name="nav_tab_radio">Радио</string>
+    <string name="nav_tab_search">Поиск</string>
+    <string name="nav_tab_library">Библиотека</string>
+    <string name="nav_tab_more">Ещё</string>
+
+    <!-- Top bar / Profile -->
+    <string name="topbar_content_description_logo">Логотип NeuroKaraoke</string>
+    <string name="topbar_content_description_profile">Профиль</string>
+    <string name="topbar_menu_pair_car">Подключить устройство</string>
+    <string name="topbar_menu_sign_out">Выйти</string>
+
+    <!-- Mini player -->
+    <string name="mini_player_label_live">В ЭФИРЕ</string>
+    <string name="mini_player_content_description_sleep_timer">Таймер сна включён</string>
+    <string name="mini_player_content_description_pause">Пауза</string>
+    <string name="mini_player_content_description_play">Воспроизвести</string>
+    <string name="mini_player_content_description_stop_radio">Остановить радио</string>
+    <string name="mini_player_content_description_previous">Предыдущая песня</string>
+    <string name="mini_player_content_description_next">Следующая песня</string>
+
+    <!-- Home screen -->
+    <string name="home_section_header_songs">Песни</string>
+    <string name="home_section_header_made_for_you">Специально для вас</string>
+    <string name="home_section_header_trending">В тренде на этой неделе</string>
+    <string name="home_section_header_cover_distribution">Распределение каверов</string>
+    <string name="home_section_header_top_genres">Популярные жанры</string>
+    <string name="home_button_see_all">ПОКАЗАТЬ ВСЕ</string>
+    <string name="home_empty_no_songs">Песни ещё не загружены</string>
+
+    <!-- Now playing / Player screen -->
+    <string name="player_title_now_playing">Сейчас играет</string>
+    <string name="player_content_description_collapse">Свернуть</string>
+    <string name="player_content_description_downloaded">Скачано</string>
+    <string name="player_content_description_download">Скачать</string>
+    <string name="player_content_description_add_to_playlist">Добавить в плейлист</string>
+    <string name="player_content_description_sleep_timer">Таймер сна</string>
+    <string name="player_content_description_equalizer">Эквалайзер</string>
+    <string name="player_content_description_art_credit">Автор обложки</string>
+    <string name="player_content_description_view_lyrics">Показать текст песни</string>
+    <string name="player_content_description_remove_favorite">Удалить из избранного</string>
+    <string name="player_content_description_add_favorite">Добавить в избранное</string>
+    <string name="player_content_description_shuffle">Перемешать</string>
+    <string name="player_content_description_previous">Предыдущая песня</string>
+    <string name="player_content_description_pause">Пауза</string>
+    <string name="player_content_description_play">Воспроизвести</string>
+    <string name="player_content_description_next">Следующая песня</string>
+    <string name="player_content_description_repeat">Повтор</string>
+    <string name="player_content_description_stop">Остановить</string>
+    <string name="player_content_description_listen">Слушать</string>
+    <string name="player_button_view_queue">ПОКАЗАТЬ ОЧЕРЕДЬ</string>
+    <string name="player_label_stop_listening">ПЕРЕСТАТЬ СЛУШАТЬ</string>
+    <string name="player_label_listen_live">СЛУШАТЬ ЭФИР</string>
+    <string name="player_label_live">В ЭФИРЕ</string>
+    <string name="player_label_listening_count">Слушают: %1$d</string>
+
+    <!-- Sleep timer -->
+    <string name="sleep_timer_title">Таймер сна</string>
+    <string name="sleep_timer_content_description_close">Закрыть</string>
+    <string name="sleep_timer_label_active">Таймер включён</string>
+    <string name="sleep_timer_label_end_of_song">До конца текущей песни</string>
+    <string name="sleep_timer_button_cancel">Отменить таймер</string>
+    <string name="sleep_timer_label_stop_after">Остановить воспроизведение через</string>
+    <string name="sleep_timer_chip_end_of_song">До конца песни</string>
+
+    <!-- Lyrics -->
+    <string name="lyrics_sheet_title">Текст песни</string>
+    <string name="lyrics_subtitle_synced">Синхронизировано • Нажмите для перемотки</string>
+    <string name="lyrics_label_offset">Смещение:</string>
+    <string name="lyrics_status_loading">Поиск текста песни…</string>
+    <string name="lyrics_empty_title">Текст песни не найден</string>
+    <string name="lyrics_empty_subtitle">%1$s - %2$s</string>
+    <string name="lyrics_credit_neurokaraoke">Текст предоставлен NeuroKaraoke</string>
+    <string name="lyrics_credit_lrclib">Текст предоставлен LRCLIB</string>
+    <string name="lyrics_translate">Перевести текст песни</string>
+
+    <!-- Queue -->
+    <string name="queue_sheet_title">Очередь</string>
+    <string name="queue_label_now_playing">Сейчас играет</string>
+    <string name="queue_label_up_next">Далее (песен: %1$d)</string>
+    <string name="queue_label_empty">В очереди больше нет песен</string>
+    <string name="queue_content_description_playing">Воспроизводится</string>
+
+    <!-- Audio effects / Equalizer -->
+    <string name="equalizer_sheet_title">Звуковые эффекты</string>
+    <string name="equalizer_tab_equalizer">Эквалайзер</string>
+    <string name="equalizer_tab_bass_boost">Усиление баса</string>
+    <string name="equalizer_unavailable_title">Звуковые эффекты недоступны</string>
+    <string name="equalizer_unavailable_subtitle">Запустите песню, чтобы включить</string>
+    <string name="equalizer_not_available_device">Эквалайзер недоступен на этом устройстве</string>
+    <string name="equalizer_toggle_enable">Включить эквалайзер</string>
+    <string name="equalizer_label_presets">Пресеты</string>
+    <string name="equalizer_preset_flat">Плоская</string>
+    <string name="equalizer_label_frequency_bands">Полосы частот</string>
+
+    <!-- Search screen -->
+    <string name="search_input_placeholder">Поиск по названию или исполнителю</string>
+    <string name="search_content_description_search">Поиск</string>
+    <string name="search_content_description_clear">Очистить</string>
+    <string name="search_filter_button">+ Добавить фильтры</string>
+    <string name="search_filter_button_active">Фильтры (%1$d)</string>
+    <string name="search_filter_label_singer">КТО ПОЁТ</string>
+    <string name="search_filter_label_sort_by">СОРТИРОВАТЬ ПО</string>
+    <string name="search_filter_singer_all">Все</string>
+    <string name="search_filter_singer_neuro">Neuro</string>
+    <string name="search_filter_singer_evil">Evil</string>
+    <string name="search_filter_singer_duet">Дуэт</string>
+    <string name="search_sort_title_asc">Название А-Я</string>
+    <string name="search_sort_title_desc">Название Я-А</string>
+    <string name="search_sort_artist_asc">Исполнитель А-Я</string>
+    <string name="search_sort_artist_desc">Исполнитель Я-А</string>
+    <string name="search_button_clear_filters">Сбросить все фильтры</string>
+    <string name="search_loading_with_count">Загрузка песен… (найдено: %1$d)</string>
+    <string name="search_loading_setlists">Загрузка всех сетлистов…</string>
+    <string name="search_empty_no_songs">Нет доступных песен</string>
+    <string name="search_empty_no_match">Нет песен, соответствующих фильтрам</string>
+    <string name="search_button_clear">Сбросить фильтры</string>
+
+    <!-- Explore / Browse screen -->
+    <string name="explore_header_title">Обзор плейлистов</string>
+    <string name="explore_header_subtitle">Публичные плейлисты, созданные нашим сообществом</string>
+    <string name="explore_search_placeholder">Поиск плейлистов</string>
+    <string name="explore_status_loading">Загрузка плейлистов…</string>
+    <string name="explore_empty_no_match">По вашему запросу плейлисты не найдены</string>
+    <string name="explore_empty_no_playlists">Нет доступных плейлистов</string>
+    <string name="explore_sort_newest">Обновлены: сначала новые</string>
+    <string name="explore_sort_oldest">Обновлены: сначала старые</string>
+    <string name="explore_sort_plays_high">Прослушивания: по убыванию</string>
+    <string name="explore_sort_plays_low">Прослушивания: по возрастанию</string>
+
+    <!-- Playlist detail screen -->
+    <string name="playlist_detail_label_public">ПУБЛИЧНЫЙ ПЛЕЙЛИСТ</string>
+    <string name="playlist_detail_loading_title">Загрузка…</string>
+    <string name="playlist_detail_loading_songs">Загрузка песен…</string>
+    <string name="playlist_detail_stats">Песен: %1$d · %2$d мин</string>
+    <string name="playlist_detail_content_description_back">Назад</string>
+    <string name="playlist_detail_content_description_favorite">В избранное</string>
+    <string name="playlist_detail_content_description_shuffle">Перемешать</string>
+    <string name="playlist_detail_button_play">ВОСПРОИЗВЕСТИ</string>
+    <string name="playlist_detail_section_songs">Песни</string>
+
+    <!-- Library screen -->
+    <string name="library_header_title">Библиотека</string>
+    <string name="library_tab_favorites">Избранное</string>
+    <string name="library_tab_playlists">Плейлисты</string>
+    <string name="library_tab_downloads">Загрузки</string>
+    <string name="library_profile_sync_status">Синхронизация Discord + NeuroKaraoke</string>
+    <string name="library_sign_in_title">Вход в аккаунт</string>
+    <string name="library_sign_in_subtitle">Подключитесь через Discord, чтобы синхронизировать данные</string>
+
+    <!-- Favorites screen -->
+    <string name="favorites_empty_title">В избранном пока пусто</string>
+    <string name="favorites_empty_subtitle">Нажмите на сердечко у любой песни, чтобы добавить её в избранное.</string>
+    <string name="favorites_button_play">Воспроизвести</string>
+    <string name="favorites_button_shuffle">Перемешать</string>
+    <string name="favorites_refresh">Обновить избранное</string>
+
+    <!-- Playlists screen -->
+    <string name="playlists_header_title">Ваши плейлисты</string>
+    <string name="playlists_content_description_sync">Синхронизировать плейлисты</string>
+    <string name="playlists_content_description_create">Создать плейлист</string>
+    <string name="playlists_empty_title">Плейлистов пока нет</string>
+    <string name="playlists_empty_subtitle">Нажмите кнопку +, чтобы создать свой первый плейлист</string>
+    <string name="playlists_content_description_synced">Синхронизировано</string>
+    <string name="playlists_content_description_delete">Удалить</string>
+    <string name="playlists_dialog_delete_title">Удалить плейлист</string>
+    <string name="playlists_dialog_delete_message">Вы уверены, что хотите удалить «%1$s»? Это действие нельзя отменить.</string>
+    <string name="playlists_dialog_button_delete">Удалить</string>
+    <string name="playlists_dialog_button_cancel">Отмена</string>
+    <string name="playlists_create_title">Создать плейлист</string>
+    <string name="playlists_create_content_description_close">Закрыть</string>
+    <string name="playlists_create_label_name">Название плейлиста</string>
+    <string name="playlists_create_label_description">Напишите описание</string>
+    <string name="playlists_create_content_description_cover">Обложка плейлиста</string>
+    <string name="playlists_create_button_choose_image">ВЫБРАТЬ ИЗОБРАЖЕНИЕ</string>
+    <string name="playlists_create_toggle_public">Публичный</string>
+    <string name="playlists_create_toggle_public_description">Ваш плейлист будет виден в вашем профиле и доступен всем.</string>
+    <string name="playlists_create_button_save">СОХРАНИТЬ</string>
+    <string name="playlists_label_playlist">Плейлист</string>
+
+    <!-- Downloads screen -->
+    <string name="downloads_header_title">Загрузки</string>
+    <string name="downloads_label_stats">Песен: %1$d · %2$s</string>
+    <string name="downloads_button_remove_all">Удалить всё</string>
+    <string name="downloads_button_play_all">Воспроизвести все</string>
+    <string name="downloads_button_shuffle">Перемешать</string>
+    <string name="downloads_empty_title">Загрузок пока нет</string>
+    <string name="downloads_empty_subtitle">Скачивайте песни, чтобы слушать их офлайн. Нажмите на меню у любой песни и выберите «Скачать».</string>
+
+    <!-- Add to playlist sheet -->
+    <string name="add_to_playlist_title">Добавить в плейлист</string>
+    <string name="add_to_playlist_create_new">Создать новый плейлист</string>
+    <string name="add_to_playlist_empty">Плейлистов пока нет. Создайте первый выше!</string>
+    <string name="add_to_playlist_already_added">Уже добавлено</string>
+    <string name="add_to_playlist_create_title">Создать плейлист</string>
+    <string name="add_to_playlist_content_description_cancel">Отмена</string>
+    <string name="add_to_playlist_label_name">Название плейлиста</string>
+    <string name="add_to_playlist_label_description">Описание</string>
+    <string name="add_to_playlist_toggle_public">Публичный</string>
+    <string name="add_to_playlist_button_create">СОЗДАТЬ И ДОБАВИТЬ</string>
+
+    <!-- More screen -->
+    <string name="more_header_title">Ещё</string>
+    <string name="more_item_soundbites">Звуковые клипы</string>
+    <string name="more_item_public_playlists">Публичные плейлисты</string>
+    <string name="more_item_setlists">Сетлисты</string>
+    <string name="more_item_artists">Исполнители</string>
+    <string name="more_item_recently_played">Недавно прослушанные</string>
+    <string name="more_item_random_songs">Случайные песни</string>
+    <string name="more_item_local_music">Музыка на устройстве</string>
+    <string name="more_item_settings">Настройки</string>
+    <string name="more_item_about">О приложении</string>
+    <string name="more_section_theme">Тема</string>
+    <string name="recently_played_empty_title">Вы ещё ничего не слушали</string>
+    <string name="recently_played_empty_subtitle">Здесь будут появляться песни, которые вы слушаете</string>
+    <string name="recently_played_clear">Очистить</string>
+    <string name="random_songs_empty_title">Нет доступных песен</string>
+    <string name="random_songs_play">Воспроизвести</string>
+    <string name="random_songs_reshuffle">Перемешать заново</string>
+
+    <!-- Theme options -->
+    <string name="theme_option_auto">Авто</string>
+    <string name="theme_option_neuro">Neuro</string>
+    <string name="theme_option_evil">Evil</string>
+    <string name="theme_option_duet">Дуэт</string>
+
+    <!-- Settings screen -->
+    <string name="settings_header_title">Настройки</string>
+    <string name="settings_content_description_back">Назад</string>
+    <string name="settings_section_playback">Воспроизведение</string>
+    <string name="settings_section_audio">Звук</string>
+    <string name="settings_crossfade_title">Плавный переход</string>
+    <string name="settings_crossfade_subtitle">Плавный переход между песнями</string>
+    <string name="settings_crossfade_off">Выкл.</string>
+    <string name="settings_crossfade_value">%1$d с</string>
+    <string name="settings_crossfade_label_off">Выкл.</string>
+    <string name="settings_crossfade_label_max">12 с</string>
+    <string name="settings_gapless_title">Воспроизведение без пауз</string>
+    <string name="settings_gapless_subtitle">Без тишины между песнями</string>
+    <string name="settings_normalize_title">Нормализация громкости</string>
+    <string name="settings_normalize_subtitle">Одинаковый уровень громкости для всех песен</string>
+    <string name="settings_autoplay_title">Автовоспроизведение</string>
+    <string name="settings_autoplay_subtitle">Включать похожие песни, когда очередь закончится</string>
+    <string name="settings_equalizer_title">Эквалайзер</string>
+    <string name="settings_equalizer_subtitle">Настраивайте эквалайзер на экране плеера</string>
+    <string name="settings_section_language">Язык</string>
+    <string name="settings_language_english">English</string>
+    <string name="settings_language_chinese">简体中文</string>
+
+    <!-- Radio screen -->
+    <string name="radio_station_title">NEURO 21 STATION</string>
+    <string name="radio_label_live">В ЭФИРЕ</string>
+    <string name="radio_label_offline">НЕ В ЭФИРЕ</string>
+    <string name="radio_label_now_playing">СЕЙЧАС ИГРАЕТ</string>
+    <string name="radio_label_up_next">ДАЛЕЕ</string>
+    <string name="radio_label_recently_played">НЕДАВНО ИГРАЛО</string>
+    <string name="radio_button_listen_live">Слушать эфир</string>
+    <string name="radio_button_stop_listening">Перестать слушать</string>
+    <string name="radio_error_title">Не удалось подключиться к радио</string>
+    <string name="radio_button_retry">Повторить</string>
+    <string name="radio_offline_title">Радио сейчас не в эфире</string>
+    <string name="radio_offline_subtitle">Загляните позже!</string>
+    <string name="radio_default_title">24/7 Karaoke Radio</string>
+    <string name="radio_station_badge_live">NEURO 21 STATION • В ЭФИРЕ</string>
+    <string name="radio_covered_by">%1$s  •  в исполнении %2$s</string>
+
+    <!-- Pair car dialog -->
+    <string name="pair_car_title">Подключить устройство</string>
+    <string name="pair_car_instruction">Введите этот код из 6 символов на экране автомобиля или телевизора.</string>
+    <string name="pair_car_code_expired">Срок действия кода истёк</string>
+    <string name="pair_car_generating">Создание кода…</string>
+    <string name="pair_car_error">Ошибка: %1$s</string>
+    <string name="pair_car_expires_in">Истекает через %1$d:%2$02d</string>
+    <string name="pair_car_button_done">Готово</string>
+
+    <!-- Update dialog -->
+    <string name="update_dialog_title">Доступно обновление</string>
+    <string name="update_dialog_version_format">v%1$s → v%2$s</string>
+    <string name="update_dialog_default_message">Доступна новая версия.</string>
+    <string name="update_dialog_button_update">Обновить</string>
+    <string name="update_dialog_button_uninstall_update">Удалить и обновить</string>
+    <string name="update_dialog_button_dismiss">Не сейчас</string>
+
+    <!-- Navigation drawer -->
+    <string name="drawer_brand_title">Neuro Karaoke</string>
+    <string name="drawer_button_random_song">Случайная песня</string>
+    <string name="drawer_section_library">ВАША БИБЛИОТЕКА</string>
+    <string name="drawer_section_theme">ТЕМА</string>
+    <string name="drawer_user_signed_in">Вход выполнен через Discord</string>
+    <string name="drawer_content_description_avatar">Аватар</string>
+    <string name="drawer_content_description_sign_out">Выйти</string>
+    <string name="drawer_sign_in_title">Войти</string>
+    <string name="drawer_sign_in_subtitle">Подключиться через Discord</string>
+    <string name="drawer_label_coming_soon">Скоро</string>
+
+    <!-- Pagination -->
+    <string name="pagination_label_showing">Показано %1$d - %2$d из %3$d</string>
+    <string name="pagination_content_description_previous">Предыдущая страница</string>
+    <string name="pagination_content_description_next">Следующая страница</string>
+
+    <!-- AAOS Home screen -->
+    <string name="aaos_tab_library">Библиотека</string>
+    <string name="aaos_tab_playlists">Плейлисты</string>
+    <string name="aaos_tab_radio">Радио</string>
+    <string name="aaos_breadcrumb_songs">Песни</string>
+    <string name="aaos_breadcrumb_playlists">Плейлисты</string>
+    <string name="aaos_breadcrumb_radio">Радио</string>
+    <string name="aaos_section_songs">Песни</string>
+    <string name="aaos_section_daily_mix">Микс дня</string>
+    <string name="aaos_section_trending">В тренде</string>
+    <string name="aaos_section_community">Сообщество</string>
+    <string name="aaos_section_recently_added">Недавно добавленные</string>
+    <string name="aaos_section_your_playlists">Ваши плейлисты</string>
+    <string name="aaos_label_loading">Загрузка…</string>
+    <string name="aaos_label_no_songs_cached">Нет кэшированных песен</string>
+    <string name="aaos_label_untitled">Без названия</string>
+    <string name="aaos_label_favorites">Избранное</string>
+    <string name="aaos_radio_button_stop">Стоп</string>
+    <string name="aaos_radio_button_listen_live">Слушать эфир</string>
+
+    <!-- AAOS Now Playing screen -->
+    <string name="aaos_now_playing_nothing">Ничего не играет</string>
+    <string name="aaos_now_playing_content_description_back">Назад</string>
+
+    <!-- AAOS Login screen -->
+    <string name="aaos_login_title">Вход через Discord</string>
+    <string name="aaos_login_content_description_back">Назад</string>
+
+    <!-- AAOS Pairing screen -->
+    <string name="aaos_pairing_title">Подключение к телефону</string>
+    <string name="aaos_pairing_content_description_back">Назад</string>
+    <string name="aaos_pairing_content_description_backspace">Удалить символ</string>
+    <string name="aaos_pairing_step_1">1. На телефоне: нажмите «Профиль» → «Подключить устройство»</string>
+    <string name="aaos_pairing_step_2">2. На телефоне появится код из 6 символов</string>
+    <string name="aaos_pairing_step_3">3. Введите этот код с помощью клавиатуры</string>
+
+    <!-- AAOS Playlist detail screen -->
+    <string name="aaos_playlist_detail_content_description_back">Назад</string>
+    <string name="aaos_playlist_detail_loading">Загрузка…</string>
+    <string name="aaos_playlist_detail_empty">Нет песен</string>
+    <string name="aaos_playlist_detail_button_play">Воспроизвести</string>
+    <string name="aaos_playlist_detail_button_shuffle">Перемешать</string>
+
+    <!-- Android Auto Car library -->
+    <string name="car_tab_library">Библиотека</string>
+    <string name="car_tab_playlists">Плейлисты</string>
+    <string name="car_tab_radio">Радио</string>
+    <string name="car_tab_explore">Обзор</string>
+    <string name="car_tab_more">Ещё</string>
+    <string name="car_title_library">Библиотека</string>
+    <string name="car_title_playlists">Плейлисты</string>
+    <string name="car_title_radio">Радио</string>
+    <string name="car_title_more">Ещё</string>
+    <string name="car_empty_no_songs">Нет кэшированных песен. Сначала откройте приложение на телефоне.</string>
+    <string name="car_empty_no_playlists">Плейлистов пока нет</string>
+    <string name="car_radio_station_title">Neuro 21 Station</string>
+    <string name="car_radio_subtitle">В эфире • Караоке-радио 24/7</string>
+    <string name="car_radio_button_listen">Слушать эфир</string>
+    <string name="car_playlist_button_play">Воспроизвести</string>
+    <string name="car_playlist_button_shuffle">Перемешать</string>
+    <string name="car_label_untitled">Без названия</string>
+    <string name="car_label_unknown_artist">Неизвестный исполнитель</string>
+    <string name="car_label_untitled_playlist">Плейлист без названия</string>
+    <string name="car_label_playlist">Плейлист</string>
+    <string name="car_item_public_playlists">Публичные плейлисты</string>
+
+    <!-- About screen -->
+    <string name="about_tab_about">О приложении</string>
+    <string name="about_tab_credits">Авторы</string>
+    <string name="about_tab_privacy">Приватность</string>
+    <string name="about_tab_contact">Контакты</string>
+
+    <!-- Plurals -->
+    <plurals name="playlist_song_count">
+        <item quantity="one">%1$d песня</item>
+        <item quantity="other">%1$d песни</item>
+    </plurals>
+
+    <plurals name="library_playlist_count">
+        <item quantity="one">%1$d плейлист</item>
+        <item quantity="other">%1$d плейлиста</item>
+    </plurals>
+
+    <!-- Common / shared strings -->
+    <string name="common_content_description_back">Назад</string>
+    <string name="common_content_description_close">Закрыть</string>
+    <string name="common_content_description_more_options">Ещё</string>
+    <string name="common_label_songs_format">Песен: %1$d</string>
+
+    <!-- Soundbites screen -->
+    <string name="soundbites_header_title">Звуковые клипы</string>
+    <string name="soundbites_header_subtitle">Коллекция звуковых клипов с участием Neuro и Evil, записанных со стримов. Звуковые клипы созданы и отредактированы Rachinova и CJ.</string>
+    <string name="soundbites_search_placeholder">Поиск видео по названию, описанию или автору…</string>
+    <string name="soundbites_sort_most_played">Самые популярные</string>
+    <string name="soundbites_sort_newest">Новые</string>
+    <string name="soundbites_sort_title_az">Название А-Я</string>
+    <string name="soundbites_sort_shortest">Самые короткие</string>
+    <string name="soundbites_sort_longest">Самые длинные</string>
+    <string name="soundbites_filter_all">Все</string>
+    <string name="soundbites_filter_neuro">Neuro</string>
+    <string name="soundbites_filter_evil">Evil</string>
+    <string name="soundbites_filter_vedal">Vedal</string>
+    <string name="soundbites_filter_other">Другие</string>
+    <string name="soundbites_content_description_sort">Сортировка</string>
+    <string name="soundbites_label_count">Звуковых клипов: %1$d</string>
+    <string name="soundbites_empty_no_match">Звуковые клипы не найдены</string>
+    <string name="soundbites_empty_none">Нет доступных звуковых клипов</string>
+    <string name="soundbites_content_description_stop">Остановить</string>
+    <string name="soundbites_content_description_play">Воспроизвести</string>
+
+    <!-- Setlists screen -->
+    <string name="setlists_header_title">Сетлисты караоке</string>
+    <string name="setlists_label_count">Доступно сетлистов: %1$d</string>
+    <string name="setlists_search_placeholder">Поиск сетлистов</string>
+    <string name="setlists_filter_all">Все</string>
+    <string name="setlists_label_song_count">Песен: %1$d</string>
+    <string name="setlists_label_tap_to_load">Нажмите, чтобы загрузить</string>
+    <string name="setlists_label_setlist_id">Сетлист %1$s…</string>
+
+    <!-- Artists screen -->
+    <string name="artists_header_title">Исполнители</string>
+    <string name="artists_header_subtitle">Песни по исполнителям оригиналов, чьи треки перепели Neuro и Evil</string>
+    <string name="artists_search_placeholder">Поиск исполнителей</string>
+    <string name="artists_label_count">Исполнителей: %1$d</string>
+    <string name="artists_status_loading">Загрузка исполнителей…</string>
+    <string name="artists_empty_none">Исполнители не найдены</string>
+
+    <!-- Artist detail screen -->
+    <string name="artist_detail_content_description_back">Назад</string>
+    <string name="artist_detail_label_artist">ИСПОЛНИТЕЛЬ</string>
+    <string name="artist_detail_label_songs_covered">Каверов: %1$d</string>
+    <string name="artist_detail_button_play">ВОСПРОИЗВЕСТИ</string>
+    <string name="artist_detail_content_description_shuffle">Перемешать</string>
+    <string name="artist_detail_section_songs">ПЕСНИ</string>
+
+    <!-- Upload / Local Music screen -->
+    <string name="upload_header_title">Музыка на устройстве</string>
+    <string name="upload_content_description_back">Назад</string>
+    <string name="upload_empty_title">Нет песен на устройстве</string>
+    <string name="upload_empty_subtitle">Нажмите +, чтобы импортировать файлы .mp3 с вашего устройства.</string>
+    <string name="upload_button_import">Импортировать музыку</string>
+    <string name="upload_button_play">Воспроизвести</string>
+    <string name="upload_button_shuffle">Перемешать</string>
+    <string name="upload_label_song_count">Песен: %1$d</string>
+    <string name="upload_content_description_remove">Удалить</string>
+    <string name="upload_content_description_import">Импортировать музыку</string>
+
+    <!-- Song list item menu -->
+    <string name="song_menu_add_to_playlist">Добавить в плейлист</string>
+    <string name="song_menu_remove_download">Удалить из загрузок</string>
+    <string name="song_menu_remove_from_playlist">Удалить из плейлиста</string>
+</resources>
