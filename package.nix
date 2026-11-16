@@ -87,7 +87,7 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "Desktop wrapper for neurokaraoke.com with media controls and tray support";
     homepage = "https://neurokaraoke.com";
-    license = lib.licenses.gpl3;
+    license = lib.licenses.gpl3Only;
     mainProgram = "neuro-karaoke-wrapper";
     platforms = lib.platforms.linux;
   };
