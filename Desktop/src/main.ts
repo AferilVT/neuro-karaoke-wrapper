@@ -319,14 +319,16 @@ function switchToSite(site: Site) {
   discordManager?.updateSite(site);
 
   if (currentView) {
-    // Pause audio, clear cache, and destroy the old view to free RAM
+    // Pause audio and destroy the old view to free RAM. Don't clear the HTTP
+    // cache: every site shares this session's partition, so clearing it made the
+    // site being switched to re-download its assets. The cache lives on disk and
+    // closing the view already releases the memory.
     currentView.webContents.setAudioMuted(true);
     currentView.webContents.executeJavaScript(
       'document.querySelectorAll("audio, video").forEach(m => m.pause())'
     ).catch(() => {});
     mainWindow.contentView.removeChildView(currentView);
     const oldTheme = Object.keys(views).find(k => views[k] === currentView);
-    currentView.webContents.session.clearCache().catch(() => {});
     currentView.webContents.close();
     if (oldTheme) delete views[oldTheme];
   }

@@ -55,9 +55,27 @@ export class DiscordManager {
   activityType: ActivityType = 2; // 0 = Playing, 2 = Listening
   songUrl?: string = undefined; // Current page URL for Discord button
   currentSite: Site = 'neuro';
-  
+  coalesceTimer?: NodeJS.Timeout = undefined;
+  /** How long to gather state changes before pushing one presence update. */
+  coalesceDelayMs: number = 750;
+
   constructor(clientId: string) {
     this.clientId = clientId;
+  }
+
+  /**
+   * Push a forced presence update once the current burst of changes settles.
+   * A song change reports title, duration, album art, art credit and song URL
+   * separately within about a second; sending each one immediately ran into
+   * Discord's SET_ACTIVITY rate limit (~5 per 20 s), so updates were dropped
+   * and the presence could show stale art or the previous song.
+   */
+  schedulePresence() {
+    if (this.coalesceTimer) clearTimeout(this.coalesceTimer);
+    this.coalesceTimer = setTimeout(() => {
+      this.coalesceTimer = undefined;
+      this.updatePresence(true);
+    }, this.coalesceDelayMs);
   }
 
   /**
@@ -108,7 +126,7 @@ export class DiscordManager {
       }
     }
 
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -128,11 +146,15 @@ export class DiscordManager {
         this.songStartTime = Date.now() - (this.pausedElapsed * 1000);
       }
     } else if (!playing && wasPlaying) {
-      // Pausing playback
-      this.pausedElapsed = this.songElapsed;
+      // Pausing playback. Elapsed is no longer reported every second (only on
+      // jumps), so derive it from the start time rather than the last report.
+      this.pausedElapsed = this.songStartTime
+        ? Math.max(0, (Date.now() - this.songStartTime) / 1000)
+        : this.songElapsed;
+      this.songElapsed = this.pausedElapsed;
     }
 
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -140,7 +162,7 @@ export class DiscordManager {
    */
   updateDuration(durationInSeconds: number) {
     this.songDuration = durationInSeconds;
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -152,9 +174,10 @@ export class DiscordManager {
     // Update start time based on current elapsed time
     this.songStartTime = Date.now() - (elapsedSeconds * 1000);
 
-    // Always update Discord when elapsed changes
+    // Elapsed now arrives only when playback jumps (seek, resume), so the
+    // progress bar needs correcting promptly.
     if (this.isPlaying) {
-      this.updatePresence();
+      this.schedulePresence();
     }
   }
 
@@ -168,7 +191,7 @@ export class DiscordManager {
     if (artText) {
       this.albumArtText = artText;
     }
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -178,7 +201,7 @@ export class DiscordManager {
     if (this.currentSite === site) return;
     this.currentSite = site;
     this.songUrl = undefined;
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -190,7 +213,7 @@ export class DiscordManager {
     if (!url.startsWith(siteBase)) return;
     if (url === this.songUrl) return;
     this.songUrl = url;
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   updateAlbumArtCredit(credit: string) {
@@ -198,7 +221,7 @@ export class DiscordManager {
     const cleaned = credit.replace(/^Art by:\s*/i, '').trim();
     this.albumArtCredit = cleaned;
     this.albumArtText = cleaned;
-    this.updatePresence(true);
+    this.schedulePresence();
   }
 
   /**
@@ -315,6 +338,10 @@ export class DiscordManager {
    * Clean up Discord RPC connection
    */
   destroy() {
+    if (this.coalesceTimer) {
+      clearTimeout(this.coalesceTimer);
+      this.coalesceTimer = undefined;
+    }
     if (this.pendingPresenceTimer) {
       clearTimeout(this.pendingPresenceTimer);
       this.pendingPresenceTimer = undefined;

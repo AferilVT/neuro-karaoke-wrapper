@@ -15,13 +15,17 @@ class SongTitleDetector {
     this.lastImageUrl = '';
     this.lastPlaylistId = null;
     this.lastSongUrl = '';
+    this.scriptsScannedForUrl = null;
   }
 
   detectPlaylistId() {
-    // Try to get playlist ID from URL
+    // Try to get playlist ID from URL. When the URL names a playlist it is
+    // authoritative, so skip the DOM fallbacks entirely (this runs on every
+    // detection pass while music plays).
     const url = window.location.href;
     const match = url.match(/\/playlist\/([a-zA-Z0-9-]+)/);
-    if (match && match[1] !== this.lastPlaylistId) {
+    if (match) {
+      if (match[1] === this.lastPlaylistId) return null;
       this.lastPlaylistId = match[1];
       return match[1];
     }
@@ -51,7 +55,10 @@ class SongTitleDetector {
       }
     }
 
-    // Fallback: scan inline scripts for playlistId
+    // Fallback: scan inline scripts for playlistId. Reading every script's text
+    // is expensive, so do it at most once per page URL.
+    if (this.scriptsScannedForUrl === url) return null;
+    this.scriptsScannedForUrl = url;
     const scripts = Array.from(document.querySelectorAll('script'));
     for (const script of scripts) {
       const text = script.textContent || '';
@@ -590,10 +597,49 @@ class SongDetectionManager {
     this.onMediaPlay = null;
     this.onMediaPause = null;
     this.lastArtwork = '';
+    this.lastSentElapsed = null;
+    this.lastSentAt = 0;
+    this.observedTarget = null;
+    this.observer = null;
+  }
+
+  /**
+   * Elapsed time only needs to cross IPC when it jumps (new song, seek, resume).
+   * Discord and the OS media controls extrapolate normal playback themselves,
+   * so a once-a-second message is wasted work.
+   */
+  shouldSendElapsed(elapsed) {
+    if (this.lastSentElapsed === null) return true;
+    const playing = this.playbackDetector.lastState === true;
+    const expected = playing
+      ? this.lastSentElapsed + (performance.now() - this.lastSentAt) / 1000
+      : this.lastSentElapsed;
+    return Math.abs(elapsed - expected) > 2;
+  }
+
+  markElapsedSent(elapsed) {
+    this.lastSentElapsed = elapsed;
+    this.lastSentAt = performance.now();
+  }
+
+  /**
+   * Watch only the player bar for DOM changes once it exists, instead of the
+   * whole page (the site re-renders lyrics and lists constantly). Falls back to
+   * <body> if the player is removed; the 3 s interval covers anything missed.
+   */
+  retargetObserver() {
+    if (!this.observer) return;
+    const player = document.querySelector('.global-player, .mobile-player');
+    const target = player && player.isConnected ? player : document.body;
+    if (target === this.observedTarget) return;
+    this.observer.disconnect();
+    this.observer.observe(target, { childList: true, subtree: true, characterData: false });
+    this.observedTarget = target;
   }
 
   detectAll() {
     this.bindMediaEvents();
+    this.retargetObserver();
 
     // Skip Discord RPC detection on /quiz pages — the quiz player confuses
     // the detectors and spams broken updates.
@@ -627,6 +673,7 @@ class SongDetectionManager {
 
     if (songInfo !== null) {
       this.durationDetector.reset(); // Reset duration for new song
+      this.lastSentElapsed = null;   // New song: next elapsed value always goes out
       ipcRenderer.send('update-song', songInfo);
 
       // Update MediaSession with new song info
@@ -651,7 +698,8 @@ class SongDetectionManager {
       ipcRenderer.send('song-duration', duration);
     }
 
-    if (elapsed !== null) {
+    if (elapsed !== null && this.shouldSendElapsed(elapsed)) {
+      this.markElapsedSent(elapsed);
       ipcRenderer.send('song-elapsed', elapsed);
       // Update MediaSession position
       const currentDuration = this.durationDetector.lastDuration;
@@ -771,12 +819,15 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Start observing after a short delay to let the page load
   setTimeout(() => {
-    // Observe body for DOM changes
+    // Observe body for DOM changes until the player bar appears; detectAll()
+    // then narrows the observer to the player (see retargetObserver).
     observer.observe(document.body, {
       childList: true,
       subtree: true,
       characterData: false
     });
+    manager.observer = observer;
+    manager.observedTarget = document.body;
 
     // Observe title element
     const titleElement = document.querySelector('title');
