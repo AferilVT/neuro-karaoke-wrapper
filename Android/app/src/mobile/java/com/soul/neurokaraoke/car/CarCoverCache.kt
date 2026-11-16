@@ -48,15 +48,17 @@ class CarCoverCache(private val context: Context) {
                             .size(SIZE_PX)
                             .allowHardware(false)
                             .build()
-                        val drawable = loader.execute(req).drawable ?: return@launch
-                        val bmp = (drawable as? BitmapDrawable)?.bitmap
-                            ?: drawable.toBitmap(SIZE_PX, SIZE_PX, Bitmap.Config.ARGB_8888)
-                        mutex.withLock {
-                            cache[url] = bmp
-                            inFlight.remove(url)
+                        val drawable = loader.execute(req).drawable
+                        if (drawable != null) {
+                            val bmp = (drawable as? BitmapDrawable)?.bitmap
+                                ?: drawable.toBitmap(SIZE_PX, SIZE_PX, Bitmap.Config.ARGB_8888)
+                            mutex.withLock {
+                                cache[url] = bmp
+                            }
+                            onAnyReady()
                         }
-                        onAnyReady()
                     } catch (_: Exception) {
+                    } finally {
                         inFlight.remove(url)
                     }
                 }
@@ -64,6 +66,6 @@ class CarCoverCache(private val context: Context) {
     }
 
     companion object {
-        private const val SIZE_PX = 320
+        private const val SIZE_PX = 96
     }
 }

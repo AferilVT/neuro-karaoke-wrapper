@@ -4,6 +4,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.os.Build
+import android.support.v4.media.session.MediaSessionCompat
 import android.util.Log
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
@@ -205,6 +206,32 @@ class MediaPlaybackService : MediaLibraryService() {
                 .setSessionActivity(sessionActivityPendingIntent)
                 .setBitmapLoader(CacheBitmapLoader(androidx.media3.datasource.DataSourceBitmapLoader(this)))
                 .build()
+
+            // Robust reflection to get legacy token for Car App Library registration
+            try {
+                // Try direct field first
+                var sessionCompat: MediaSessionCompat? = null
+                try {
+                    val field = exoPlayer.javaClass.getDeclaredField("sessionCompat")
+                    field.isAccessible = true
+                    sessionCompat = field.get(exoPlayer) as? MediaSessionCompat
+                } catch (_: Exception) {}
+
+                if (sessionCompat == null) {
+                    // Try via impl field (standard Media3 layout)
+                    val implField = MediaSession::class.java.getDeclaredField("impl")
+                    implField.isAccessible = true
+                    val impl = implField.get(librarySession)
+                    val sessionCompatField = impl.javaClass.getDeclaredField("sessionCompat")
+                    sessionCompatField.isAccessible = true
+                    sessionCompat = sessionCompatField.get(impl) as? MediaSessionCompat
+                }
+
+                GlobalMediaToken.token = sessionCompat?.sessionToken
+                Log.d("MediaPlaybackService", "MediaSession token set: ${GlobalMediaToken.token != null}")
+            } catch (e: Exception) {
+                Log.e("MediaPlaybackService", "Failed to get sessionCompat via reflection", e)
+            }
         }
     }
 

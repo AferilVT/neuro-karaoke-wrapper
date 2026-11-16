@@ -48,6 +48,13 @@ class PublicPlaylistsCarScreen(
         PLAYS_LOW(R.string.explore_sort_plays_low)
     }
 
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val invalidateRunnable = Runnable { invalidate() }
+    private fun invalidateOnMain() {
+        mainHandler.removeCallbacks(invalidateRunnable)
+        mainHandler.postDelayed(invalidateRunnable, 100)
+    }
+
     init {
         loadJob = scope.launch {
             val result = karaokeApi.fetchPublicPlaylists()
@@ -57,7 +64,7 @@ class PublicPlaylistsCarScreen(
             // Prefetch covers
             val covers = playlists.take(20).mapNotNull { it.coverUrl }
             coverCache.prefetch(covers) {
-                android.os.Handler(android.os.Looper.getMainLooper()).post { invalidate() }
+                invalidateOnMain()
             }
             
             withContext(Dispatchers.Main) { invalidate() }
@@ -95,7 +102,7 @@ class PublicPlaylistsCarScreen(
         }
 
         val items = ItemList.Builder()
-        sortedPlaylists.forEach { apiPlaylist ->
+        sortedPlaylists.take(48).forEach { apiPlaylist ->
             items.addItem(
                 GridItem.Builder()
                     .setTitle(apiPlaylist.name)
@@ -105,13 +112,21 @@ class PublicPlaylistsCarScreen(
                     }
                     .setImage(
                         getIcon(apiPlaylist.coverUrl),
-                        if (apiPlaylist.coverUrl != null) GridItem.IMAGE_TYPE_LARGE else GridItem.IMAGE_TYPE_ICON
+                        GridItem.IMAGE_TYPE_LARGE
                     )
                     .build()
             )
         }
 
         val actionStrip = ActionStrip.Builder()
+            .addAction(
+                Action.Builder()
+                    .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_radio)).build())
+                    .setOnClickListener {
+                        screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    }
+                    .build()
+            )
             .addAction(
                 Action.Builder()
                     .setTitle(carContext.getString(currentSort.labelRes))

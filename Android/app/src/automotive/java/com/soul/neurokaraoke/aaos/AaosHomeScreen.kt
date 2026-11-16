@@ -76,7 +76,7 @@ fun AaosHomeScreen(
     onNowPlayingClick: () -> Unit,
     onPairClick: () -> Unit
 ) {
-    var tab by remember { mutableStateOf(AaosTab.RADIO) }
+    var tab by remember { mutableStateOf(AaosTab.LIBRARY) }
     val songs by viewModel.songs.collectAsState()
     val setlists by viewModel.setlists.collectAsState()
     val userPlaylists by viewModel.userPlaylists.collectAsState()

@@ -60,11 +60,15 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private var setlists: List<Playlist> = emptyList()
     private var loadJob: Job? = null
     private var initialLoaded = false
-    private var activeTab: String = TAB_RADIO
+    private var activeTab: String = TAB_PLAYLISTS
     private var librarySingerFilter: Singer? = null
 
     private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
-    fun invalidateOnMain() = mainHandler.post { invalidate() }
+    private val invalidateRunnable = Runnable { invalidate() }
+    fun invalidateOnMain() {
+        mainHandler.removeCallbacks(invalidateRunnable)
+        mainHandler.postDelayed(invalidateRunnable, 100)
+    }
 
     init {
         carPlayer.ensureConnected()
@@ -81,11 +85,29 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             setlists = catalog.getPlaylists()
             
             initialLoaded = true
-            // Prefetch first batch of covers
-            coverCache.prefetch(
-                allSongs.take(40).map { it.coverUrl } +
-                    setlists.take(20).flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
-            ) { invalidateOnMain() }
+            // Prefetch covers
+            val userCovers = userRepo.playlists.value.flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+            val setlistCovers = setlists.take(20).flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+            val songCovers = allSongs.take(40).map { it.coverUrl }
+            
+            coverCache.prefetch(songCovers + userCovers + setlistCovers) { 
+                invalidateOnMain() 
+            }
+
+            // Also observe user playlist and favorites updates to prefetch new covers
+            scope.launch {
+                userRepo.playlists.collect { updatedPlaylists ->
+                    val newCovers = updatedPlaylists.flatMap { it.previewCovers.take(1) + listOf(it.coverUrl) }
+                    coverCache.prefetch(newCovers) { invalidateOnMain() }
+                }
+            }
+            scope.launch {
+                favoritesRepo.favorites.collect { favorites ->
+                    val newCovers = favorites.take(1).map { it.coverUrl }
+                    coverCache.prefetch(newCovers) { invalidateOnMain() }
+                }
+            }
+
             withContext(Dispatchers.Main) { invalidate() }
         }
         lifecycle.addObserver(object : androidx.lifecycle.DefaultLifecycleObserver {
@@ -104,6 +126,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
     private fun tabTemplate(): Template {
         val builder = TabTemplate.Builder(object : TabTemplate.TabCallback {
             override fun onTabSelected(tabContentId: String) {
+                if (tabContentId == TAB_NOW_PLAYING) {
+                    screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    return
+                }
                 activeTab = tabContentId
                 invalidate()
             }
@@ -111,16 +137,15 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         builder.setHeaderAction(Action.APP_ICON)
         builder.setActiveTabContentId(activeTab)
 
-        builder.addTab(tab(TAB_RADIO, res.getString(R.string.car_tab_radio), R.drawable.ic_car_radio))
-        builder.addTab(tab(TAB_LIBRARY, res.getString(R.string.car_tab_library), R.drawable.ic_car_library))
+        builder.addTab(tab(TAB_NOW_PLAYING, res.getString(R.string.player_title_now_playing), R.drawable.ic_car_song))
         builder.addTab(tab(TAB_PLAYLISTS, res.getString(R.string.car_tab_playlists), R.drawable.ic_car_browse))
+        builder.addTab(tab(TAB_RADIO, res.getString(R.string.car_tab_radio), R.drawable.ic_car_radio))
         builder.addTab(tab(TAB_MORE, res.getString(R.string.car_tab_more), R.drawable.ic_car_persona))
 
         val content = when (activeTab) {
-            TAB_PLAYLISTS -> playlistsContent()
             TAB_RADIO -> radioContent()
             TAB_MORE -> moreContent()
-            else -> libraryContent()
+            else -> playlistsContent()
         }
         builder.setTabContents(TabContents.Builder(content).build())
         return builder.build()
@@ -139,12 +164,12 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
     // ---- Library: grid of recently-added songs --------------------------------
 
-    private fun libraryContent(): Template {
+    private fun libraryContent(headerAction: Action = Action.APP_ICON): Template {
         if (!initialLoaded) {
             return GridTemplate.Builder()
                 .setTitle(res.getString(R.string.car_title_library))
                 .setLoading(true)
-                .setHeaderAction(Action.APP_ICON)
+                .setHeaderAction(headerAction)
                 .build()
         }
         if (allSongs.isEmpty()) {
@@ -153,7 +178,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                 .setSingleList(
                     ItemList.Builder().setNoItemsMessage(res.getString(R.string.car_empty_no_songs)).build()
                 )
-                .setHeaderAction(Action.APP_ICON)
+                .setHeaderAction(headerAction)
                 .build()
         }
         val limit = gridLimit()
@@ -166,10 +191,21 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         }
 
         filteredSongs.take(limit).forEachIndexed { idx, song ->
-            items.addItem(songTile(song) { carPlayer.playSongs(filteredSongs, idx) })
+            items.addItem(songTile(song) { 
+                carPlayer.playSongs(filteredSongs, idx, res.getString(R.string.car_title_library))
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            })
         }
 
         val actionStrip = ActionStrip.Builder()
+            .addAction(
+                Action.Builder()
+                    .setIcon(CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_song)).build())
+                    .setOnClickListener {
+                        screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+                    }
+                    .build()
+            )
             .addAction(
                 Action.Builder()
                     .setTitle(getSingerLabel(librarySingerFilter))
@@ -181,7 +217,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         return GridTemplate.Builder()
             .setTitle(res.getString(R.string.car_title_library))
             .setSingleList(items.build())
-            .setHeaderAction(Action.APP_ICON)
+            .setHeaderAction(headerAction)
             .setActionStrip(actionStrip)
             .build()
     }
@@ -193,6 +229,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             Singer.DUET -> "Duets"
             else -> "All"
         }
+    }
+
+    private inner class LibraryCarScreen(carContext: CarContext) : Screen(carContext) {
+        override fun onGetTemplate(): Template = libraryContent(Action.BACK)
     }
 
     private fun showFilterPicker() {
@@ -239,6 +279,8 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
         // Add Favorites at the top if not empty
         val favorites = favoritesRepo.favorites.value
+        val listLimit = if (favorites.isNotEmpty()) limit - 1 else limit
+        
         if (favorites.isNotEmpty()) {
             val favTitle = res.getString(R.string.aaos_label_favorites)
             val favItem = GridItem.Builder()
@@ -251,7 +293,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
             items.addItem(favItem.build())
         }
 
-        combined.take(limit).forEach { pl ->
+        combined.take(listLimit).forEach { pl ->
             items.addItem(playlistTile(pl))
         }
 
@@ -283,7 +325,10 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                     IconCompat.createWithResource(carContext, android.R.drawable.ic_media_play)
                 ).build()
             )
-            .setOnClickListener { carPlayer.playRadio() }
+            .setOnClickListener { 
+                carPlayer.playRadio() 
+                screenManager.push(NowPlayingCarScreen(carContext, carPlayer))
+            }
             .build()
 
         val pane = Pane.Builder()
@@ -301,6 +346,19 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
 
     private fun moreContent(): Template {
         val items = ItemList.Builder()
+
+        items.addItem(
+            Row.Builder()
+                .setTitle(res.getString(R.string.car_title_library))
+                .setImage(
+                    CarIcon.Builder(IconCompat.createWithResource(carContext, R.drawable.ic_car_library)).build(),
+                    Row.IMAGE_TYPE_ICON
+                )
+                .setOnClickListener {
+                    screenManager.push(LibraryCarScreen(carContext))
+                }
+                .build()
+        )
 
         items.addItem(
             Row.Builder()
@@ -493,13 +551,13 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
                 IconCompat.createWithResource(carContext, R.drawable.ic_car_song)
             ).build()
         }
-        val type = if (bmp != null) GridItem.IMAGE_TYPE_LARGE else GridItem.IMAGE_TYPE_ICON
-        builder.setImage(icon, type)
+        builder.setImage(icon, GridItem.IMAGE_TYPE_LARGE)
     }
 
     private fun gridLimit(): Int = try {
         carContext.getCarService(ConstraintManager::class.java)
             .getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_GRID)
+            .coerceAtMost(48)
     } catch (_: Throwable) {
         24
     }
@@ -508,6 +566,7 @@ class HomeCarScreen(carContext: CarContext) : Screen(carContext) {
         const val TAB_LIBRARY = "library"
         const val TAB_PLAYLISTS = "playlists"
         const val TAB_RADIO = "radio"
+        const val TAB_NOW_PLAYING = "now_playing"
         const val TAB_MORE = "more"
     }
 }

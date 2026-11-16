@@ -51,14 +51,16 @@ class CarPlayer(private val context: Context) {
         }, { mainHandler.post(it) })
     }
 
-    fun playSongs(songs: List<Song>, startIndex: Int) {
+    val currentController: MediaController? get() = controller
+
+    fun playSongs(songs: List<Song>, startIndex: Int, playlistName: String? = null) {
         val count = songs.size
         val start = startIndex
-        Log.d("NK_CAR_PLAYER", "playSongs: count=$count, startIndex=$start")
+        Log.d("NK_CAR_PLAYER", "playSongs: count=$count, startIndex=$start, playlist=$playlistName")
         ensureConnected()
         
         // Map to MediaItems on whatever thread we are on
-        val items = songs.map { it.toMediaItem() }
+        val items = songs.map { it.toMediaItem(playlistName) }
         
         runOnController { c ->
             Log.d("NK_CAR_PLAYER", "Executing setMediaItems on controller: items=${items.size}, firstId=${items.firstOrNull()?.mediaId}")
@@ -82,6 +84,7 @@ class CarPlayer(private val context: Context) {
                 MediaMetadata.Builder()
                     .setTitle(context.getString(R.string.car_radio_station_title))
                     .setArtist(context.getString(R.string.player_label_live))
+                    .setAlbumTitle("Neuro Radio")
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setIsPlayable(true)
                     .build()
@@ -101,7 +104,7 @@ class CarPlayer(private val context: Context) {
         connecting = null
     }
 
-    private fun runOnController(block: (MediaController) -> Unit) {
+    fun runOnController(block: (MediaController) -> Unit) {
         if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
             val c = controller
             if (c != null) {
@@ -122,7 +125,7 @@ class CarPlayer(private val context: Context) {
         }
     }
 
-    private fun Song.toMediaItem(): MediaItem {
+    private fun Song.toMediaItem(playlistName: String? = null): MediaItem {
         val songUri = if (audioUrl.isNotBlank()) Uri.parse(audioUrl) else Uri.parse("https://idk.neurokaraoke.com/empty.mp3")
         val coverUri = if (coverUrl.isNotBlank()) Uri.parse(coverUrl) else null
         
@@ -138,7 +141,8 @@ class CarPlayer(private val context: Context) {
                 MediaMetadata.Builder()
                     .setTitle(title)
                     .setArtist("$artist • $coverArtist")
-                    .setAlbumTitle(coverArtist)
+                    // If no playlist name is provided, use "Library" or similar instead of falling back to artist.
+                    .setAlbumTitle(playlistName ?: "Neuro Karaoke")
                     .setMediaType(MediaMetadata.MEDIA_TYPE_MUSIC)
                     .setIsPlayable(true)
                     .apply {

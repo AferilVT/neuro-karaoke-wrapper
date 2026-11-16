@@ -25,6 +25,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.soul.neurokaraoke.data.repository.LocaleManager
+import com.soul.neurokaraoke.service.GlobalMediaToken
 import com.soul.neurokaraoke.service.MediaPlaybackService
 import com.soul.neurokaraoke.ui.theme.NeuroKaraokeTheme
 
@@ -49,7 +50,12 @@ class AaosLauncherActivity : ComponentActivity() {
 
     private fun handleAuthIntent(intent: Intent?) {
         val data = intent?.data ?: return
-        if (data.scheme == "neurokaraoke" && data.host == "auth") {
+        val isAuthCallback = when {
+            data.scheme == "neurokaraoke" && data.host == "auth" -> true
+            data.scheme == "https" && data.host == "neurokaraoke.com" && data.path == "/app-auth" -> true
+            else -> false
+        }
+        if (isAuthCallback) {
             val code = data.getQueryParameter("code") ?: return
             pendingAuthCode.value = code
         }
@@ -59,6 +65,7 @@ class AaosLauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleAuthIntent(intent)
+        handleMediaIntent(intent)
 
         // Connect to MediaPlaybackService so playback flows through the
         // same service the phone uses — notifications, audio focus, the works.
@@ -81,10 +88,13 @@ class AaosLauncherActivity : ComponentActivity() {
                     ) {
                         val vm: AaosViewModel = viewModel()
                         LaunchedEffect(Unit) { vm.bootstrap(applicationContext) }
+                        
                         // Discord deep-link path no longer used (pairing code replaces it).
                         AaosApp(
                             viewModel = vm,
-                            controllerProvider = { controller }
+                            controllerProvider = { controller },
+                            navOverride = requestedRoute.value,
+                            onNavOverrideHandled = { requestedRoute.value = null }
                         )
                     }
                 }

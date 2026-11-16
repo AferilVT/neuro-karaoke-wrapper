@@ -19,10 +19,19 @@ sealed interface AaosRoute {
 @Composable
 fun AaosApp(
     viewModel: AaosViewModel,
-    controllerProvider: () -> MediaController?
+    controllerProvider: () -> MediaController?,
+    navOverride: AaosRoute? = null,
+    onNavOverrideHandled: () -> Unit = {}
 ) {
     var route: AaosRoute by rememberSaveable(stateSaver = AaosRouteSaver) {
         mutableStateOf(AaosRoute.Home)
+    }
+
+    androidx.compose.runtime.LaunchedEffect(navOverride) {
+        if (navOverride != null) {
+            route = navOverride
+            onNavOverrideHandled()
+        }
     }
 
     val pairingStatus by viewModel.pairingStatus.collectAsState()

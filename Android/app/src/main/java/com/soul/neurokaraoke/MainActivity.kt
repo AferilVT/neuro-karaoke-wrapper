@@ -46,12 +46,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // On AAOS the phone UI makes no sense — hand off to the car Compose UI.
-        if (packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_AUTOMOTIVE)) {
-            startActivity(android.content.Intent(this, com.soul.neurokaraoke.aaos.AaosLauncherActivity::class.java))
-            finish()
-            return
-        }
         enableEdgeToEdge()
 
         // Check if first-time setup is needed
