@@ -82,6 +82,70 @@ sudo flatpak install ./Neuro.Karaoke.Player-*.flatpak
 chmod +x ./Neuro.Karaoke.Player-*.AppImage
 ./Neuro.Karaoke.Player-*.AppImage
 ```
+#### Nix
+
+The repository provides a flake with a package for `x86_64-linux` and `aarch64-linux`.
+
+Run without installing:
+
+```bash
+nix run github:AferilVT/neuro-karaoke-wrapper
+```
+
+Install into your profile:
+
+```bash
+nix profile install github:AferilVT/neuro-karaoke-wrapper
+```
+
+##### NixOS / Home Manager (flakes)
+
+```nix
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    neuro-karaoke-wrapper.url = "github:AferilVT/neuro-karaoke-wrapper";
+    neuro-karaoke-wrapper.inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = { self, nixpkgs, neuro-karaoke-wrapper, ... }: {
+    nixosConfigurations.myhost = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        ./configuration.nix
+        ({ pkgs, ... }: {
+          environment.systemPackages = [
+            neuro-karaoke-wrapper.packages.${pkgs.stdenv.hostPlatform.system}.default
+          ];
+        })
+      ];
+    };
+  };
+}
+```
+
+For Home Manager use `home.packages` instead of `environment.systemPackages`.
+
+Alternatively, use the overlay:
+
+```nix
+nixpkgs.overlays = [ neuro-karaoke-wrapper.overlays.default ];
+environment.systemPackages = [ pkgs.neuro-karaoke-wrapper ];
+```
+
+##### Proxy
+
+The package accepts an optional `proxy` argument. It sets `HTTP_PROXY`/`HTTPS_PROXY` only for this application:
+
+```nix
+environment.systemPackages = [
+  (neuro-karaoke-wrapper.packages.${pkgs.stdenv.hostPlatform.system}.default.override {
+    proxy = "http://127.0.0.1:2080";
+  })
+];
+```
+
+If you use the overlay, `pkgs.neuro-karaoke-wrapper.override { proxy = "..."; }` works too.
 
 ### Android
 Download `Neuro.Karaoke.Player.apk` from the [latest release](../../releases/latest) and install it on your device.
