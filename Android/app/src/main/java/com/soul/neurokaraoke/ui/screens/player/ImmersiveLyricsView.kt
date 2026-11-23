@@ -100,13 +100,12 @@ fun ImmersiveLyricsView(
         } else if (cached?.plainLyrics?.isNotBlank() == true) {
             lyricLines = lyricsApi.parsePlainLyrics(cached.plainLyrics!!); isSynced = false
         }
-        if (song.audioUrl.isNotBlank()) {
-            val songId = neuroApi.findSongIdByAudioUrl(song.audioUrl)
-            resolvedSongId = songId
-            if (songId != null && lyricLines.isEmpty()) {
-                neuroApi.fetchSongLyrics(songId).onSuccess { lines ->
-                    if (lines.isNotEmpty()) { lyricLines = lines; isSynced = true }
-                }
+        val songId = LyricsApi.neuroSongIdFromLocalId(song.id)
+            ?: song.audioUrl.takeIf { it.isNotBlank() }?.let { neuroApi.findSongIdByAudioUrl(it) }
+        resolvedSongId = songId
+        if (songId != null && lyricLines.isEmpty()) {
+            neuroApi.fetchSongLyrics(songId).onSuccess { lines ->
+                if (lines.isNotEmpty()) { lyricLines = lines; isSynced = true }
             }
         }
         if (lyricLines.isEmpty()) {
@@ -120,9 +119,13 @@ fun ImmersiveLyricsView(
         isLoading = false
     }
 
-    val currentLineIndex = remember(currentPosition, lyricLines, isSynced) {
-        if (!isSynced || lyricLines.isEmpty()) -1
-        else lyricLines.indexOfLast { it.timestamp <= currentPosition }
+    val timestamps = remember(lyricLines) { lyricLines.map { it.timestamp } }
+    val currentLineIndex = remember(currentPosition, timestamps, isSynced) {
+        if (!isSynced || timestamps.isEmpty()) -1
+        else {
+            val idx = timestamps.binarySearch(currentPosition)
+            if (idx >= 0) idx else -(idx + 1) - 1
+        }
     }
 
     val listState = rememberLazyListState()

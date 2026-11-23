@@ -25,14 +25,15 @@ import android.content.res.AssetManager
 import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Android-only glue: loads a Shimeji mascot pack from `assets/mascots/<name>/` and decodes/
- * caches its frame bitmaps.
+ * caches its frame bitmaps off the UI thread.
  */
 class MascotAssets(private val assets: AssetManager) {
 
-    private val frameCache = HashMap<String, ImageBitmap>()
+    private val frameCache = ConcurrentHashMap<String, ImageBitmap>()
 
     /** Load & parse a pack from assets/mascots/<name>/. */
     fun loadSet(name: String): MascotSet {
@@ -44,6 +45,33 @@ class MascotAssets(private val assets: AssetManager) {
             }
         }
     }
+
+    /** Pre-decode all PNG frames for a character set (call from Dispatchers.IO). */
+    fun preloadSet(setName: String) {
+        val dir = "mascots/$setName/img"
+        val files = runCatching { assets.list(dir) }.getOrNull() ?: return
+        for (fileName in files) {
+            if (fileName.endsWith(".png", ignoreCase = true)) {
+                runCatching { frame(setName, "/$fileName") }
+            }
+        }
+    }
+
+    /** Evict cached bitmaps for character sets that are no longer active. */
+    fun retainOnly(activeSetNames: Set<String>) {
+        val iter = frameCache.keys.iterator()
+        while (iter.hasNext()) {
+            val key = iter.next()
+            val setName = key.substringBefore('/')
+            if (setName !in activeSetNames) {
+                iter.remove()
+            }
+        }
+    }
+
+    /** Non-blocking cache lookup for the Compose draw pass (never decodes on UI thread). */
+    fun cachedFrame(setName: String, image: String): ImageBitmap? =
+        frameCache["$setName$image"]
 
     /** Decode a frame PNG (cached) as an ImageBitmap. image is like "/shime1.png". */
     fun frame(setName: String, image: String): ImageBitmap {

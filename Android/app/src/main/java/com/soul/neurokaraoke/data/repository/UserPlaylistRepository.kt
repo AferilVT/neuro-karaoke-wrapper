@@ -37,7 +37,9 @@ class UserPlaylistRepository(private val context: Context) {
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     init {
-        loadPlaylists()
+        syncScope.launch {
+            loadPlaylists()
+        }
     }
 
     private fun loadPlaylists() {
@@ -50,7 +52,9 @@ class UserPlaylistRepository(private val context: Context) {
                     val obj = jsonArray.getJSONObject(i)
                     playlistList.add(parsePlaylist(obj))
                 }
-                _playlists.value = playlistList
+                if (_playlists.value.isEmpty()) {
+                    _playlists.value = playlistList
+                }
             } catch (e: Exception) {
                 if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
                 _playlists.value = emptyList()
@@ -59,11 +63,14 @@ class UserPlaylistRepository(private val context: Context) {
     }
 
     private fun savePlaylists() {
-        val jsonArray = JSONArray()
-        for (playlist in _playlists.value) {
-            jsonArray.put(playlistToJson(playlist))
+        val snapshot = _playlists.value
+        syncScope.launch {
+            val jsonArray = JSONArray()
+            for (playlist in snapshot) {
+                jsonArray.put(playlistToJson(playlist))
+            }
+            prefs.edit().putString(KEY_PLAYLISTS, jsonArray.toString()).apply()
         }
-        prefs.edit().putString(KEY_PLAYLISTS, jsonArray.toString()).apply()
     }
 
     private fun parsePlaylist(json: JSONObject): Playlist {

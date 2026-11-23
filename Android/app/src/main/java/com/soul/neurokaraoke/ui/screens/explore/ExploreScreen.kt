@@ -243,7 +243,7 @@ fun ExploreScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     contentPadding = PaddingValues(bottom = 100.dp)
                 ) {
-                    items(paginatedPlaylists) { playlist ->
+                    items(paginatedPlaylists, key = { it.id }) { playlist ->
                         PlaylistCard(
                             playlist = playlist,
                             onClick = { onPlaylistClick(playlist.id) }

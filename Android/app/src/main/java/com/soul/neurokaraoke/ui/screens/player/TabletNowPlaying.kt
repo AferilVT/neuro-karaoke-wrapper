@@ -42,6 +42,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -52,10 +53,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.R
 import com.soul.neurokaraoke.data.model.Song
+import com.soul.neurokaraoke.viewmodel.PlaybackProgress
 import com.soul.neurokaraoke.viewmodel.RepeatMode
+import kotlinx.coroutines.flow.StateFlow
 
 private fun formatMs(ms: Long): String {
     val totalSec = (ms / 1000).coerceAtLeast(0)
@@ -71,8 +75,9 @@ private fun formatMs(ms: Long): String {
 fun TabletNowPlaying(
     song: Song,
     isPlaying: Boolean,
-    currentPosition: Long,
-    duration: Long,
+    currentPosition: Long = 0L,
+    duration: Long = 0L,
+    playbackProgressFlow: StateFlow<PlaybackProgress>? = null,
     isShuffleEnabled: Boolean,
     repeatMode: RepeatMode,
     isFavorite: Boolean,
@@ -193,15 +198,12 @@ fun TabletNowPlaying(
                         }
                     }
                     Spacer(Modifier.height(8.dp))
-                    Slider(
-                        value = if (duration > 0) (currentPosition.toFloat() / duration).coerceIn(0f, 1f) else 0f,
-                        onValueChange = { onSeekTo(it) },
-                        colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary)
+                    TabletProgressScrubber(
+                        fallbackPosition = currentPosition,
+                        fallbackDuration = duration,
+                        playbackProgressFlow = playbackProgressFlow,
+                        onSeekTo = onSeekTo
                     )
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(formatMs(currentPosition), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(formatMs(duration), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
                     Spacer(Modifier.height(8.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onShuffleClick) {
@@ -238,10 +240,11 @@ fun TabletNowPlaying(
                 }
 
                 // RIGHT: lyrics
-                LyricsPanel(
+                TabletSyncedLyricsPanel(
                     song = song,
-                    currentPosition = currentPosition,
-                    duration = duration,
+                    fallbackPosition = currentPosition,
+                    fallbackDuration = duration,
+                    playbackProgressFlow = playbackProgressFlow,
                     onSeekTo = onSeekTo,
                     accessToken = accessToken,
                     modifier = Modifier.weight(0.58f).fillMaxHeight().padding(end = 12.dp)
@@ -249,4 +252,49 @@ fun TabletNowPlaying(
             }
         }
     }
+}
+
+@Composable
+private fun TabletProgressScrubber(
+    fallbackPosition: Long,
+    fallbackDuration: Long,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?,
+    onSeekTo: (Float) -> Unit
+) {
+    val progressState = playbackProgressFlow?.collectAsStateWithLifecycle()?.value
+    val position = progressState?.currentPosition ?: fallbackPosition
+    val duration = progressState?.duration?.takeIf { it > 0 } ?: fallbackDuration
+
+    Slider(
+        value = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f,
+        onValueChange = { onSeekTo(it) },
+        colors = SliderDefaults.colors(thumbColor = MaterialTheme.colorScheme.primary, activeTrackColor = MaterialTheme.colorScheme.primary)
+    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(formatMs(position), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(formatMs(duration), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun TabletSyncedLyricsPanel(
+    song: Song,
+    fallbackPosition: Long,
+    fallbackDuration: Long,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?,
+    onSeekTo: (Float) -> Unit,
+    accessToken: String?,
+    modifier: Modifier = Modifier
+) {
+    val progressState = playbackProgressFlow?.collectAsStateWithLifecycle()?.value
+    val position = progressState?.currentPosition ?: fallbackPosition
+    val duration = progressState?.duration?.takeIf { it > 0 } ?: fallbackDuration
+    LyricsPanel(
+        song = song,
+        currentPosition = position,
+        duration = duration,
+        onSeekTo = onSeekTo,
+        accessToken = accessToken,
+        modifier = modifier
+    )
 }

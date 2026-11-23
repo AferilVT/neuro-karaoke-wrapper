@@ -43,6 +43,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -59,6 +60,9 @@ import com.soul.neurokaraoke.ui.components.SongListItem
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private const val PAGE_SIZE = 20
 
@@ -92,8 +96,18 @@ fun SearchScreen(
         focusManager.clearFocus()
     }
 
+    var debouncedQuery by remember { mutableStateOf("") }
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.isBlank()) {
+            debouncedQuery = ""
+        } else {
+            delay(150L)
+            debouncedQuery = searchQuery
+        }
+    }
+
     // Reset page when filters change
-    LaunchedEffect(searchQuery, selectedSinger, sortOption) {
+    LaunchedEffect(debouncedQuery, selectedSinger, sortOption) {
         currentPage = 1
     }
 
@@ -106,36 +120,38 @@ fun SearchScreen(
         }
     }
 
-    val filteredSongs by remember(searchQuery, songs, selectedSinger, sortOption) {
-        derivedStateOf {
+    // Filter and sort off the main thread so large catalogs never drop keystroke frames
+    val filteredSongs by produceState(
+        initialValue = emptyList<Song>(),
+        debouncedQuery,
+        songs,
+        selectedSinger,
+        sortOption
+    ) {
+        value = withContext(Dispatchers.Default) {
             var result = songs
 
-            // Filter by search query
-            if (searchQuery.isNotBlank()) {
-                val query = searchQuery.lowercase()
+            if (debouncedQuery.isNotBlank()) {
+                val query = debouncedQuery.lowercase()
                 result = result.filter { song ->
-                    song.title.contains(searchQuery, ignoreCase = true) ||
-                    song.artist.contains(searchQuery, ignoreCase = true) ||
-                    song.titleRomaji.contains(query) ||
-                    song.artistRomaji.contains(query) ||
-                    song.titleEnglish?.contains(searchQuery, ignoreCase = true) == true
+                    song.title.contains(debouncedQuery, ignoreCase = true) ||
+                        song.artist.contains(debouncedQuery, ignoreCase = true) ||
+                        song.titleRomaji.contains(query) ||
+                        song.artistRomaji.contains(query) ||
+                        song.titleEnglish?.contains(debouncedQuery, ignoreCase = true) == true
                 }
             }
 
-            // Filter by singer
             if (selectedSinger != null) {
                 result = result.filter { it.singer == selectedSinger }
             }
 
-            // Sort
-            result = when (sortOption) {
+            when (sortOption) {
                 SortOption.TITLE_ASC -> result.sortedBy { it.title.lowercase() }
                 SortOption.TITLE_DESC -> result.sortedByDescending { it.title.lowercase() }
                 SortOption.ARTIST_ASC -> result.sortedBy { it.artist.lowercase() }
                 SortOption.ARTIST_DESC -> result.sortedByDescending { it.artist.lowercase() }
             }
-
-            result
         }
     }
 
@@ -391,7 +407,7 @@ fun SearchScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                itemsIndexed(paginatedSongs) { index, song ->
+                itemsIndexed(paginatedSongs, key = { _, song -> song.id }) { index, song ->
                     val globalIndex = (currentPage - 1) * PAGE_SIZE + index
                     SongListItem(
                         song = song,

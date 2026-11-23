@@ -70,6 +70,16 @@ object DownloadRepository {
     private val _downloads = MutableStateFlow<List<DownloadedSong>>(emptyList())
     val downloads: StateFlow<List<DownloadedSong>> = _downloads.asStateFlow()
 
+    @Volatile
+    private var downloadedIds: Set<String> = emptySet()
+    @Volatile
+    private var downloadedByAudioUrl: Map<String, DownloadedSong> = emptyMap()
+
+    private fun updateDownloadIndexes(list: List<DownloadedSong>) {
+        downloadedIds = list.mapTo(HashSet(list.size)) { it.id }
+        downloadedByAudioUrl = list.associateBy { it.audioUrl }
+    }
+
     private val _downloadProgress = MutableStateFlow<Map<String, Float>>(emptyMap())
     val downloadProgress: StateFlow<Map<String, Float>> = _downloadProgress.asStateFlow()
 
@@ -144,11 +154,11 @@ object DownloadRepository {
     }
 
     fun isDownloaded(songId: String): Boolean {
-        return _downloads.value.any { it.id == songId }
+        return songId in downloadedIds
     }
 
     fun getLocalAudioPath(audioUrl: String): String? {
-        val downloaded = _downloads.value.find { it.audioUrl == audioUrl } ?: return null
+        val downloaded = downloadedByAudioUrl[audioUrl] ?: return null
         val file = File(downloaded.localAudioPath)
         return if (file.exists()) downloaded.localAudioPath else null
     }
@@ -207,7 +217,9 @@ object DownloadRepository {
                     )
 
                     synchronized(_downloads) {
-                        _downloads.value += downloaded
+                        val updated = _downloads.value + downloaded
+                        _downloads.value = updated
+                        updateDownloadIndexes(updated)
                         saveMetadata()
                     }
                     completedDownloadCount.incrementAndGet()
@@ -235,20 +247,27 @@ object DownloadRepository {
 
     fun removeSong(songId: String) {
         val song = _downloads.value.find { it.id == songId } ?: return
-        File(song.localAudioPath).delete()
-        song.localCoverPath?.let { File(it).delete() }
-
-        _downloads.value = _downloads.value.filter { it.id != songId }
-        saveMetadata()
+        val updated = _downloads.value.filter { it.id != songId }
+        _downloads.value = updated
+        updateDownloadIndexes(updated)
+        downloadScope.launch {
+            File(song.localAudioPath).delete()
+            song.localCoverPath?.let { File(it).delete() }
+            synchronized(_downloads) { saveMetadata() }
+        }
     }
 
     fun removeAll() {
-        _downloads.value.forEach { song ->
-            File(song.localAudioPath).delete()
-            song.localCoverPath?.let { File(it).delete() }
-        }
+        val toDelete = _downloads.value
         _downloads.value = emptyList()
-        saveMetadata()
+        updateDownloadIndexes(emptyList())
+        downloadScope.launch {
+            toDelete.forEach { song ->
+                File(song.localAudioPath).delete()
+                song.localCoverPath?.let { File(it).delete() }
+            }
+            synchronized(_downloads) { saveMetadata() }
+        }
     }
 
     fun getTotalSizeBytes(): Long {
@@ -272,42 +291,41 @@ object DownloadRepository {
         outputFile: File,
         onProgress: (Float) -> Unit
     ) {
-        var connection: HttpURLConnection? = null
-        try {
-            val url = URL(urlString)
-            connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 15000
-            connection.readTimeout = 30000
-            connection.setRequestProperty("User-Agent", "NeuroKaraoke Android App")
-
-            val responseCode = connection.responseCode
-            if (responseCode != HttpURLConnection.HTTP_OK) {
-                throw Exception("HTTP error: $responseCode")
+        val request = okhttp3.Request.Builder()
+            .url(urlString)
+            .header("User-Agent", "NeuroKaraoke Android App")
+            .get()
+            .build()
+        com.soul.neurokaraoke.data.api.HttpClient.shared.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                throw Exception("HTTP error: ${response.code}")
             }
-
-            val contentLength = connection.contentLength.toLong()
+            val body = response.body ?: throw Exception("Empty response body")
+            val contentLength = body.contentLength()
             var bytesRead = 0L
+            var lastReportedProgress = -1f
+            var lastReportTimeMs = 0L
 
-            connection.inputStream.buffered().use { input ->
-                outputFile.outputStream().buffered().use { output ->
-                    val buffer = ByteArray(8192)
+            body.byteStream().buffered(32 * 1024).use { input ->
+                outputFile.outputStream().buffered(32 * 1024).use { output ->
+                    val buffer = ByteArray(32 * 1024)
                     var read: Int
                     while (input.read(buffer).also { read = it } != -1) {
                         output.write(buffer, 0, read)
                         bytesRead += read
                         if (contentLength > 0) {
-                            onProgress(bytesRead.toFloat() / contentLength)
+                            val progress = (bytesRead.toFloat() / contentLength).coerceIn(0f, 1f)
+                            val now = android.os.SystemClock.elapsedRealtime()
+                            if (progress - lastReportedProgress >= 0.01f && now - lastReportTimeMs >= 150L) {
+                                lastReportedProgress = progress
+                                lastReportTimeMs = now
+                                onProgress(progress)
+                            }
                         }
                     }
                 }
             }
-
-            if (contentLength <= 0) {
-                onProgress(1f)
-            }
-        } finally {
-            connection?.disconnect()
+            onProgress(1f)
         }
     }
 
@@ -474,6 +492,7 @@ object DownloadRepository {
             }
 
             _downloads.value = songs
+            updateDownloadIndexes(songs)
             if (needsResave) saveMetadata()
         } catch (e: Exception) {
             if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()

@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,20 +35,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.GlassCard
 import com.soul.neurokaraoke.ui.theme.GradientProgressBar
 import com.soul.neurokaraoke.ui.theme.NeonTheme
+import com.soul.neurokaraoke.viewmodel.PlaybackProgress
 import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.R
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun MiniPlayer(
     currentSong: Song?,
     isPlaying: Boolean,
-    progress: Float,
+    progress: Float = 0f,
+    playbackProgressFlow: StateFlow<PlaybackProgress>? = null,
     onPlayPauseClick: () -> Unit,
     onPreviousClick: () -> Unit,
     onNextClick: () -> Unit,
@@ -72,22 +77,12 @@ fun MiniPlayer(
         glowRadius = 8.dp
     ) {
         Column {
-            if (isRadioMode && progress <= 0f) {
-                // Solid accent line for radio mode if no progress available
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(2.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
-                )
-            } else {
-                // Neon progress bar at top
-                GradientProgressBar(
-                    progress = progress,
-                    gradientColors = neonColors.gradientColors,
-                    height = 2.dp
-                )
-            }
+            MiniPlayerProgressBar(
+                isRadioMode = isRadioMode,
+                fallbackProgress = progress,
+                playbackProgressFlow = playbackProgressFlow,
+                gradientColors = neonColors.gradientColors
+            )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -214,5 +209,37 @@ fun MiniPlayer(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun MiniPlayerProgressBar(
+    isRadioMode: Boolean,
+    fallbackProgress: Float,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?,
+    gradientColors: List<Color>
+) {
+    val progress = if (playbackProgressFlow != null) {
+        val state by playbackProgressFlow.collectAsStateWithLifecycle()
+        state.progress
+    } else {
+        fallbackProgress
+    }
+
+    if (isRadioMode && progress <= 0f) {
+        // Solid accent line for radio mode if no progress available
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+        )
+    } else {
+        // Neon progress bar at top
+        GradientProgressBar(
+            progress = progress,
+            gradientColors = gradientColors,
+            height = 2.dp
+        )
     }
 }

@@ -5,20 +5,16 @@
 # Keep app model classes (data classes used with JSON parsing)
 -keep class com.soul.neurokaraoke.data.model.** { *; }
 
-# Media3 / ExoPlayer
--keep class androidx.media3.** { *; }
+# Media3 / ExoPlayer (consumer rules bundled in AARs handle required keeps)
 -dontwarn androidx.media3.**
 
-# Coil image loading
--keep class coil.** { *; }
+# Coil image loading (consumer rules bundled in AARs)
 -dontwarn coil.**
 
-# Jetpack Compose
--keep class androidx.compose.** { *; }
+# Jetpack Compose (consumer rules bundled in AARs)
 -dontwarn androidx.compose.**
 
-# Android Car App Library
--keep class androidx.car.app.** { *; }
+# Android Car App Library (consumer rules bundled in AARs)
 -dontwarn androidx.car.app.**
 
 # Coroutines

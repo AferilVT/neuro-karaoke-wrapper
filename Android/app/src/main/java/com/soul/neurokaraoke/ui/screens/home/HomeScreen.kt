@@ -15,9 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -87,9 +84,9 @@ fun HomeScreen(
             .onSuccess { coverDistribution = it }
     }
 
-    // Derive sections from songs
-    val trendingSongs = remember(songs) { songs.shuffled().take(6) }
-    val madeForYouSongs = remember(songs) { songs.shuffled().take(4) }
+    // Derive sections from songs in O(k) without allocating/shuffling the entire catalog
+    val trendingSongs = remember(songs) { sampleRandom(songs, 4) }
+    val madeForYouSongs = remember(songs) { sampleRandom(songs, 4) }
 
     if (isLoading && songs.isEmpty() && setlistSongs.isEmpty()) {
         Box(
@@ -179,7 +176,7 @@ fun HomeScreen(
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(madeForYouSongs) { song ->
+                    items(madeForYouSongs, key = { it.id }) { song ->
                         SongCard(
                             song = song,
                             onClick = { onSongClick(song.id) },
@@ -200,17 +197,23 @@ fun HomeScreen(
             }
 
             item {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.height(500.dp)
-                ) {
-                    items(trendingSongs.take(4)) { song ->
-                        SongCard(
-                            song = song,
-                            onClick = { onSongClick(song.id) }
-                        )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    trendingSongs.take(4).chunked(2).forEach { rowSongs ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            rowSongs.forEach { song ->
+                                SongCard(
+                                    song = song,
+                                    onClick = { onSongClick(song.id) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (rowSongs.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
                     }
                 }
             }
@@ -461,4 +464,19 @@ private fun SectionHeader(
             }
         }
     }
+}
+
+/** O(k) random sampling without copying or shuffling the full list. */
+private fun <T> sampleRandom(list: List<T>, count: Int): List<T> {
+    if (list.size <= count) return list.shuffled()
+    val pickedIndices = HashSet<Int>(count * 2)
+    val result = ArrayList<T>(count)
+    val rng = kotlin.random.Random.Default
+    while (result.size < count) {
+        val idx = rng.nextInt(list.size)
+        if (pickedIndices.add(idx)) {
+            result.add(list[idx])
+        }
+    }
+    return result
 }

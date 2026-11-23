@@ -91,6 +91,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import com.soul.neurokaraoke.audio.EqualizerManager
 import com.soul.neurokaraoke.data.api.LyricLine
@@ -102,9 +103,11 @@ import com.soul.neurokaraoke.ui.theme.NeonTheme
 import com.soul.neurokaraoke.ui.theme.CyberLabelStyle
 import com.soul.neurokaraoke.ui.theme.gradientBorder
 import com.soul.neurokaraoke.ui.theme.pulsingGlow
+import com.soul.neurokaraoke.viewmodel.PlaybackProgress
 import com.soul.neurokaraoke.viewmodel.RepeatMode
 import androidx.compose.ui.res.stringResource
 import com.soul.neurokaraoke.R
+import kotlinx.coroutines.flow.StateFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -114,6 +117,7 @@ fun PlayerScreen(
     progress: Float = 0f,
     currentPosition: Long = 0L,
     duration: Long = 0L,
+    playbackProgressFlow: StateFlow<PlaybackProgress>? = null,
     isShuffleEnabled: Boolean = false,
     repeatMode: RepeatMode = RepeatMode.OFF,
     queue: List<Song> = emptyList(),
@@ -146,16 +150,11 @@ fun PlayerScreen(
     var showQueue by remember { mutableStateOf(false) }
     var showEqualizer by remember { mutableStateOf(false) }
     var showSleepTimer by remember { mutableStateOf(false) }
-    var isSeeking by remember { mutableStateOf(false) }
-    var seekProgress by remember { mutableStateOf(0f) }
 
     val lyricsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val queueSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val equalizerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val sleepTimerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    // Use seek progress while dragging, otherwise use actual progress
-    val displayProgress = if (isSeeking) seekProgress else progress
 
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isLandscape = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
@@ -169,6 +168,7 @@ fun PlayerScreen(
             isPlaying = isPlaying,
             currentPosition = currentPosition,
             duration = duration,
+            playbackProgressFlow = playbackProgressFlow,
             isShuffleEnabled = isShuffleEnabled,
             repeatMode = repeatMode,
             isFavorite = isFavorite,
@@ -422,40 +422,12 @@ fun PlayerScreen(
                 listenerCount = radioListenerCount
             )
 
-            if (duration > 0) {
-                Spacer(modifier = Modifier.height(24.dp))
-                // Progress bar (read-only for radio)
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Slider(
-                        value = progress.coerceIn(0f, 1f),
-                        onValueChange = {},
-                        enabled = false,
-                        colors = SliderDefaults.colors(
-                            disabledThumbColor = Color.Transparent,
-                            disabledActiveTrackColor = MaterialTheme.colorScheme.primary,
-                            disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = formatTime(currentPosition),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = formatTime(duration),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
+            RadioProgressSection(
+                fallbackProgress = progress,
+                fallbackPosition = currentPosition,
+                fallbackDuration = duration,
+                playbackProgressFlow = playbackProgressFlow
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -500,43 +472,14 @@ fun PlayerScreen(
             )
         } else {
 
-        // Progress bar
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Slider(
-                value = displayProgress,
-                onValueChange = { newProgress ->
-                    isSeeking = true
-                    seekProgress = newProgress
-                },
-                onValueChangeFinished = {
-                    onSeekTo(seekProgress)
-                    isSeeking = false
-                },
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                )
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = formatTime(if (isSeeking) (seekProgress * duration).toLong() else currentPosition),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatTime(duration),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        // Progress bar (isolated so 10Hz progress ticks don't recompose art/controls)
+        PlayerProgressSection(
+            fallbackProgress = progress,
+            fallbackPosition = currentPosition,
+            fallbackDuration = duration,
+            playbackProgressFlow = playbackProgressFlow,
+            onSeekTo = onSeekTo
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -658,11 +601,12 @@ fun PlayerScreen(
             dragHandle = null,
             containerColor = MaterialTheme.colorScheme.background
         ) {
-            ImmersiveLyricsView(
+            PlayerImmersiveLyricsSheet(
                 song = song,
                 isPlaying = isPlaying,
-                currentPosition = currentPosition,
-                duration = duration,
+                fallbackPosition = currentPosition,
+                fallbackDuration = duration,
+                playbackProgressFlow = playbackProgressFlow,
                 onSeekTo = onSeekTo,
                 onPlayPause = onPlayPauseClick,
                 onPrevious = onPreviousClick,
@@ -1164,7 +1108,7 @@ private fun LyricsContent(
                         .fillMaxWidth()
                         .height(400.dp)
                 ) {
-                    itemsIndexed(lyricLines) { index, line ->
+                    itemsIndexed(lyricLines, key = { index, line -> "${index}_${line.timestamp}" }) { index, line ->
                         val isCurrentLine = isSynced && index == currentLineIndex
                         val isPastLine = isSynced && index < currentLineIndex
 
@@ -1297,7 +1241,7 @@ private fun QueueContent(
             LazyColumn(
                 modifier = Modifier.height(300.dp)
             ) {
-                items(upNext) { song ->
+                items(upNext, key = { it.id }) { song ->
                     QueueItem(
                         song = song,
                         isPlaying = false,
@@ -1309,6 +1253,138 @@ private fun QueueContent(
 
         Spacer(modifier = Modifier.height(32.dp))
     }
+}
+
+@Composable
+private fun PlayerProgressSection(
+    fallbackProgress: Float,
+    fallbackPosition: Long,
+    fallbackDuration: Long,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?,
+    onSeekTo: (Float) -> Unit
+) {
+    val progressState = playbackProgressFlow?.collectAsStateWithLifecycle()?.value
+    val progress = progressState?.progress ?: fallbackProgress
+    val currentPosition = progressState?.currentPosition ?: fallbackPosition
+    val duration = progressState?.duration?.takeIf { it > 0 } ?: fallbackDuration
+
+    var isSeeking by remember { mutableStateOf(false) }
+    var seekProgress by remember { mutableStateOf(0f) }
+    val displayProgress = if (isSeeking) seekProgress else progress
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Slider(
+            value = displayProgress,
+            onValueChange = { newProgress ->
+                isSeeking = true
+                seekProgress = newProgress
+            },
+            onValueChangeFinished = {
+                onSeekTo(seekProgress)
+                isSeeking = false
+            },
+            colors = SliderDefaults.colors(
+                thumbColor = MaterialTheme.colorScheme.primary,
+                activeTrackColor = MaterialTheme.colorScheme.primary,
+                inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = formatTime(if (isSeeking) (seekProgress * duration).toLong() else currentPosition),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = formatTime(duration),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun RadioProgressSection(
+    fallbackProgress: Float,
+    fallbackPosition: Long,
+    fallbackDuration: Long,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?
+) {
+    val progressState = playbackProgressFlow?.collectAsStateWithLifecycle()?.value
+    val progress = progressState?.progress ?: fallbackProgress
+    val currentPosition = progressState?.currentPosition ?: fallbackPosition
+    val duration = progressState?.duration?.takeIf { it > 0 } ?: fallbackDuration
+
+    if (duration > 0) {
+        Spacer(modifier = Modifier.height(24.dp))
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Slider(
+                value = progress.coerceIn(0f, 1f),
+                onValueChange = {},
+                enabled = false,
+                colors = SliderDefaults.colors(
+                    disabledThumbColor = Color.Transparent,
+                    disabledActiveTrackColor = MaterialTheme.colorScheme.primary,
+                    disabledInactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = formatTime(currentPosition),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = formatTime(duration),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayerImmersiveLyricsSheet(
+    song: Song,
+    isPlaying: Boolean,
+    fallbackPosition: Long,
+    fallbackDuration: Long,
+    playbackProgressFlow: StateFlow<PlaybackProgress>?,
+    onSeekTo: (Float) -> Unit,
+    onPlayPause: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    accessToken: String?,
+    onClose: () -> Unit
+) {
+    val progressState = playbackProgressFlow?.collectAsStateWithLifecycle()?.value
+    val currentPosition = progressState?.currentPosition ?: fallbackPosition
+    val duration = progressState?.duration?.takeIf { it > 0 } ?: fallbackDuration
+
+    ImmersiveLyricsView(
+        song = song,
+        isPlaying = isPlaying,
+        currentPosition = currentPosition,
+        duration = duration,
+        onSeekTo = onSeekTo,
+        onPlayPause = onPlayPause,
+        onPrevious = onPrevious,
+        onNext = onNext,
+        accessToken = accessToken,
+        onClose = onClose
+    )
 }
 
 @Composable

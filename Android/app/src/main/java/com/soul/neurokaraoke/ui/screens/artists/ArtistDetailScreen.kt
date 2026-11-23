@@ -257,7 +257,7 @@ fun ArtistDetailScreen(
             }
 
             // Songs list
-            itemsIndexed(artistSongs) { index, song ->
+            itemsIndexed(artistSongs, key = { _, song -> song.id }) { index, song ->
                 SongListItem(
                     song = song,
                     index = index + 1,

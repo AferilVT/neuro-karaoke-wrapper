@@ -127,7 +127,7 @@ fun SetlistScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(filteredPlaylists) { playlist ->
+                items(filteredPlaylists, key = { it.id }) { playlist ->
                     PlaylistCard(
                         playlist = playlist,
                         isSelected = playlist.id == currentPlaylistId,

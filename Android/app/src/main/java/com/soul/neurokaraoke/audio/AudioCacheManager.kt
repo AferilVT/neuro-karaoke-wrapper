@@ -76,10 +76,11 @@ object AudioCacheManager {
         val resolvedCache = cache
             ?: throw IllegalStateException("AudioCacheManager: cache not initialized. Call initialize() first.")
 
+        // Omit setCacheWriteDataSinkFactory(null) — passing null disables cache writes (read-only).
+        // Leaving the default CacheDataSink.Factory active enables transparent stream-to-disk caching.
         return CacheDataSource.Factory()
             .setCache(resolvedCache)
             .setUpstreamDataSourceFactory(upstreamFactory)
-            .setCacheWriteDataSinkFactory(null) // Use default
             .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR or CacheDataSource.FLAG_IGNORE_CACHE_FOR_UNSET_LENGTH_REQUESTS)
     }
 

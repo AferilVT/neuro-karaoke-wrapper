@@ -20,6 +20,7 @@ class SongCache(private val context: Context) {
     private val setupCompleteKey = "setup_complete"
     private val cacheVersionKey = "cache_version"
     private val playlistCountKey = "cached_playlist_count"
+    private val cachedAtKey = "cached_at_ms"
     private val currentCacheVersion = 7
 
     private val file: File
@@ -53,6 +54,7 @@ class SongCache(private val context: Context) {
      */
     suspend fun cacheSongs(songs: List<Song>, playlistCount: Int = 0) = withContext(Dispatchers.IO) {
         try {
+            val now = System.currentTimeMillis()
             val jsonArray = JSONArray()
 
             songs.forEach { song ->
@@ -61,16 +63,18 @@ class SongCache(private val context: Context) {
 
             val root = JSONObject().apply {
                 put("songs", jsonArray)
-                put("cachedAt", System.currentTimeMillis())
+                put("cachedAt", now)
                 put("count", songs.size)
             }
 
             file.writeText(root.toString())
 
-            // Save playlist count so we can detect new setlists
-            if (playlistCount > 0) {
-                prefs.edit().putInt(playlistCountKey, playlistCount).apply()
-            }
+            // Persist lightweight metadata in SharedPreferences so isCacheStale() is O(1)
+            // and never reads/parses songs_cache.json on the main thread.
+            prefs.edit().apply {
+                putLong(cachedAtKey, now)
+                if (playlistCount > 0) putInt(playlistCountKey, playlistCount)
+            }.apply()
 
             true
         } catch (e: Exception) {
@@ -82,26 +86,19 @@ class SongCache(private val context: Context) {
     /**
      * Check if cache is stale.
      * Stale when: new playlists added, or cache older than 6 hours.
+     * O(1) — reads only SharedPreferences / file mtime without parsing JSON.
      */
     fun isCacheStale(currentPlaylistCount: Int): Boolean {
         if (currentPlaylistCount <= 0) return false
         val cachedCount = prefs.getInt(playlistCountKey, 0)
         if (cachedCount in 1 until currentPlaylistCount) return true
 
-        // Time-based expiry: refresh every 6 hours
         if (!file.exists()) return true
-        try {
-            val json = file.readText()
-            val root = JSONObject(json)
-            val cachedAt = root.optLong("cachedAt", 0)
-            if (cachedAt > 0) {
-                val ageMs = System.currentTimeMillis() - cachedAt
-                if (ageMs > 6 * 60 * 60 * 1000) return true
-            }
-        } catch (_: Exception) {
-            return true
+        val cachedAt = prefs.getLong(cachedAtKey, 0L).takeIf { it > 0L } ?: file.lastModified()
+        if (cachedAt > 0L) {
+            val ageMs = System.currentTimeMillis() - cachedAt
+            if (ageMs > 6 * 60 * 60 * 1000L) return true
         }
-
         return false
     }
 

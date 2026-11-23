@@ -73,6 +73,12 @@ data class PlayerUiState(
     val isCustomQueue: Boolean = false
 )
 
+data class PlaybackProgress(
+    val progress: Float = 0f,
+    val currentPosition: Long = 0L,
+    val duration: Long = 0L
+)
+
 enum class RepeatMode {
     OFF, ONE, ALL
 }
@@ -92,6 +98,9 @@ class PlayerViewModel(
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
+
+    private val _playbackProgress = MutableStateFlow(PlaybackProgress())
+    val playbackProgress: StateFlow<PlaybackProgress> = _playbackProgress.asStateFlow()
 
     private var progressJob: Job? = null
     private var sleepTimerJob: Job? = null
@@ -171,22 +180,23 @@ class PlayerViewModel(
      */
     fun savePlaybackStateNow() {
         isRestoringState = false
-        savePlaybackState()
+        savePlaybackState(synchronous = true)
     }
 
     /**
      * Save playback state to SharedPreferences
      * Saves full song details for instant restoration without API call
      */
-    private fun savePlaybackState() {
+    private fun savePlaybackState(synchronous: Boolean = false) {
         // Don't save during restore phase or radio mode
         if (isRestoringState || _uiState.value.isRadioMode) return
 
         val song = _uiState.value.currentSong ?: return
-        val position = mediaController?.currentPosition ?: 0L
-        val duration = mediaController?.duration?.takeIf { it > 0 } ?: _uiState.value.duration
-        // Use commit() instead of apply() to ensure synchronous save before app killed
-        prefs.edit()
+        val position = mediaController?.currentPosition ?: _playbackProgress.value.currentPosition
+        val duration = mediaController?.duration?.takeIf { it > 0 }
+            ?: _playbackProgress.value.duration.takeIf { it > 0 }
+            ?: _uiState.value.duration
+        val editor = prefs.edit()
             .putString("last_song_id", song.id)
             .putString("last_song_title", song.title)
             .putString("last_song_artist", song.artist)
@@ -198,7 +208,8 @@ class PlayerViewModel(
             .putString("last_playlist_id", _uiState.value.currentPlaylistId)
             .putLong("last_position", position)
             .putLong("last_duration", duration)
-            .commit()
+        // Only fsync synchronously on lifecycle stop/destroy; routine saves use apply()
+        if (synchronous) editor.commit() else editor.apply()
     }
 
     /**
@@ -258,12 +269,15 @@ class PlayerViewModel(
         } else RepeatMode.OFF
         val savedShuffle = prefs.getBoolean("shuffle_enabled", false)
 
+        _playbackProgress.value = PlaybackProgress(
+            progress = restoredProgress,
+            currentPosition = savedPosition,
+            duration = savedDuration
+        )
         _uiState.value = _uiState.value.copy(
             currentSong = restoredSong,
             currentPlaylistId = playlistId,
-            currentPosition = savedPosition,
             duration = savedDuration,
-            progress = restoredProgress,
             repeatMode = repeatMode,
             isShuffleEnabled = savedShuffle
         )
@@ -312,6 +326,12 @@ class PlayerViewModel(
                     Player.STATE_ENDED -> handleSongEnded()
                     Player.STATE_READY -> {
                         val duration = mediaController?.duration?.coerceAtLeast(0L) ?: 0L
+                        val currentPos = _playbackProgress.value.currentPosition
+                        val progress = if (duration > 0) (currentPos.toFloat() / duration).coerceIn(0f, 1f) else 0f
+                        _playbackProgress.value = _playbackProgress.value.copy(
+                            progress = progress,
+                            duration = duration
+                        )
                         _uiState.value = _uiState.value.copy(
                             duration = duration,
                             currentSong = _uiState.value.currentSong?.copy(duration = duration)
@@ -343,10 +363,13 @@ class PlayerViewModel(
                             )
                         }
                     if (song.id != _uiState.value.currentSong?.id) {
-                        _uiState.value = _uiState.value.copy(
-                            currentSong = song,
+                        _playbackProgress.value = PlaybackProgress(
                             progress = 0f,
-                            currentPosition = 0L
+                            currentPosition = 0L,
+                            duration = song.duration
+                        )
+                        _uiState.value = _uiState.value.copy(
+                            currentSong = song
                         )
                         // Refresh queue order whenever we transition to a new song, 
                         // especially important for keeping the "Up Next" accurate.
@@ -461,42 +484,45 @@ class PlayerViewModel(
         if (count == 0) return
 
         val currentState = _uiState.value
-        val newQueue = mutableListOf<Song>()
+        val newQueue = ArrayList<Song>(count)
         val currentIdx = controller.currentMediaItemIndex
         if (currentIdx == C.INDEX_UNSET) return
 
+        // Pre-index catalogs in O(N) once so timeline reconstruction is O(N) instead of O(N^2)
+        val songById = HashMap<String, Song>(
+            currentState.allSongs.size + currentState.songs.size + currentState.queue.size
+        )
+        for (s in currentState.queue) songById[s.id] = s
+        for (s in currentState.songs) songById[s.id] = s
+        for (s in currentState.allSongs) songById[s.id] = s
+
         var nextIdx = currentIdx
-        val seen = mutableSetOf<Int>()
+        val seen = HashSet<Int>(count)
 
         // Follow the "next" links in the player's timeline (respects shuffle mode)
-        while (nextIdx != C.INDEX_UNSET && !seen.contains(nextIdx) && newQueue.size < count) {
+        while (nextIdx != C.INDEX_UNSET && seen.add(nextIdx) && newQueue.size < count) {
             val mediaItem = controller.getMediaItemAt(nextIdx)
             val mediaId = mediaItem.mediaId
-            
-            // Find the song metadata in our catalogs
-            val song = currentState.allSongs.find { it.id == mediaId }
-                ?: currentState.songs.find { it.id == mediaId }
-                ?: currentState.queue.find { it.id == mediaId } // Fallback to current queue metadata
-                ?: Song(
-                    id = mediaId,
-                    title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
-                    artist = mediaItem.mediaMetadata.artist?.toString() ?: "",
-                    coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
-                    audioUrl = mediaItem.localConfiguration?.uri?.toString() ?: "",
-                    singer = Singer.NEURO
-                )
-            
+
+            val song = songById[mediaId] ?: Song(
+                id = mediaId,
+                title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                artist = mediaItem.mediaMetadata.artist?.toString() ?: "",
+                coverUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: "",
+                audioUrl = mediaItem.localConfiguration?.uri?.toString() ?: "",
+                singer = Singer.NEURO
+            )
+
             newQueue.add(song)
-            seen.add(nextIdx)
-            
+
             // Ask the timeline for the next index, respecting the current shuffle state
             nextIdx = controller.currentTimeline.getNextWindowIndex(
-                nextIdx, 
-                Player.REPEAT_MODE_OFF, 
+                nextIdx,
+                Player.REPEAT_MODE_OFF,
                 controller.shuffleModeEnabled
             )
         }
-        
+
         // If we didn't find the current song in the loop for some reason, don't wipe the queue
         if (newQueue.isNotEmpty()) {
             _uiState.value = _uiState.value.copy(queue = newQueue)
@@ -509,16 +535,25 @@ class PlayerViewModel(
         progressJob?.cancel()
         progressJob = viewModelScope.launch {
             while (isActive) {
-                val controller = mediaController ?: continue
+                val controller = mediaController
+                if (controller == null) {
+                    delay(100L)
+                    continue
+                }
                 val position = controller.currentPosition.coerceAtLeast(0L)
                 val duration = controller.duration.coerceAtLeast(1L)
-                val progress = if (duration > 0) position.toFloat() / duration else 0f
+                val progress = if (duration > 0) (position.toFloat() / duration).coerceIn(0f, 1f) else 0f
 
-                _uiState.value = _uiState.value.copy(
-                    progress = progress.coerceIn(0f, 1f),
-                    currentPosition = position,
-                    duration = duration
-                )
+                // Emit progress on its own StateFlow so unrelated screens and app-level
+                // roots never recompose at 10Hz during playback.
+                val prev = _playbackProgress.value
+                if (prev.currentPosition != position || prev.duration != duration) {
+                    _playbackProgress.value = PlaybackProgress(
+                        progress = progress,
+                        currentPosition = position,
+                        duration = duration
+                    )
+                }
 
                 // Report play count once song has played for 30+ seconds
                 val songForPlayCount = _uiState.value.currentSong
@@ -761,12 +796,16 @@ class PlayerViewModel(
         RecentlyPlayedStore.record(song)
 
         val resumePos = if (startPosition > 0) startPosition else 0L
-        _uiState.value = _uiState.value.copy(
-            currentSong = song,
-            progress = if (resumePos > 0 && _uiState.value.duration > 0) {
-                (resumePos.toFloat() / _uiState.value.duration.toFloat()).coerceIn(0f, 1f)
+        val currentDuration = _playbackProgress.value.duration.takeIf { it > 0 } ?: _uiState.value.duration
+        _playbackProgress.value = PlaybackProgress(
+            progress = if (resumePos > 0 && currentDuration > 0) {
+                (resumePos.toFloat() / currentDuration.toFloat()).coerceIn(0f, 1f)
             } else 0f,
             currentPosition = resumePos,
+            duration = song.duration.takeIf { it > 0 } ?: currentDuration
+        )
+        _uiState.value = _uiState.value.copy(
+            currentSong = song,
             error = null
         )
 
@@ -1105,9 +1144,10 @@ class PlayerViewModel(
         if (duration > 0) {
             val position = (progress * duration).toLong()
             controller.seekTo(position)
-            _uiState.value = _uiState.value.copy(
-                progress = progress,
-                currentPosition = position
+            _playbackProgress.value = PlaybackProgress(
+                progress = progress.coerceIn(0f, 1f),
+                currentPosition = position,
+                duration = duration
             )
         }
     }
@@ -1460,14 +1500,13 @@ class PlayerViewModel(
                     val currentRadioSong = state.current?.toSong()
                     radioCatalogSong = state.current?.toCatalogSong()
 
+                    _playbackProgress.value = PlaybackProgress()
                     _uiState.value = _uiState.value.copy(
                         isRadioMode = true,
                         radioListenerCount = state.listenerCount,
                         currentSong = currentRadioSong ?: _uiState.value.currentSong,
                         queue = emptyList(),
                         currentPlaylistId = null,
-                        progress = 0f,
-                        currentPosition = 0L,
                         duration = 0L
                     )
 
@@ -1595,7 +1634,7 @@ class PlayerViewModel(
         super.onCleared()
         // Save state before cleanup so it persists across app restarts
         isRestoringState = false  // Ensure save isn't blocked
-        savePlaybackState()
+        savePlaybackState(synchronous = true)
         isCleared = true
         stopProgressUpdates()
         crossfadeJob?.cancel()

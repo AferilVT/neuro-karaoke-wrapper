@@ -20,9 +20,10 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,6 +40,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.soul.neurokaraoke.data.model.Song
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 /** Matches the "m:ss" duration formatting used in TvDetailScreen.kt / the phone UI. */
 private fun formatDuration(ms: Long): String {
@@ -59,20 +63,34 @@ fun TvSearchScreen(
 ) {
     val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
     var query by remember { mutableStateOf("") }
+    var debouncedQuery by remember { mutableStateOf("") }
 
-    val results by remember(query, playerState.allSongs) {
-        derivedStateOf {
+    LaunchedEffect(query) {
+        if (query.isBlank()) {
+            debouncedQuery = ""
+        } else {
+            delay(100L)
+            debouncedQuery = query
+        }
+    }
+
+    val results by produceState(
+        initialValue = playerState.allSongs,
+        debouncedQuery,
+        playerState.allSongs
+    ) {
+        value = withContext(Dispatchers.Default) {
             val songs = playerState.allSongs
-            if (query.isBlank()) {
+            if (debouncedQuery.isBlank()) {
                 songs
             } else {
-                val lower = query.lowercase()
+                val lower = debouncedQuery.lowercase()
                 songs.filter { song ->
-                    song.title.contains(query, ignoreCase = true) ||
-                        song.artist.contains(query, ignoreCase = true) ||
+                    song.title.contains(debouncedQuery, ignoreCase = true) ||
+                        song.artist.contains(debouncedQuery, ignoreCase = true) ||
                         song.titleRomaji.contains(lower) ||
                         song.artistRomaji.contains(lower) ||
-                        song.titleEnglish?.contains(query, ignoreCase = true) == true
+                        song.titleEnglish?.contains(debouncedQuery, ignoreCase = true) == true
                 }
             }
         }

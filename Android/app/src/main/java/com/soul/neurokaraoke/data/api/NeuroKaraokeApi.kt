@@ -71,6 +71,19 @@ class NeuroKaraokeApi {
         private const val API_URL = "https://api.neurokaraoke.com"
         private const val MAX_CACHE_SIZE = 20 // Limit cache to 20 playlists
 
+        // Process-wide shared LRU cache so all NeuroKaraokeApi instances reuse fetched playlists
+        private val sharedCacheLock = Any()
+        private val sharedCache = object : LinkedHashMap<String, List<ApiSong>>(MAX_CACHE_SIZE, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<ApiSong>>): Boolean {
+                return size > MAX_CACHE_SIZE
+            }
+        }
+
+        // Process-wide shared audioPath -> backend song ID map (built once across the whole app)
+        @Volatile
+        private var sharedSongIdMap: Map<String, String>? = null
+        private val sharedSongIdMapMutex = Mutex()
+
         /** Turn an API audio path ("audioUrl" / "absolutePath") into a playable URL. */
         fun resolveAudioUrl(rawAudioUrl: String?): String? = when {
             rawAudioUrl.isNullOrBlank() || rawAudioUrl == "null" -> null
@@ -81,16 +94,11 @@ class NeuroKaraokeApi {
         }
     }
 
-    // LRU cache with size limit to prevent memory issues
-    private val cache = object : LinkedHashMap<String, List<ApiSong>>(MAX_CACHE_SIZE, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<ApiSong>>): Boolean {
-            return size > MAX_CACHE_SIZE
-        }
-    }
+    private fun getCachedPlaylist(playlistId: String): List<ApiSong>? =
+        synchronized(sharedCacheLock) { sharedCache[playlistId] }
 
-    // Lazy-loaded map of audio path → backend song ID for lyrics lookup
-    private var songIdMap: Map<String, String>? = null
-    private val songIdMapMutex = Mutex()
+    private fun putCachedPlaylist(playlistId: String, songs: List<ApiSong>) =
+        synchronized(sharedCacheLock) { sharedCache[playlistId] = songs }
 
     /**
      * Increment server-side play count for a song.
@@ -124,30 +132,26 @@ class NeuroKaraokeApi {
      * Fetch playlist songs from API
      */
     suspend fun fetchPlaylist(playlistId: String): Result<List<ApiSong>> = withContext(Dispatchers.IO) {
-        // Check cache first
-        cache[playlistId]?.let { return@withContext Result.success(it) }
+        // Check shared cache first
+        getCachedPlaylist(playlistId)?.let { return@withContext Result.success(it) }
 
-        var connection: HttpURLConnection? = null
         try {
-            val url = URL("$BASE_URL/public/playlist/$playlistId")
-            connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
-
-            val responseCode = connection.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                val songs = parsePlaylistResponse(response)
-                cache[playlistId] = songs
-                Result.success(songs)
-            } else {
-                Result.failure(Exception("HTTP error: $responseCode"))
+            val request = okhttp3.Request.Builder()
+                .url("$BASE_URL/public/playlist/$playlistId")
+                .get()
+                .build()
+            HttpClient.shared.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val body = response.body?.string().orEmpty()
+                    val songs = parsePlaylistResponse(body)
+                    putCachedPlaylist(playlistId, songs)
+                    Result.success(songs)
+                } else {
+                    Result.failure(Exception("HTTP error: ${response.code}"))
+                }
             }
         } catch (e: Exception) {
             Result.failure(e)
-        } finally {
-            connection?.disconnect()
         }
     }
 
@@ -726,7 +730,7 @@ class NeuroKaraokeApi {
      * Find a song in cached playlist by title
      */
     fun findSong(playlistId: String, title: String, artist: String? = null): ApiSong? {
-        val songs = cache[playlistId] ?: return null
+        val songs = getCachedPlaylist(playlistId) ?: return null
 
         val normalize = { value: String? ->
             value?.lowercase()
@@ -793,9 +797,9 @@ class NeuroKaraokeApi {
      * Ensure the song ID map is built. Safe to call multiple times.
      */
     suspend fun ensureSongIdMap() {
-        if (songIdMap != null) return
-        songIdMapMutex.withLock {
-            if (songIdMap == null) {
+        if (sharedSongIdMap != null) return
+        sharedSongIdMapMutex.withLock {
+            if (sharedSongIdMap == null) {
                 buildSongIdMap()
             }
         }
@@ -803,7 +807,7 @@ class NeuroKaraokeApi {
 
     /**
      * Find the backend song ID for a given audio URL.
-     * Builds the lookup map lazily from setlists on first call.
+     * Builds the lookup map lazily from setlists once per process.
      */
     suspend fun findSongIdByAudioUrl(audioUrl: String): String? {
         ensureSongIdMap()
@@ -813,67 +817,67 @@ class NeuroKaraokeApi {
         val path = audioUrl
             .removePrefix("https://storage.neurokaraoke.com/")
             .removePrefix("http://storage.neurokaraoke.com/")
-        return songIdMap?.get(path)
+        return sharedSongIdMap?.get(path)
     }
 
     /**
      * Build the audioPath → songId lookup map from setlists.
-     * Uses streaming JsonReader to avoid loading the entire response into memory.
+     * Uses streaming JsonReader over shared OkHttpClient to avoid loading the entire response into memory.
      */
     private suspend fun buildSongIdMap() = withContext(Dispatchers.IO) {
-        var connection: HttpURLConnection? = null
         try {
-            val url = URL("$API_URL/api/playlists?startIndex=0&pageSize=200&isSetlist=True&year=0")
-            connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 15000
-            connection.readTimeout = 15000
-
-            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
-                val map = mutableMapOf<String, String>()
-                val reader = JsonReader(connection.inputStream.bufferedReader())
-                reader.use {
-                    reader.beginArray() // top-level array of playlists
-                    while (reader.hasNext()) {
-                        reader.beginObject() // playlist object
+            val request = okhttp3.Request.Builder()
+                .url("$API_URL/api/playlists?startIndex=0&pageSize=200&isSetlist=True&year=0")
+                .get()
+                .build()
+            HttpClient.shared.newCall(request).execute().use { response ->
+                if (response.isSuccessful) {
+                    val stream = response.body?.byteStream() ?: run {
+                        sharedSongIdMap = emptyMap()
+                        return@withContext
+                    }
+                    val map = mutableMapOf<String, String>()
+                    JsonReader(stream.bufferedReader()).use { reader ->
+                        reader.beginArray() // top-level array of playlists
                         while (reader.hasNext()) {
-                            val key = reader.nextName()
-                            if (key == "songListDTOs") {
-                                reader.beginArray() // songs array
-                                while (reader.hasNext()) {
-                                    var songId = ""
-                                    var absolutePath = ""
-                                    reader.beginObject() // song object
+                            reader.beginObject() // playlist object
+                            while (reader.hasNext()) {
+                                val key = reader.nextName()
+                                if (key == "songListDTOs") {
+                                    reader.beginArray() // songs array
                                     while (reader.hasNext()) {
-                                        when (reader.nextName()) {
-                                            "id" -> songId = reader.nextString()
-                                            "absolutePath" -> absolutePath = reader.nextString()
-                                            else -> reader.skipValue()
+                                        var songId = ""
+                                        var absolutePath = ""
+                                        reader.beginObject() // song object
+                                        while (reader.hasNext()) {
+                                            when (reader.nextName()) {
+                                                "id" -> songId = reader.nextString()
+                                                "absolutePath" -> absolutePath = reader.nextString()
+                                                else -> reader.skipValue()
+                                            }
+                                        }
+                                        reader.endObject()
+                                        if (songId.isNotBlank() && absolutePath.isNotBlank()) {
+                                            map[absolutePath] = songId
                                         }
                                     }
-                                    reader.endObject()
-                                    if (songId.isNotBlank() && absolutePath.isNotBlank()) {
-                                        map[absolutePath] = songId
-                                    }
+                                    reader.endArray()
+                                } else {
+                                    reader.skipValue()
                                 }
-                                reader.endArray()
-                            } else {
-                                reader.skipValue()
                             }
+                            reader.endObject()
                         }
-                        reader.endObject()
+                        reader.endArray()
                     }
-                    reader.endArray()
+                    sharedSongIdMap = map
+                } else {
+                    sharedSongIdMap = emptyMap()
                 }
-                songIdMap = map
-            } else {
-                songIdMap = emptyMap()
             }
         } catch (e: Exception) {
             if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
-            songIdMap = emptyMap()
-        } finally {
-            connection?.disconnect()
+            sharedSongIdMap = emptyMap()
         }
     }
 

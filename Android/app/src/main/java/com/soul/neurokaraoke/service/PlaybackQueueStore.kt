@@ -34,24 +34,30 @@ object PlaybackQueueStore {
     private val writeScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Volatile
-    private var pendingJson: String? = null
+    private var pendingSnapshot: SavedQueue? = null
 
     fun save(context: Context, queue: List<Song>, isCustom: Boolean, isAllSongs: Boolean) {
-        val root = JSONObject()
-            .put("custom", isCustom)
-            .put("allSongs", isAllSongs)
-        if (!isAllSongs) {
-            root.put("songs", JSONArray().apply { queue.forEach { put(it.toJson()) } })
-        }
-        pendingJson = root.toString()
+        // Snapshot the list cheaply on the caller thread; serialize JSON on Dispatchers.IO.
+        val snapshot = SavedQueue(
+            isCustom = isCustom,
+            isAllSongs = isAllSongs,
+            songs = if (isAllSongs) emptyList() else queue.toList()
+        )
+        pendingSnapshot = snapshot
         val file = File(context.applicationContext.filesDir, FILE_NAME)
         writeScope.launch {
             lock.withLock {
                 // Always write the newest snapshot, whichever launch gets here first
-                val json = pendingJson ?: return@withLock
-                pendingJson = null
+                val latest = pendingSnapshot ?: return@withLock
+                pendingSnapshot = null
                 try {
-                    file.writeText(json)
+                    val root = JSONObject()
+                        .put("custom", latest.isCustom)
+                        .put("allSongs", latest.isAllSongs)
+                    if (!latest.isAllSongs) {
+                        root.put("songs", JSONArray().apply { latest.songs.forEach { put(it.toJson()) } })
+                    }
+                    file.writeText(root.toString())
                 } catch (e: Exception) {
                     if (com.soul.neurokaraoke.BuildConfig.DEBUG) e.printStackTrace()
                 }
@@ -62,10 +68,11 @@ object PlaybackQueueStore {
     suspend fun load(context: Context): SavedQueue? = withContext(Dispatchers.IO) {
         val file = File(context.applicationContext.filesDir, FILE_NAME)
         lock.withLock {
-            // A save may still be queued — read the newest snapshot, not the stale file
-            val json = pendingJson ?: if (file.exists()) file.readText() else return@withLock null
+            // A save may still be queued — return the newest snapshot directly without parsing
+            pendingSnapshot?.let { return@withLock it }
+            if (!file.exists()) return@withLock null
             try {
-                val root = JSONObject(json)
+                val root = JSONObject(file.readText())
                 val array = root.optJSONArray("songs")
                 val songs = if (array == null) emptyList() else {
                     (0 until array.length()).map { songFromJson(array.getJSONObject(it)) }

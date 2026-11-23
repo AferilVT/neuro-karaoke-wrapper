@@ -93,20 +93,22 @@ fun SongListItem(
         }
 
         // Thumbnail with play overlay + singer-color border
+        val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+        val placeholderPainter = remember(surfaceVariantColor) { ColorPainter(surfaceVariantColor) }
         Box(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, singerColor.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(surfaceVariantColor),
             contentAlignment = Alignment.Center
         ) {
             AsyncImage(
                 model = song.coverUrl,
                 contentDescription = song.title,
                 contentScale = ContentScale.Crop,
-                placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
-                error = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+                placeholder = placeholderPainter,
+                error = placeholderPainter,
                 modifier = Modifier.matchParentSize()
             )
             // Downloaded badge

@@ -32,6 +32,7 @@ import com.soul.neurokaraoke.data.repository.DownloadRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.withContext
 
@@ -55,9 +56,9 @@ class MediaPlaybackService : MediaLibraryService() {
         browseTree = AutoBrowseTree(this)
 
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(60_000, 180_000, 2_500, 5_000)
+            .setBufferDurationsMs(30_000, 60_000, 2_000, 4_000)
             .setPrioritizeTimeOverSizeThresholds(true)
-            .setBackBuffer(30_000, true)
+            .setBackBuffer(15_000, true)
             .build()
 
         val cacheDataSourceFactory = AudioCacheManager.createCacheDataSourceFactory(this)
@@ -679,6 +680,7 @@ class MediaPlaybackService : MediaLibraryService() {
 
     override fun onDestroy() {
         AaosRadioPoller.stop()
+        serviceScope.cancel()
         EqualizerManager.release()
         playerListener?.let { listener ->
             player?.removeListener(listener)

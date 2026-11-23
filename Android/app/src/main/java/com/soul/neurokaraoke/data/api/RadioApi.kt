@@ -3,11 +3,14 @@ package com.soul.neurokaraoke.data.api
 import com.soul.neurokaraoke.data.model.Singer
 import com.soul.neurokaraoke.data.model.Song
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 
 data class RadioSong(
     val id: String,
@@ -73,49 +76,75 @@ class RadioApi {
         private const val STATIC_NOWPLAYING_URL = "https://radio.twinskaraoke.com/api/nowplaying_static/neuro_21.json"
         private const val IMAGE_BASE = "https://images.neurokaraoke.com"
         private const val IMAGE_ACCOUNT = "WxURxyML82UkE7gY-PiBKw"
+        private const val CACHE_TTL_MS = 5_000L
+
+        private val fetchMutex = Mutex()
+        @Volatile
+        private var cachedState: RadioState? = null
+        @Volatile
+        private var cachedAtMs: Long = 0L
     }
 
-    suspend fun fetchCurrentState(): Result<RadioState> = withContext(Dispatchers.IO) {
-        try {
-            // 1. Fetch main metadata
-            val url = URL(STATE_URL)
-            val connection = url.openConnection() as HttpURLConnection
-            connection.connectTimeout = 10_000
-            connection.readTimeout = 10_000
+    suspend fun fetchCurrentState(forceRefresh: Boolean = false): Result<RadioState> = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        if (!forceRefresh) {
+            val cached = cachedState
+            if (cached != null && now - cachedAtMs < CACHE_TTL_MS) {
+                return@withContext Result.success(cached)
+            }
+        }
 
-            val response = connection.inputStream.bufferedReader().readText()
-            connection.disconnect()
-            val json = JSONObject(response)
-            val state = parseRadioState(json)
-
-            // 2. Fetch progress from static endpoint
-            val staticUrl = URL(STATIC_NOWPLAYING_URL)
-            val staticConnection = staticUrl.openConnection() as HttpURLConnection
-            staticConnection.connectTimeout = 5000
-            staticConnection.readTimeout = 5000
-            
-            var progress = 0
-            var duration = 0
-            try {
-                val staticResponse = staticConnection.inputStream.bufferedReader().readText()
-                val staticJson = JSONObject(staticResponse)
-                val nowPlaying = staticJson.optJSONObject("now_playing")
-                if (nowPlaying != null) {
-                    progress = nowPlaying.optInt("elapsed", 0)
-                    duration = nowPlaying.optInt("duration", 0)
+        fetchMutex.withLock {
+            val recheckNow = System.currentTimeMillis()
+            if (!forceRefresh) {
+                val cached = cachedState
+                if (cached != null && recheckNow - cachedAtMs < CACHE_TTL_MS) {
+                    return@withLock Result.success(cached)
                 }
-            } catch (e: Exception) {
-                // Ignore static fetch failure
-            } finally {
-                staticConnection.disconnect()
             }
 
-            Result.success(state.copy(
-                currentProgress = progress,
-                totalDuration = duration
-            ))
-        } catch (e: Exception) {
-            Result.failure(e)
+            try {
+                val merged = coroutineScope {
+                    val stateDeferred = async {
+                        val req = Request.Builder().url(STATE_URL).build()
+                        HttpClient.shared.newCall(req).execute().use { resp ->
+                            if (!resp.isSuccessful) throw Exception("HTTP ${resp.code}")
+                            val body = resp.body?.string() ?: throw Exception("Empty response")
+                            parseRadioState(JSONObject(body))
+                        }
+                    }
+                    val staticDeferred = async {
+                        try {
+                            val req = Request.Builder().url(STATIC_NOWPLAYING_URL).build()
+                            HttpClient.shared.newCall(req).execute().use { resp ->
+                                if (!resp.isSuccessful) return@use 0 to 0
+                                val body = resp.body?.string() ?: return@use 0 to 0
+                                val nowPlaying = JSONObject(body).optJSONObject("now_playing")
+                                if (nowPlaying != null) {
+                                    nowPlaying.optInt("elapsed", 0) to nowPlaying.optInt("duration", 0)
+                                } else {
+                                    0 to 0
+                                }
+                            }
+                        } catch (_: Exception) {
+                            0 to 0
+                        }
+                    }
+
+                    val state = stateDeferred.await()
+                    val (progress, duration) = staticDeferred.await()
+                    state.copy(
+                        currentProgress = progress,
+                        totalDuration = duration
+                    )
+                }
+
+                cachedState = merged
+                cachedAtMs = System.currentTimeMillis()
+                Result.success(merged)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 

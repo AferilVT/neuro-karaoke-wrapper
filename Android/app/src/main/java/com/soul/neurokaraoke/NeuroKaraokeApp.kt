@@ -48,9 +48,10 @@ class NeuroKaraokeApp : Application(), ImageLoaderFactory {
 
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
+            .okHttpClient { com.soul.neurokaraoke.data.api.HttpClient.shared }
             .memoryCache {
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.25)
+                    .maxSizePercent(0.20)
                     .build()
             }
             .diskCache {
@@ -59,7 +60,7 @@ class NeuroKaraokeApp : Application(), ImageLoaderFactory {
                     .maxSizeBytes(250L * 1024 * 1024) // 250MB
                     .build()
             }
-            .crossfade(300)
+            .crossfade(false)
             .respectCacheHeaders(false)
             .build()
     }

@@ -89,6 +89,8 @@ fun Modifier.gradientBorder(
 
 /**
  * Pulsing glow for active/playing elements — play button, now-playing indicator.
+ * Reads the animated alpha inside drawBehind so animation frames never trigger
+ * composition-phase recompositions.
  */
 @Composable
 fun Modifier.pulsingGlow(
@@ -100,7 +102,7 @@ fun Modifier.pulsingGlow(
     durationMs: Int = 2000
 ): Modifier {
     val infiniteTransition = rememberInfiniteTransition(label = "glow")
-    val alpha by infiniteTransition.animateFloat(
+    val alphaState = infiniteTransition.animateFloat(
         initialValue = minAlpha,
         targetValue = maxAlpha,
         animationSpec = infiniteRepeatable(
@@ -109,7 +111,23 @@ fun Modifier.pulsingGlow(
         ),
         label = "glowAlpha"
     )
-    return this.ambientGlow(color = color, radius = baseRadius, cornerRadius = cornerRadius, alpha = alpha)
+    return this.drawBehind {
+        val alpha = alphaState.value
+        val radiusPx = baseRadius.toPx()
+        val cornerPx = cornerRadius.toPx()
+        drawRoundRect(
+            color = color.copy(alpha = alpha * 0.3f),
+            topLeft = Offset(-radiusPx, -radiusPx),
+            size = Size(size.width + radiusPx * 2, size.height + radiusPx * 2),
+            cornerRadius = CornerRadius(cornerPx + radiusPx * 0.5f)
+        )
+        drawRoundRect(
+            color = color.copy(alpha = alpha * 0.6f),
+            topLeft = Offset(-radiusPx * 0.3f, -radiusPx * 0.3f),
+            size = Size(size.width + radiusPx * 0.6f, size.height + radiusPx * 0.6f),
+            cornerRadius = CornerRadius(cornerPx + radiusPx * 0.15f)
+        )
+    }
 }
 
 /**

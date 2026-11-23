@@ -51,8 +51,10 @@ class FavoritesRepository(context: Context) {
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     init {
-        loadFavorites()
-        loadPending()
+        syncScope.launch {
+            loadFavorites()
+            loadPending()
+        }
     }
 
     private fun loadFavorites() {
@@ -73,11 +75,14 @@ class FavoritesRepository(context: Context) {
     }
 
     private fun saveFavorites() {
-        val jsonArray = JSONArray()
-        for (song in _favorites.value) {
-            jsonArray.put(songToJson(song))
+        val snapshot = _favorites.value
+        syncScope.launch {
+            val jsonArray = JSONArray()
+            for (song in snapshot) {
+                jsonArray.put(songToJson(song))
+            }
+            prefs.edit().putString(KEY_FAVORITES, jsonArray.toString()).apply()
         }
-        prefs.edit().putString(KEY_FAVORITES, jsonArray.toString()).apply()
     }
 
     private fun loadPending() {

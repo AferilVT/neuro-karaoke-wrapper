@@ -13,14 +13,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.soul.neurokaraoke.data.SongCache
 import com.soul.neurokaraoke.data.repository.LocaleManager
 import com.soul.neurokaraoke.data.model.User
@@ -32,6 +31,8 @@ import com.soul.neurokaraoke.ui.tv.isTelevision
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
 import com.soul.neurokaraoke.viewmodel.UpdateViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 class MainActivity : ComponentActivity() {
 
@@ -65,15 +66,18 @@ class MainActivity : ComponentActivity() {
             // When language changes at runtime, recreate the Activity so it goes
             // through attachBaseContext() again with the new locale. This avoids
             // the white flash caused by key() destroying the entire Compose tree.
-            val currentLanguage by LocaleManager.currentLanguage.collectAsState()
+            val currentLanguage by LocaleManager.currentLanguage.collectAsStateWithLifecycle()
             val initialLanguage = remember { currentLanguage }
             LaunchedEffect(currentLanguage) {
                 if (currentLanguage != initialLanguage) recreate()
             }
 
-            val playerState by playerViewModel.uiState.collectAsState()
-            val updateState by updateViewModel.uiState.collectAsState()
-            val currentSinger = playerState.currentSong?.singer?.name
+            val currentSinger by remember(playerViewModel) {
+                playerViewModel.uiState
+                    .map { it.currentSong?.singer?.name }
+                    .distinctUntilChanged()
+            }.collectAsStateWithLifecycle(initialValue = null)
+            val updateState by updateViewModel.uiState.collectAsStateWithLifecycle()
             val context = LocalContext.current
 
             // Check for updates when setup completes

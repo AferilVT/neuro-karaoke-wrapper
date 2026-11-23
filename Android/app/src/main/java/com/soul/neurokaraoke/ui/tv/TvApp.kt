@@ -41,6 +41,8 @@ import com.soul.neurokaraoke.data.repository.UserPlaylistRepository
 import com.soul.neurokaraoke.ui.tv.neurolings.NeurolingsCounts
 import com.soul.neurokaraoke.viewmodel.AuthViewModel
 import com.soul.neurokaraoke.viewmodel.PlayerViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 @Composable
 fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
@@ -213,9 +215,8 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.86f))
             ) {
-                TvImmersiveBackground(playerViewModel)
                 TvDetailScreen(
                     playlist = playlist,
                     onPlayAll = { songs -> songs.firstOrNull()?.let { playerViewModel.playSongWithQueue(it, songs) } },
@@ -245,9 +246,8 @@ fun TvApp(playerViewModel: PlayerViewModel, authViewModel: AuthViewModel) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colorScheme.background.copy(alpha = 0.86f))
             ) {
-                TvImmersiveBackground(playerViewModel)
                 TvSettingsScreen(onClose = { showSettings = false })
             }
         }
@@ -276,23 +276,40 @@ private fun ApiPublicPlaylist.toTvPlaylist(): Playlist = Playlist(
 
 @Composable
 private fun TvImmersiveBackground(playerViewModel: PlayerViewModel) {
-    val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
-    val cover = playerState.currentSong?.coverUrl
+    val cover by remember(playerViewModel) {
+        playerViewModel.uiState
+            .map { it.currentSong?.coverUrl }
+            .distinctUntilChanged()
+    }.collectAsStateWithLifecycle(initialValue = null)
+
+    val bgColor = MaterialTheme.colorScheme.background
+    val scrimBrush = remember(bgColor) {
+        Brush.verticalGradient(
+            listOf(
+                bgColor.copy(alpha = 0.50f),
+                bgColor.copy(alpha = 0.80f)
+            )
+        )
+    }
+
     Box(
         Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(bgColor)
     ) {
         if (!cover.isNullOrBlank()) {
             val context = LocalContext.current
+            val imageRequest = remember(context, cover) {
+                ImageRequest.Builder(context)
+                    .data(cover)
+                    .transformations(BlurTransformation.Default)
+                    .crossfade(true)
+                    .build()
+            }
             AsyncImage(
                 // Blur via a Coil transformation, not Modifier.blur() — the latter is a
                 // no-op below API 31, so older TV / Fire OS devices showed a sharp cover.
-                model = ImageRequest.Builder(context)
-                    .data(cover)
-                    .transformations(BlurTransformation())
-                    .crossfade(true)
-                    .build(),
+                model = imageRequest,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -301,14 +318,7 @@ private fun TvImmersiveBackground(playerViewModel: PlayerViewModel) {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.50f),
-                            MaterialTheme.colorScheme.background.copy(alpha = 0.80f)
-                        )
-                    )
-                )
+                .background(scrimBrush)
         )
     }
 }

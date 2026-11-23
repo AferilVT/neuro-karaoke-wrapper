@@ -12,7 +12,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import com.soul.neurokaraoke.ui.components.UsernameLoginDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,6 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -57,10 +57,10 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    val playerState by playerViewModel.uiState.collectAsState()
-    val authState by authViewModel.uiState.collectAsState()
-    val downloadedSongs by downloadViewModel.downloads.collectAsState()
-    val downloadProgress by downloadViewModel.downloadProgress.collectAsState()
+    val playerState by playerViewModel.uiState.collectAsStateWithLifecycle()
+    val authState by authViewModel.uiState.collectAsStateWithLifecycle()
+    val downloadedSongs by downloadViewModel.downloads.collectAsStateWithLifecycle()
+    val downloadProgress by downloadViewModel.downloadProgress.collectAsStateWithLifecycle()
     var showFullPlayer by remember { mutableStateOf(false) }
     var showPairCarDialog by remember { mutableStateOf(false) }
     var showUsernameLogin by remember { mutableStateOf(false) }
@@ -69,9 +69,9 @@ fun MainScreen(
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
     val userPlaylistRepository = remember { UserPlaylistRepository(context) }
     val favoritesRepository = remember { FavoritesRepository(context) }
-    val favoriteSongs by favoritesRepository.favorites.collectAsState()
-    val isRefreshingFavorites by favoritesRepository.isSyncing.collectAsState()
-    val isSyncingPlaylists by userPlaylistRepository.isSyncing.collectAsState()
+    val favoriteSongs by favoritesRepository.favorites.collectAsStateWithLifecycle()
+    val isRefreshingFavorites by favoritesRepository.isSyncing.collectAsStateWithLifecycle()
+    val isSyncingPlaylists by userPlaylistRepository.isSyncing.collectAsStateWithLifecycle()
 
     // Sync favorites and playlists when user logs in
     LaunchedEffect(authState.isLoggedIn) {
@@ -128,7 +128,7 @@ fun MainScreen(
                 MiniPlayer(
                     currentSong = playerState.currentSong,
                     isPlaying = playerState.isPlaying,
-                    progress = playerState.progress,
+                    playbackProgressFlow = playerViewModel.playbackProgress,
                     onPlayPauseClick = { playerViewModel.togglePlayPause() },
                     onPreviousClick = { playerViewModel.playPrevious() },
                     onNextClick = { playerViewModel.playNext() },
@@ -262,8 +262,7 @@ fun MainScreen(
             PlayerScreen(
                 song = currentSong,
                 isPlaying = playerState.isPlaying,
-                progress = playerState.progress,
-                currentPosition = playerState.currentPosition,
+                playbackProgressFlow = playerViewModel.playbackProgress,
                 duration = playerState.duration,
                 isShuffleEnabled = playerState.isShuffleEnabled,
                 repeatMode = playerState.repeatMode,

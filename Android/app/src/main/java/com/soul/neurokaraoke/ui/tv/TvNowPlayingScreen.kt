@@ -173,27 +173,10 @@ fun TvNowPlayingScreen(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(Modifier.height(12.dp))
-            LinearProgressIndicator(
-                progress = {
-                    if (playerState.duration > 0) {
-                        (playerState.currentPosition.toFloat() / playerState.duration).coerceIn(0f, 1f)
-                    } else 0f
-                },
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.primary
+            TvPlaybackProgressBar(
+                playbackProgressFlow = playerViewModel.playbackProgress,
+                fallbackDuration = playerState.duration
             )
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    formatMs(playerState.currentPosition),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    formatMs(playerState.duration),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
             Spacer(Modifier.height(12.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -246,14 +229,67 @@ fun TvNowPlayingScreen(
             TvFullscreenButton(fullscreen = fullscreen, onClick = onToggleFullscreen)
         }
 
-        // RIGHT: lyrics (reused verbatim from the phone/tablet player)
-        LyricsPanel(
+        // RIGHT: lyrics (progress collected inside sub-composable so left pane doesn't recompose at 10Hz)
+        TvSyncedLyricsPanel(
             song = song,
-            currentPosition = playerState.currentPosition,
-            duration = playerState.duration,
+            playbackProgressFlow = playerViewModel.playbackProgress,
+            fallbackDuration = playerState.duration,
             onSeekTo = { playerViewModel.seekTo(it) },
             accessToken = accessToken,
             modifier = Modifier.weight(0.58f).fillMaxHeight().padding(start = 24.dp)
         )
     }
+}
+
+@Composable
+private fun TvPlaybackProgressBar(
+    playbackProgressFlow: kotlinx.coroutines.flow.StateFlow<com.soul.neurokaraoke.viewmodel.PlaybackProgress>,
+    fallbackDuration: Long
+) {
+    val playbackProgress by playbackProgressFlow.collectAsStateWithLifecycle()
+    val duration = playbackProgress.duration.takeIf { it > 0 } ?: fallbackDuration
+    val currentPosition = playbackProgress.currentPosition
+
+    LinearProgressIndicator(
+        progress = {
+            if (duration > 0) {
+                (currentPosition.toFloat() / duration).coerceIn(0f, 1f)
+            } else 0f
+        },
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.primary
+    )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(
+            formatMs(currentPosition),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            formatMs(duration),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun TvSyncedLyricsPanel(
+    song: com.soul.neurokaraoke.data.model.Song,
+    playbackProgressFlow: kotlinx.coroutines.flow.StateFlow<com.soul.neurokaraoke.viewmodel.PlaybackProgress>,
+    fallbackDuration: Long,
+    onSeekTo: (Float) -> Unit,
+    accessToken: String?,
+    modifier: Modifier = Modifier
+) {
+    val playbackProgress by playbackProgressFlow.collectAsStateWithLifecycle()
+    val duration = playbackProgress.duration.takeIf { it > 0 } ?: fallbackDuration
+    LyricsPanel(
+        song = song,
+        currentPosition = playbackProgress.currentPosition,
+        duration = duration,
+        onSeekTo = onSeekTo,
+        accessToken = accessToken,
+        modifier = modifier
+    )
 }

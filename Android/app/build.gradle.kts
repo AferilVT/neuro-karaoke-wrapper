@@ -60,7 +60,11 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (signingConfigs.getByName("release").storeFile != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -74,6 +78,10 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+        freeCompilerArgs += listOf(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true"
+        )
     }
     buildFeatures {
         compose = true
@@ -110,9 +118,8 @@ dependencies {
     // Navigation Compose
     implementation(libs.androidx.navigation.compose)
 
-    // Coil for image loading
+    // Coil for image loading (coil-compose brings in coil transitively)
     implementation(libs.coil.compose)
-    implementation("io.coil-kt:coil:2.6.0")
 
     // Media3 ExoPlayer
     implementation(libs.androidx.media3.exoplayer)
